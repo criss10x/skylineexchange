@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Contact Skyline — Skyline Exchange</title>
+  <meta name="description" content="Contact Skyline Exchange in Bali via WhatsApp, Instagram, email, or Google Maps." />
+  <link rel="canonical" href="https://skylinemoneychanger.com/contactskyline" />
+  <meta name="theme-color" content="#00E1D3" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Skyline Exchange" />
+  <meta property="og:title" content="Contact Skyline — Skyline Exchange" />
+  <meta property="og:description" content="Reach Skyline Exchange on WhatsApp, Instagram, email, or Google Maps." />
+  <meta property="og:url" content="https://skylinemoneychanger.com/contactskyline" />
+  <meta property="og:image" content="https://skylinemoneychanger.com/assets/og-image.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg?v=2" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png?v=2" />
+  <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png?v=2" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="/css/styles.css?v=4" />
+
+  <!-- Meta Pixel Code -->
+  <script>
+  !function(f,b,e,v,n,t,s)
+  {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+  n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+  if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+  n.queue=[];t=b.createElement(e);t.async=!0;
+  t.src=v;s=b.getElementsByTagName(e)[0];
+  s.parentNode.insertBefore(t,s)}(window, document,'script',
+  'https://connect.facebook.net/en_US/fbevents.js');
+  fbq('init', '1000262369555549');
+  fbq('track', 'PageView');
+  fbq('track', 'ViewContent', { content_name: 'Contact Skyline', content_category: 'contact' });
+  </script>
+  <noscript><img height="1" width="1" style="display:none"
+  src="https://www.facebook.com/tr?id=1000262369555549&ev=PageView&noscript=1"
+  /></noscript>
+  <!-- End Meta Pixel Code -->
+
+  <style>
+    .contact-page { min-height: 100dvh; display: grid; place-items: center; padding: 120px 20px 96px; }
+    .contact-box { width: min(680px, 100%); text-align: center; }
+
+    .contact-title { font-family: var(--font-head); font-weight: 700; font-size: clamp(2rem, 6vw, 3.2rem); letter-spacing: -0.02em; opacity: 0; transform: translateY(18px); animation: rise 0.6s var(--ease-out) 0.1s forwards; }
+    .contact-sub { margin-top: 10px; color: var(--muted); opacity: 0; transform: translateY(14px); animation: rise 0.55s var(--ease-out) 0.22s forwards; }
+
+    .contact-grid { margin-top: 34px; display: grid; gap: 14px; grid-template-columns: 1fr; }
+    .contact-btn {
+      display: flex; align-items: center; gap: 16px;
+      padding: 20px 22px;
+      border: 1px solid var(--border); border-radius: var(--r-card);
+      background: var(--glass-strong);
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      box-shadow: var(--shadow-card);
+      color: var(--ink);
+      opacity: 0; transform: translateY(24px);
+      transition: transform 0.25s var(--ease-out), box-shadow 0.25s var(--ease-out), border-color 0.25s;
+      /* ponytail: CSS keyframes, no JS animation lib for four buttons */
+      animation: rise 0.55s var(--ease-out) forwards;
+    }
+    .contact-btn:nth-child(1) { animation-delay: 0.34s; }
+    .contact-btn:nth-child(2) { animation-delay: 0.44s; }
+    .contact-btn:nth-child(3) { animation-delay: 0.54s; }
+    .contact-btn:nth-child(4) { animation-delay: 0.64s; }
+
+    .contact-btn:hover { transform: translateY(-4px); box-shadow: var(--shadow-soft); border-color: rgba(0, 129, 120, 0.32); }
+    .contact-btn:active { transform: translateY(-1px) scale(0.985); }
+
+    /* ponytail: highlight WhatsApp button with a soft repeating pulse ring */
+    .wa-highlight {
+      position: relative;
+      border-color: rgba(0, 225, 211, 0.55);
+    }
+    .wa-highlight::after {
+      content: "";
+      position: absolute; inset: 0;
+      border-radius: var(--r-card);
+      box-shadow: 0 0 0 0 rgba(0, 225, 211, 0.45);
+      animation: pulse-ring 2.4s ease-out infinite;
+      pointer-events: none;
+    }
+    @keyframes pulse-ring {
+      0% { box-shadow: 0 0 0 0 rgba(0, 225, 211, 0.45); }
+      70% { box-shadow: 0 0 0 14px rgba(0, 225, 211, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(0, 225, 211, 0); }
+    }
+    .wa-highlight:hover { transform: translateY(-4px) scale(1.01); border-color: rgba(0, 225, 211, 0.75); }
+    .wa-highlight:hover::after { animation-play-state: paused; }
+    .contact-btn .icon { width: 46px; height: 46px; border-radius: 14px; background: rgba(0, 225, 211, 0.16); color: var(--primary); display: grid; place-items: center; flex: 0 0 46px; transition: transform 0.25s var(--ease-out), background-color 0.25s; }
+    .contact-btn:hover .icon { transform: scale(1.1); background: rgba(0, 225, 211, 0.28); }
+    .contact-btn .arrow { margin-left: auto; color: var(--primary); transform: translateX(-4px); opacity: 0.7; transition: transform 0.25s var(--ease-out), opacity 0.25s; }
+    .contact-btn:hover .arrow, .contact-btn:active .arrow { transform: translateX(0); opacity: 1; }
+
+    .contact-btn .body { text-align: left; }
+    .contact-btn .label { font-family: var(--font-head); font-weight: 600; font-size: 17px; }
+    .contact-btn .value { font-size: 14px; color: var(--muted); }
+
+    .back { display: inline-flex; align-items: center; gap: 8px; margin-top: 28px; font-size: 14px; color: var(--muted); opacity: 0; transform: translateY(12px); animation: rise 0.5s var(--ease-out) 0.8s forwards; transition: color 0.2s; }
+    .back:hover { color: var(--primary); }
+
+    @keyframes rise { to { opacity: 1; transform: translateY(0); } }
+
+    .map-card {
+      margin-top: 22px; overflow: hidden;
+      border: 1px solid var(--border); border-radius: var(--r-card);
+      background: var(--glass-strong);
+      box-shadow: var(--shadow-card);
+      opacity: 0; transform: translateY(18px);
+      animation: rise 0.55s var(--ease-out) 0.74s forwards;
+    }
+    .map-card iframe { width: 100%; height: clamp(260px, 40vw, 360px); border: 0; display: block; }
+
+    @media (max-width: 640px) {
+      .contact-page { padding: 104px 16px 72px; }
+      .contact-btn { padding: 18px; }
+      .contact-btn .icon { width: 42px; height: 42px; flex-basis: 42px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .contact-title, .contact-sub, .contact-btn, .back { animation: none; opacity: 1; transform: none; }
+      .contact-btn, .contact-btn .icon, .contact-btn .arrow { transition: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="aurora" aria-hidden="true">
+    <div class="aurora-blob aurora-a"></div>
+    <div class="aurora-blob aurora-b"></div>
+    <div class="aurora-blob aurora-c"></div>
+  </div>
+  <div class="grain" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="Skyline Exchange — home">
+      <img class="brand-mark" src="/assets/logo.svg?v=2" alt="" width="40" height="40" />
+      <span class="brand-word">SKYLINE<em>EXCHANGE</em></span>
+    </a>
+  </header>
+
+  <main class="contact-page" role="main">
+    <div class="contact-box">
+      <h1 class="contact-title" id="contactTitle">Contact us</h1>
+      <p class="contact-sub" id="contactSub">Reach Skyline Exchange anytime.</p>
+      <div class="contact-grid" id="contactGrid">
+        <a id="waBtn" class="contact-btn wa-highlight" href="#" target="_blank" rel="noopener">
+          <span class="icon" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.56 12.56 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.56 12.56 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+          </span>
+          <span class="body">
+            <span class="label" id="waLabel">WhatsApp</span>
+            <span class="value" id="waValue">Chat with us</span>
+          </span>
+          <span class="arrow" aria-hidden="true">→</span>
+        </a>
+
+        <a id="igBtn" class="contact-btn" href="#" target="_blank" rel="noopener">
+          <span class="icon" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+          </span>
+          <span class="body">
+            <span class="label" id="igLabel">Instagram</span>
+            <span class="value" id="igValue">Follow our journey</span>
+          </span>
+          <span class="arrow" aria-hidden="true">→</span>
+        </a>
+
+        <a id="emailBtn" class="contact-btn" href="#">
+          <span class="icon" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+          </span>
+          <span class="body">
+            <span class="label" id="emailLabel">Email</span>
+            <span class="value" id="emailValue">Write to us</span>
+          </span>
+          <span class="arrow" aria-hidden="true">→</span>
+        </a>
+
+        <a id="mapsBtn" class="contact-btn" href="#" target="_blank" rel="noopener">
+          <span class="icon" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+          </span>
+          <span class="body">
+            <span class="label" id="mapsLabel">Google Maps</span>
+            <span class="value" id="mapsValue">Find us in Bali</span>
+          </span>
+          <span class="arrow" aria-hidden="true">→</span>
+        </a>
+      </div>
+
+      <figure class="map-card" aria-label="Skyline Exchange location on Google Maps">
+        <iframe
+          id="mapFrame"
+          loading="lazy"
+          allowfullscreen
+          referrerpolicy="no-referrer-when-downgrade"
+          title="Skyline Exchange location"
+          src="https://www.google.com/maps/embed?origin=mfe&pb=!1m3!2m1!1sSkyline+Exchange+Kuta+Bali!6i15">
+        </iframe>
+      </figure>
+
+      <a class="back" href="/">← Back to home</a>
+    </div>
+  </main>
+
+  <script src="/config.js?v=3"></script>
+  <script>
+    const C = window.SITE_CONFIG || {};
+    const i18n = {
+      en: { title: "Contact us", sub: "Reach Skyline Exchange anytime.", wa: "Chat with us", ig: "Follow our journey", email: "Write to us", maps: "Find us in Bali" },
+      id: { title: "Hubungi kami", sub: "Hubungi Skyline Exchange kapan saja.", wa: "Chat dengan kami", ig: "Ikuti kabar kami", email: "Kirim email", maps: "Temukan kami di Bali" }
+    };
+    const lang = new URLSearchParams(location.search).get('lang') || 'en';
+    const t = i18n[lang] || i18n.en;
+
+    document.getElementById('contactTitle').textContent = t.title;
+    document.getElementById('contactSub').textContent = t.sub;
+
+    const waText = "Halo Skyline Exchange, saya mau tanya";
+    const waNum = C.whatsapp || '';
+
+    document.getElementById('waBtn').href = waNum ? `https://wa.me/${waNum}?text=${encodeURIComponent(waText)}` : '#';
+    document.getElementById('waValue').textContent = t.wa;
+    document.getElementById('igBtn').href = C.instagramUrl || '#';
+    document.getElementById('igValue').textContent = t.ig;
+    document.getElementById('emailBtn').href = C.email ? `mailto:${C.email}` : '#';
+    document.getElementById('emailValue').textContent = t.email;
+    document.getElementById('mapsBtn').href = C.mapsUrl || '#';
+    document.getElementById('mapsValue').textContent = t.maps;
+  </script>
+</body>
+</html>
