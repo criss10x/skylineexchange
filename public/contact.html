@@ -202,7 +202,7 @@
     document.getElementById('contactTitle').textContent = t.title;
     document.getElementById('contactSub').textContent = t.sub;
 
-    const waText = (C.i18n && C.i18n[lang] && C.i18n[lang].wa_text) || (C.i18n && C.i18n.en && C.i18n.en.wa_text) || "Hi Skyline Exchange!";
+    const waText = "Halo Skyline Exchange, saya mau tanya";
     const waNum = C.whatsapp || '';
 
     document.getElementById('waBtn').href = waNum ? `https://wa.me/${waNum}?text=${encodeURIComponent(waText)}` : '#';
