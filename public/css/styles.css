@@ -93,6 +93,7 @@ button { font: inherit; background: none; border: 0; cursor: pointer; color: inh
 }
 .preloader.is-done { opacity: 0; visibility: hidden; }
 .preloader-inner { display: grid; justify-items: center; gap: 18px; }
+.preloader-logo { width: 52px; height: 52px; }
 .preloader-mark {
   font-family: var(--font-head); font-weight: 700; font-size: 15px;
   letter-spacing: 0.34em; color: var(--ink);
