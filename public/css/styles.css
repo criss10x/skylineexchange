@@ -5,13 +5,13 @@
 
 /* ---------- Tokens ---------- */
 :root {
-  --primary: #0F766E;        /* teal-700 — CTA, links (5.3:1 on white) */
-  --primary-deep: #0B5D57;
-  --brand: #0D9488;          /* teal-600 — graphics */
-  --secondary: #14B8A6;      /* teal-500 — hovers, focus ring */
+  --brand: #00E1D3;          /* logo tosca — fills, graphics (pair with dark text) */
+  --primary: #008178;        /* same hue, darkened — text, links (4.8:1 on white) */
+  --primary-deep: #006B63;   /* hover for primary-colored elements */
+  --secondary: #00C4B8;      /* mid tosca — gradients, decorative */
   --ink: #0F172A;            /* slate-900 */
   --muted: #64748B;          /* slate-500 */
-  --border: rgba(15, 118, 110, 0.14);
+  --border: rgba(0, 129, 120, 0.16);
   --glass: rgba(255, 255, 255, 0.62);
   --glass-strong: rgba(255, 255, 255, 0.78);
   --gold: #D97706;
@@ -21,7 +21,7 @@
 
   --r-card: 20px;
   --r-pill: 999px;
-  --shadow-soft: 0 24px 60px -28px rgba(13, 148, 136, 0.28);
+  --shadow-soft: 0 24px 60px -28px rgba(0, 196, 184, 0.32);
   --shadow-card: 0 10px 34px -18px rgba(15, 23, 42, 0.18);
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
 }
@@ -36,8 +36,8 @@ body {
   line-height: 1.6;
   color: var(--ink);
   background:
-    radial-gradient(1200px 700px at 80% -10%, rgba(153, 246, 228, 0.35), transparent 60%),
-    linear-gradient(180deg, #F0FDFA 0%, #FFFFFF 52%, #F0FDFA 100%);
+    radial-gradient(1200px 700px at 80% -10%, rgba(0, 225, 211, 0.16), transparent 60%),
+    linear-gradient(180deg, #EDFEFC 0%, #FFFFFF 52%, #EDFEFC 100%);
   min-height: 100dvh;
   overflow-x: clip;
   -webkit-font-smoothing: antialiased;
@@ -46,7 +46,7 @@ body {
 img, svg { display: block; max-width: 100%; }
 a { color: var(--primary); text-decoration: none; }
 button { font: inherit; background: none; border: 0; cursor: pointer; color: inherit; }
-:focus-visible { outline: 3px solid var(--secondary); outline-offset: 3px; border-radius: 6px; }
+:focus-visible { outline: 3px solid var(--primary); outline-offset: 3px; border-radius: 6px; }
 
 /* ============================================================
    Ambient background — aurora + grain
@@ -59,12 +59,12 @@ button { font: inherit; background: none; border: 0; cursor: pointer; color: inh
 .aurora-blob { position: absolute; border-radius: 50%; will-change: transform; }
 .aurora-a {
   width: 58vw; height: 58vw; left: -12vw; top: -10vw;
-  background: radial-gradient(circle, rgba(153, 246, 228, 0.55) 0%, rgba(153, 246, 228, 0.22) 38%, transparent 68%);
+  background: radial-gradient(circle, rgba(0, 225, 211, 0.3) 0%, rgba(0, 225, 211, 0.12) 38%, transparent 68%);
   animation: drift-a 19s ease-in-out infinite alternate;
 }
 .aurora-b {
   width: 52vw; height: 52vw; right: -10vw; top: 16vh;
-  background: radial-gradient(circle, rgba(94, 234, 212, 0.42) 0%, rgba(94, 234, 212, 0.16) 40%, transparent 68%);
+  background: radial-gradient(circle, rgba(0, 196, 184, 0.26) 0%, rgba(0, 196, 184, 0.1) 40%, transparent 68%);
   animation: drift-b 23s ease-in-out infinite alternate;
 }
 .aurora-c {
@@ -98,10 +98,10 @@ button { font: inherit; background: none; border: 0; cursor: pointer; color: inh
   font-family: var(--font-head); font-weight: 700; font-size: 15px;
   letter-spacing: 0.34em; color: var(--ink);
 }
-.preloader-mark em { font-style: normal; color: var(--brand); margin-left: 0.34em; }
+.preloader-mark em { font-style: normal; color: var(--primary); margin-left: 0.34em; }
 .preloader-bar {
   width: 180px; height: 2px; border-radius: 2px; overflow: hidden;
-  background: rgba(13, 148, 136, 0.15);
+  background: rgba(0, 225, 211, 0.22);
 }
 .preloader-fill {
   display: block; height: 100%; width: 100%;
@@ -126,7 +126,7 @@ button { font: inherit; background: none; border: 0; cursor: pointer; color: inh
   font-family: var(--font-head); font-weight: 700; font-size: 13px;
   letter-spacing: 0.26em; color: var(--ink); white-space: nowrap;
 }
-.brand-word em { font-style: normal; color: var(--brand); margin-left: 0.26em; }
+.brand-word em { font-style: normal; color: var(--primary); margin-left: 0.26em; }
 
 .lang-toggle {
   display: inline-flex; align-items: center; gap: 2px;
@@ -144,7 +144,7 @@ button { font: inherit; background: none; border: 0; cursor: pointer; color: inh
   transition: color 0.2s, background-color 0.2s;
 }
 .lang-btn:hover { color: var(--primary); }
-.lang-btn.is-active { background: var(--primary); color: #fff; }
+.lang-btn.is-active { background: var(--brand); color: var(--ink); }
 
 /* ============================================================
    ACT 1 — Hero
@@ -173,13 +173,13 @@ button { font: inherit; background: none; border: 0; cursor: pointer; color: inh
 .pulse-dot {
   width: 8px; height: 8px; border-radius: 50%;
   background: var(--brand);
-  box-shadow: 0 0 0 0 rgba(13, 148, 136, 0.5);
+  box-shadow: 0 0 0 0 rgba(0, 225, 211, 0.55);
   animation: pulse 2.2s ease-out infinite;
 }
 @keyframes pulse {
-  0%   { box-shadow: 0 0 0 0 rgba(13, 148, 136, 0.45); }
-  70%  { box-shadow: 0 0 0 11px rgba(13, 148, 136, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(13, 148, 136, 0); }
+  0%   { box-shadow: 0 0 0 0 rgba(0, 225, 211, 0.5); }
+  70%  { box-shadow: 0 0 0 11px rgba(0, 225, 211, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(0, 225, 211, 0); }
 }
 
 .headline {
@@ -233,14 +233,14 @@ button { font: inherit; background: none; border: 0; cursor: pointer; color: inh
   display: inline-flex; align-items: center; gap: 11px;
   min-height: 56px; padding: 16px 32px;
   border-radius: var(--r-pill);
-  background: var(--primary); color: #fff;
+  background: var(--brand); color: var(--ink);
   font-weight: 600; font-size: 16.5px; letter-spacing: 0.01em;
-  box-shadow: 0 18px 38px -14px rgba(15, 118, 110, 0.55);
+  box-shadow: 0 18px 38px -14px rgba(0, 180, 170, 0.6);
   transition: background-color 0.25s var(--ease-out), box-shadow 0.25s var(--ease-out);
   will-change: transform;
 }
-.cta:hover { background: var(--primary-deep); box-shadow: 0 22px 46px -14px rgba(15, 118, 110, 0.62); }
-.cta:active { background: #094c47; }
+.cta:hover { background: #00CFC2; box-shadow: 0 22px 46px -14px rgba(0, 180, 170, 0.7); }
+.cta:active { background: #00BCB0; }
 
 /* Currency marquee */
 .marquee {
@@ -255,7 +255,7 @@ button { font: inherit; background: none; border: 0; cursor: pointer; color: inh
   white-space: nowrap; width: max-content;
   animation: slide 38s linear infinite;
   font-family: var(--font-head); font-weight: 500; font-size: 13px;
-  letter-spacing: 0.32em; color: rgba(15, 118, 110, 0.38);
+  letter-spacing: 0.32em; color: rgba(0, 129, 120, 0.42);
 }
 @keyframes slide { from { transform: translate3d(0,0,0); } to { transform: translate3d(-50%,0,0); } }
 
@@ -266,7 +266,7 @@ button { font: inherit; background: none; border: 0; cursor: pointer; color: inh
 }
 .skyline svg { width: 100%; height: clamp(120px, 18vw, 240px); will-change: transform; }
 .skyline path, .skyline circle { fill: none; stroke-linecap: round; stroke-linejoin: round; }
-.sky-back path { stroke: var(--brand); stroke-opacity: 0.16; stroke-width: 1.4; }
+.sky-back path { stroke: var(--secondary); stroke-opacity: 0.28; stroke-width: 1.4; }
 .sky-front path { stroke: var(--primary); stroke-opacity: 0.42; stroke-width: 1.6; }
 .sky-sun { stroke: var(--gold); stroke-opacity: 0.55; stroke-width: 1.6; fill: rgba(217, 119, 6, 0.07); }
 .sky-horizon { stroke: var(--primary); stroke-opacity: 0.3; stroke-width: 1.4; }
@@ -339,13 +339,13 @@ button { font: inherit; background: none; border: 0; cursor: pointer; color: inh
 .card:hover {
   transform: translateY(-4px);
   box-shadow: var(--shadow-soft);
-  border-color: rgba(15, 118, 110, 0.3);
+  border-color: rgba(0, 129, 120, 0.32);
 }
 .card-icon {
   width: 46px; height: 46px; margin-bottom: 12px;
   display: grid; place-items: center;
   border-radius: 14px;
-  background: rgba(13, 148, 136, 0.1); color: var(--primary);
+  background: rgba(0, 225, 211, 0.16); color: var(--primary);
 }
 .card-title { font-family: var(--font-head); font-weight: 600; font-size: 17px; }
 .card-value { font-size: 14px; color: var(--ink); overflow-wrap: anywhere; }
