@@ -30,6 +30,20 @@ app.get("/health", (req, res) => {
   res.json({ ok: true, uptime: Math.round(process.uptime()) });
 });
 
+// ponytail: pretty URLs (/contact -> /contact.html) without a static-site generator
+const fs = require("fs");
+app.use((req, res, next) => {
+  if (req.method !== "GET" && req.method !== "HEAD") return next();
+  let file = req.path;
+  if (file.endsWith("/")) file += "index.html";
+  else if (!path.extname(file)) file += ".html";
+  const full = path.join(PUBLIC_DIR, file);
+  if (full.startsWith(PUBLIC_DIR) && fs.existsSync(full) && fs.statSync(full).isFile()) {
+    return res.sendFile(full);
+  }
+  next();
+});
+
 app.use(
   express.static(PUBLIC_DIR, {
     setHeaders(res, filePath) {
