@@ -74,11 +74,18 @@
     .contact-btn:hover { transform: translateY(-4px); box-shadow: var(--shadow-soft); border-color: rgba(0, 129, 120, 0.32); }
     .contact-btn:active { transform: translateY(-1px) scale(0.985); }
 
-    /* ponytail: highlight WhatsApp button with a soft repeating pulse */
+    /* ponytail: highlight WhatsApp button with a soft repeating pulse ring */
     .wa-highlight {
       position: relative;
       border-color: rgba(0, 225, 211, 0.55);
+    }
+    .wa-highlight::after {
+      content: "";
+      position: absolute; inset: 0;
+      border-radius: var(--r-card);
+      box-shadow: 0 0 0 0 rgba(0, 225, 211, 0.45);
       animation: pulse-ring 2.4s ease-out infinite;
+      pointer-events: none;
     }
     @keyframes pulse-ring {
       0% { box-shadow: 0 0 0 0 rgba(0, 225, 211, 0.45); }
@@ -86,6 +93,7 @@
       100% { box-shadow: 0 0 0 0 rgba(0, 225, 211, 0); }
     }
     .wa-highlight:hover { transform: translateY(-4px) scale(1.01); border-color: rgba(0, 225, 211, 0.75); }
+    .wa-highlight:hover::after { animation-play-state: paused; }
     .contact-btn .icon { width: 46px; height: 46px; border-radius: 14px; background: rgba(0, 225, 211, 0.16); color: var(--primary); display: grid; place-items: center; flex: 0 0 46px; transition: transform 0.25s var(--ease-out), background-color 0.25s; }
     .contact-btn:hover .icon { transform: scale(1.1); background: rgba(0, 225, 211, 0.28); }
     .contact-btn .arrow { margin-left: auto; color: var(--primary); transform: translateX(-4px); opacity: 0.7; transition: transform 0.25s var(--ease-out), opacity 0.25s; }
