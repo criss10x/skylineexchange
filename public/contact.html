@@ -108,6 +108,16 @@
 
     @keyframes rise { to { opacity: 1; transform: translateY(0); } }
 
+    .map-card {
+      margin-top: 22px; overflow: hidden;
+      border: 1px solid var(--border); border-radius: var(--r-card);
+      background: var(--glass-strong);
+      box-shadow: var(--shadow-card);
+      opacity: 0; transform: translateY(18px);
+      animation: rise 0.55s var(--ease-out) 0.74s forwards;
+    }
+    .map-card iframe { width: 100%; height: clamp(260px, 40vw, 360px); border: 0; display: block; }
+
     @media (max-width: 640px) {
       .contact-page { padding: 104px 16px 72px; }
       .contact-btn { padding: 18px; }
@@ -184,6 +194,17 @@
           <span class="arrow" aria-hidden="true">→</span>
         </a>
       </div>
+
+      <figure class="map-card" aria-label="Map from Skyline Exchange to Ngurah Rai Airport">
+        <iframe
+          id="mapFrame"
+          loading="lazy"
+          allowfullscreen
+          referrerpolicy="no-referrer-when-downgrade"
+          title="Skyline Exchange location near Ngurah Rai Airport"
+          src="https://www.google.com/maps/embed?origin=mfe&pb=!1m5!4m4!4m1!2sSkyline+Exchange+Kuta+Bali!4m1!2sNgurah+Rai+Airport">
+        </iframe>
+      </figure>
 
       <a class="back" href="/">← Back to home</a>
     </div>
