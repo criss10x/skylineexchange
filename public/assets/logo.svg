@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none" role="img" aria-label="Skyline Exchange logo">
+  <!-- Temporary brand mark — replace this file with the official logo -->
+  <rect x="1.5" y="1.5" width="45" height="45" rx="13" fill="#FFFFFF" stroke="#0F766E" stroke-opacity="0.25" stroke-width="1.5"/>
+  <!-- sun -->
+  <circle cx="33.5" cy="14.5" r="4.5" stroke="#D97706" stroke-width="1.8" fill="rgba(217,119,6,0.12)"/>
+  <!-- skyline -->
+  <path d="M9 34 V22 H14 V18 H19 V22 H23 V34" stroke="#0F766E" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M23 34 V26 H29 V15 H35 V34" stroke="#0D9488" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- horizon -->
+  <path d="M7 34 H41" stroke="#0F766E" stroke-width="1.9" stroke-linecap="round"/>
+  <!-- exchange arrows under horizon -->
+  <path d="M13 39.5 H27 M27 39.5 l-3 -2.4 M27 39.5 l-3 2.4" stroke="#0D9488" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" transform="translate(4,0)"/>
+</svg>
