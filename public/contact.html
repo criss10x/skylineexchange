@@ -47,8 +47,10 @@
   <style>
     .contact-page { min-height: 100dvh; display: grid; place-items: center; padding: 120px 20px 96px; }
     .contact-box { width: min(680px, 100%); text-align: center; }
-    .contact-title { font-family: var(--font-head); font-weight: 700; font-size: clamp(2rem, 6vw, 3.2rem); letter-spacing: -0.02em; }
-    .contact-sub { margin-top: 10px; color: var(--muted); }
+
+    .contact-title { font-family: var(--font-head); font-weight: 700; font-size: clamp(2rem, 6vw, 3.2rem); letter-spacing: -0.02em; opacity: 0; transform: translateY(18px); animation: rise 0.6s var(--ease-out) 0.1s forwards; }
+    .contact-sub { margin-top: 10px; color: var(--muted); opacity: 0; transform: translateY(14px); animation: rise 0.55s var(--ease-out) 0.22s forwards; }
+
     .contact-grid { margin-top: 34px; display: grid; gap: 14px; grid-template-columns: 1fr; }
     .contact-btn {
       display: flex; align-items: center; gap: 16px;
@@ -58,17 +60,42 @@
       backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
       box-shadow: var(--shadow-card);
       color: var(--ink);
+      opacity: 0; transform: translateY(24px);
       transition: transform 0.25s var(--ease-out), box-shadow 0.25s var(--ease-out), border-color 0.25s;
+      /* ponytail: CSS keyframes, no JS animation lib for four buttons */
+      animation: rise 0.55s var(--ease-out) forwards;
     }
-    .contact-btn:hover { transform: translateY(-3px); box-shadow: var(--shadow-soft); border-color: rgba(0, 129, 120, 0.32); }
-    .contact-btn:active { transform: translateY(0); }
-    .contact-btn .icon { width: 46px; height: 46px; border-radius: 14px; background: rgba(0, 225, 211, 0.16); color: var(--primary); display: grid; place-items: center; flex: 0 0 46px; }
+    .contact-btn:nth-child(1) { animation-delay: 0.34s; }
+    .contact-btn:nth-child(2) { animation-delay: 0.44s; }
+    .contact-btn:nth-child(3) { animation-delay: 0.54s; }
+    .contact-btn:nth-child(4) { animation-delay: 0.64s; }
+
+    .contact-btn:hover { transform: translateY(-4px); box-shadow: var(--shadow-soft); border-color: rgba(0, 129, 120, 0.32); }
+    .contact-btn:active { transform: translateY(-1px) scale(0.985); }
+    .contact-btn .icon { width: 46px; height: 46px; border-radius: 14px; background: rgba(0, 225, 211, 0.16); color: var(--primary); display: grid; place-items: center; flex: 0 0 46px; transition: transform 0.25s var(--ease-out), background-color 0.25s; }
+    .contact-btn:hover .icon { transform: scale(1.1); background: rgba(0, 225, 211, 0.28); }
+    .contact-btn .arrow { margin-left: auto; color: var(--primary); transform: translateX(-4px); opacity: 0.7; transition: transform 0.25s var(--ease-out), opacity 0.25s; }
+    .contact-btn:hover .arrow, .contact-btn:active .arrow { transform: translateX(0); opacity: 1; }
+
     .contact-btn .body { text-align: left; }
     .contact-btn .label { font-family: var(--font-head); font-weight: 600; font-size: 17px; }
     .contact-btn .value { font-size: 14px; color: var(--muted); }
-    .contact-btn .arrow { margin-left: auto; color: var(--primary); }
-    .back { display: inline-flex; align-items: center; gap: 8px; margin-top: 28px; font-size: 14px; color: var(--muted); }
+
+    .back { display: inline-flex; align-items: center; gap: 8px; margin-top: 28px; font-size: 14px; color: var(--muted); opacity: 0; transform: translateY(12px); animation: rise 0.5s var(--ease-out) 0.8s forwards; transition: color 0.2s; }
     .back:hover { color: var(--primary); }
+
+    @keyframes rise { to { opacity: 1; transform: translateY(0); } }
+
+    @media (max-width: 640px) {
+      .contact-page { padding: 104px 16px 72px; }
+      .contact-btn { padding: 18px; }
+      .contact-btn .icon { width: 42px; height: 42px; flex-basis: 42px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .contact-title, .contact-sub, .contact-btn, .back { animation: none; opacity: 1; transform: none; }
+      .contact-btn, .contact-btn .icon, .contact-btn .arrow { transition: none; }
+    }
   </style>
 </head>
 <body>
