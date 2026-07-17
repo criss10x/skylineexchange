@@ -60,6 +60,27 @@ app.use(
   })
 );
 
+// Redirect with pixel: /go?url=https://...
+app.get("/go", (req, res) => {
+  const target = req.query.url || "/";
+  const html = `<!DOCTYPE html>
+<html><head>
+  <meta http-equiv="refresh" content="0;url=${target.replace(/"/g, "&quot;")}">
+  <noscript><meta http-equiv="refresh" content="0;url=${target.replace(/"/g, "&quot;")}"></noscript>
+</head><body>
+<script>
+!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}
+(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+fbq('init','1000262369555549');
+fbq('track','Lead',{content_name:'Redirect',content_category:'go'});
+</script>
+</body></html>`;
+  res.send(html);
+});
+
 // Single-page fallback (unknown paths render the page, marked 404 for SEO)
 app.use((req, res) => {
   res.status(404).sendFile(path.join(PUBLIC_DIR, "index.html"));
