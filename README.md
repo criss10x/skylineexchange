@@ -29,6 +29,29 @@ Tanpa build step — simpan, refresh, selesai. `config.js` di-serve `no-cache`.
 > Jika mengubah `css/styles.css` atau `js/main.js` di produksi, naikkan parameter versi
 > di `index.html` (`styles.css?v=2`, `main.js?v=2`) agar cache pengunjung ter-refresh.
 
+## Meta Pixel
+
+Pixel ID aktif: **1701643450891632**. ID ini muncul di **6 tempat / 4 file** —
+kalau ganti pixel lagi, ganti **semuanya**, jangan sebagian:
+
+| File | Baris | Event |
+|---|---|---|
+| `public/index.html` | `fbq('init')` + `<noscript>` | PageView |
+| `public/contact.html` | `fbq('init')` + `<noscript>` | PageView + Lead |
+| `public/contactskyline.html` | `fbq('init')` + `<noscript>` | PageView + ViewContent |
+| `server.js` (route `/cek`) | `fbq('init')` | Lead |
+| `server.js` (route `/go`) | `fbq('init')` | Lead |
+
+Cara cepat mengganti seluruhnya sekaligus:
+
+```bash
+grep -rn "ID_LAMA" public server.js          # cek dulu di mana saja
+sed -i 's/ID_LAMA/ID_BARU/g' public/index.html public/contact.html public/contactskyline.html server.js
+grep -rn "ID_LAMA" public server.js          # harus kosong
+```
+
+Meninggalkan satu ID lama = dua pixel aktif berbarengan dan data iklan jadi terpecah.
+
 ## Mengganti logo
 
 Timpa `public/assets/logo.svg` dengan logo resmi (SVG dianjurkan, PNG juga bisa —
