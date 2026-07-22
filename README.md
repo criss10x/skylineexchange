@@ -29,6 +29,20 @@ Tanpa build step — simpan, refresh, selesai. `config.js` di-serve `no-cache`.
 > Jika mengubah `css/styles.css` atau `js/main.js` di produksi, naikkan parameter versi
 > di `index.html` (`styles.css?v=2`, `main.js?v=2`) agar cache pengunjung ter-refresh.
 
+## SEO — aturan yang harus dijaga
+
+- **Satu URL per halaman.** `server.js` me-301 `www.*` → domain telanjang dan
+  `/apa.html` → `/apa`. Jangan menautkan versi `.html` di mana pun.
+- **`/contactskyline` sengaja `noindex`** — isinya kembar dengan `/contact`, jadi
+  hanya `/contact` yang boleh diindeks. Kalau membuat varian landing iklan lagi,
+  beri `<meta name="robots" content="noindex, follow">` juga.
+- **`/go` dan `/cek` dikirim dengan header `X-Robots-Tag: noindex`** — jangan
+  di-`Disallow` di robots.txt, karena crawler jadi tak bisa membaca noindex-nya.
+- **`sitemap.xml` hanya memuat URL kanonik & indexable.** Setiap menambah halaman
+  baru yang layak diindeks, tambahkan di situ dan perbarui `lastmod`.
+- Target keyword: **"Skyline Money Changer"** (brand + domain), didukung
+  "money changer Bali" / "currency exchange Bali".
+
 ## Meta Pixel
 
 Pixel ID aktif: **1701643450891632**. ID ini muncul di **6 tempat / 4 file** —

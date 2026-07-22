@@ -36,7 +36,8 @@ window.SITE_CONFIG = {
       email_sub: "Write to us",
       maps_sub: "Open in Google Maps",
       hours_title: "Opening hours",
-      scroll: "Scroll"
+      scroll: "Scroll",
+      footer_contact: "Contact"
     },
     id: {
       eyebrow: "Segera hadir",
@@ -53,7 +54,8 @@ window.SITE_CONFIG = {
       email_sub: "Kirim email",
       maps_sub: "Buka di Google Maps",
       hours_title: "Jam operasional",
-      scroll: "Gulir"
+      scroll: "Gulir",
+      footer_contact: "Kontak"
     }
   }
 };

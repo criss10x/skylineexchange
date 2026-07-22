@@ -12,6 +12,27 @@ const PORT = process.env.PORT || 3000;
 const PUBLIC_DIR = path.join(__dirname, "public");
 
 app.disable("x-powered-by");
+app.set("trust proxy", true);
+
+// One canonical host: www.* is a duplicate of the bare domain for crawlers.
+const CANONICAL_HOST = "skylinemoneychanger.com";
+app.use((req, res, next) => {
+  if (req.hostname && req.hostname.toLowerCase() === "www." + CANONICAL_HOST) {
+    return res.redirect(301, "https://" + CANONICAL_HOST + req.originalUrl);
+  }
+  next();
+});
+
+// One canonical URL per page: /contact.html and /contact both resolved 200,
+// so send the .html form to the clean URL the canonical tag already declares.
+app.use((req, res, next) => {
+  if ((req.method === "GET" || req.method === "HEAD") && req.path.endsWith(".html")) {
+    const clean = req.path === "/index.html" ? "/" : req.path.slice(0, -".html".length);
+    const query = req.originalUrl.slice(req.path.length);
+    return res.redirect(301, clean + query);
+  }
+  next();
+});
 
 // Security headers
 app.use((req, res, next) => {
@@ -61,7 +82,10 @@ app.use(
 );
 
 // ponytail: specific short redirects w/ pixel
+// Not real content — keep them out of the index (no robots.txt Disallow, or
+// crawlers could never read this header).
 app.get("/cek", (req, res) => {
+  res.set("X-Robots-Tag", "noindex, nofollow");
   const target = "https://script.google.com/macros/s/AKfycbyPAP7FKm1qKsKgUUU15p0WSCgk9KXWem74dpbSdHJy0HGpobIV3SZJ8UR_YZn9GY4dKQ/exec?page=cek";
   res.send(`<!DOCTYPE html>
 <html><head><meta http-equiv="refresh" content="0;url=${target}">
@@ -79,6 +103,7 @@ fbq('track','Lead');
 
 // Redirect with pixel: /go?url=https://...
 app.get("/go", (req, res) => {
+  res.set("X-Robots-Tag", "noindex, nofollow");
   const target = req.query.url || "/";
   const html = `<!DOCTYPE html>
 <html><head>

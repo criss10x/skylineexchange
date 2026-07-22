@@ -378,6 +378,8 @@ button { font: inherit; background: none; border: 0; cursor: pointer; color: inh
   padding: 26px 20px 34px; text-align: center;
   font-size: 13px; color: var(--muted);
 }
+.footer-link { color: var(--primary); text-decoration: underline; text-underline-offset: 3px; }
+.footer-link:hover { color: var(--primary-deep); }
 
 /* ============================================================
    Responsive
