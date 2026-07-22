@@ -33,6 +33,18 @@ Tanpa build step — simpan, refresh, selesai. `config.js` di-serve `no-cache`.
 
 - **Satu URL per halaman.** `server.js` me-301 `www.*` → domain telanjang dan
   `/apa.html` → `/apa`. Jangan menautkan versi `.html` di mana pun.
+
+  ⚠️ **Batasan hosting:** CDN Hostinger (`Server: hcdn`) menyajikan file yang
+  benar-benar ada di `public/` secara langsung, tanpa melewati Node. Jadi
+  `/contact.html`, `/contactskyline.html`, dan `/index.html` tetap balas 200 di
+  produksi — redirect `.html` di `server.js` hanya berlaku saat jalan lokal.
+  Cara memastikan: `curl -I` URL tersebut; kalau tidak ada header
+  `X-Content-Type-Options`, berarti Express memang dilewati.
+  Yang menahan duplikat itu sekarang adalah tag `canonical` di tiap halaman
+  (sudah benar) plus tidak adanya link internal ke versi `.html`.
+  Kalau kelak ingin benar-benar hilang: pindahkan file halaman keluar dari
+  `public/` (mis. ke `views/`) supaya CDN tak punya file untuk disajikan dan
+  semua permintaan jatuh ke Express.
 - **`/contactskyline` sengaja `noindex`** — isinya kembar dengan `/contact`, jadi
   hanya `/contact` yang boleh diindeks. Kalau membuat varian landing iklan lagi,
   beri `<meta name="robots" content="noindex, follow">` juga.
