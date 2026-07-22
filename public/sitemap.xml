@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Only canonical, indexable URLs belong here.
-     /contactskyline is noindex (ad duplicate of /contact) and /go, /cek are
-     redirect shims, so all three are intentionally left out. -->
+     /contactskyline is noindex (ad duplicate of /contact) and /cek is a
+     redirect shim, so both are intentionally left out. -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://skylinemoneychanger.com/</loc>

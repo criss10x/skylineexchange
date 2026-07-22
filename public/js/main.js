@@ -142,17 +142,28 @@
     setTimeout(function () { if (pre.parentNode) pre.parentNode.removeChild(pre); }, 620);
   }
 
+  /* The preloader waits for the fonts the hero is about to use, capped so a
+     slow font never holds the page hostage. On a repeat visit with warm cache
+     that resolves almost immediately instead of burning a fixed delay. */
   function runPreloader(done) {
     try { sessionStorage.setItem("skyline-pre", "1"); } catch (e) {}
-    var start = null, DUR = 850;
+    var start = null, MIN = 260, MAX = 700, fontsReady = false;
+    try {
+      if (document.fonts && document.fonts.ready) {
+        document.fonts.ready.then(function () { fontsReady = true; });
+      } else { fontsReady = true; }
+    } catch (e) { fontsReady = true; }
+
     function frame(ts) {
       if (!start) start = ts;
-      var p = Math.min((ts - start) / DUR, 1);
+      var elapsed = ts - start;
+      var finished = (fontsReady && elapsed >= MIN) || elapsed >= MAX;
+      var p = finished ? 1 : Math.min(elapsed / MAX, 0.96);
       var eased = 1 - Math.pow(1 - p, 3);
       if (preFill) preFill.style.transform = "scaleX(" + eased + ")";
       if (preCount) preCount.textContent = Math.round(eased * 100);
-      if (p < 1) { requestAnimationFrame(frame); }
-      else { setTimeout(function () { removePre(); done(); }, 120); }
+      if (!finished) { requestAnimationFrame(frame); }
+      else { setTimeout(function () { removePre(); done(); }, 90); }
     }
     requestAnimationFrame(frame);
   }

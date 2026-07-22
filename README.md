@@ -36,8 +36,11 @@ Tanpa build step — simpan, refresh, selesai. `config.js` di-serve `no-cache`.
 - **`/contactskyline` sengaja `noindex`** — isinya kembar dengan `/contact`, jadi
   hanya `/contact` yang boleh diindeks. Kalau membuat varian landing iklan lagi,
   beri `<meta name="robots" content="noindex, follow">` juga.
-- **`/go` dan `/cek` dikirim dengan header `X-Robots-Tag: noindex`** — jangan
-  di-`Disallow` di robots.txt, karena crawler jadi tak bisa membaca noindex-nya.
+- **`/cek` dikirim dengan header `X-Robots-Tag: noindex`** — jangan di-`Disallow`
+  di robots.txt, karena crawler jadi tak bisa membaca noindex-nya.
+- **Route `/go?url=` sudah dihapus** (open redirect). Redirect baru harus
+  menuliskan tujuannya di kode, seperti `/cek` — jangan pernah mengambil URL
+  tujuan dari query string.
 - **`sitemap.xml` hanya memuat URL kanonik & indexable.** Setiap menambah halaman
   baru yang layak diindeks, tambahkan di situ dan perbarui `lastmod`.
 - Target keyword: **"Skyline Money Changer"** (brand + domain), didukung
@@ -45,26 +48,38 @@ Tanpa build step — simpan, refresh, selesai. `config.js` di-serve `no-cache`.
 
 ## Meta Pixel
 
-Pixel ID aktif: **1701643450891632**. ID ini muncul di **6 tempat / 4 file** —
-kalau ganti pixel lagi, ganti **semuanya**, jangan sebagian:
-
-| File | Baris | Event |
-|---|---|---|
-| `public/index.html` | `fbq('init')` + `<noscript>` | PageView |
-| `public/contact.html` | `fbq('init')` + `<noscript>` | PageView + Lead |
-| `public/contactskyline.html` | `fbq('init')` + `<noscript>` | PageView + ViewContent |
-| `server.js` (route `/cek`) | `fbq('init')` | Lead |
-| `server.js` (route `/go`) | `fbq('init')` | Lead |
-
-Cara cepat mengganti seluruhnya sekaligus:
+Pixel ID aktif: **1701643450891632**. Semua logika ada di
+**`public/js/pixel.js`** — itu satu-satunya tempat ID perlu diubah untuk semua
+halaman. (Satu pengecualian: route `/cek` di `server.js` punya snippet sendiri,
+karena halaman itu langsung berpindah sehingga pixel-nya tidak boleh ditunda.)
 
 ```bash
-grep -rn "ID_LAMA" public server.js          # cek dulu di mana saja
-sed -i 's/ID_LAMA/ID_BARU/g' public/index.html public/contact.html public/contactskyline.html server.js
-grep -rn "ID_LAMA" public server.js          # harus kosong
+grep -rn "ID_LAMA" public server.js   # pastikan hanya 2 lokasi ini
 ```
 
-Meninggalkan satu ID lama = dua pixel aktif berbarengan dan data iklan jadi terpecah.
+**Event yang terkirim:**
+
+| Kapan | Event |
+|---|---|
+| Setiap halaman dibuka | `PageView` |
+| **Klik tombol/link WhatsApp mana pun** | `Contact` |
+| `/contact` dibuka | `Lead` |
+| `/contactskyline` dibuka | `ViewContent` |
+| `/cek` dibuka | `Lead` |
+
+Menambah event khusus halaman: set `window.SKYLINE_PIXEL_EVENTS` **sebelum**
+memuat `pixel.js`, contohnya di `contact.html`:
+
+```html
+<script>window.SKYLINE_PIXEL_EVENTS = [["Lead", { content_name: "Contact Page" }]];</script>
+<script src="/js/pixel.js?v=1" defer></script>
+```
+
+**Kenapa pixel dimuat belakangan:** pustaka Meta ±250 KB — 80% berat halaman.
+`pixel.js` menjalankan stub `fbq()` seketika (semua event masuk antrean) tapi
+baru mengunduh pustakanya setelah halaman selesai tampil. Antrean di-flush saat
+pustaka tiba, jadi tidak ada event yang hilang — termasuk klik WhatsApp yang
+terjadi sebelum pustaka termuat.
 
 ## Mengganti logo
 
