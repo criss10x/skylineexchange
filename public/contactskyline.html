@@ -116,107 +116,197 @@
     }
 
     /* ============================================================
-       Border Beam effect (size: md, colorVariant: colorful, strength: 0.7)
+       Exact libraries.dev Border Beam (size: md, colorVariant: colorful)
        ============================================================ */
     @property --beam-angle {
-      syntax: '<angle>';
+      syntax: "<angle>";
       initial-value: 0deg;
-      inherits: false;
+      inherits: true;
     }
 
     .border-beam-wrap {
       position: relative;
-      border-color: rgba(0, 129, 120, 0.2);
+      background: #0F172A !important; /* Deep obsidian for maximum rainbow beam contrast */
+      color: #FFFFFF !important;
+      border: 1px solid rgba(255, 255, 255, 0.1) !important;
+      box-shadow: 0 16px 40px -12px rgba(15, 23, 42, 0.38) !important;
+      overflow: visible !important;
+      isolation: isolate;
     }
 
-    /* Outer bloom glow (strength: 0.7) */
+    .border-beam-wrap .icon {
+      background: rgba(251, 191, 36, 0.16) !important;
+      color: #FBBF24 !important;
+    }
+    .border-beam-wrap .label {
+      color: #FFFFFF !important;
+    }
+    .border-beam-wrap .value {
+      color: #94A3B8 !important;
+    }
+    .border-beam-wrap .arrow {
+      color: #00E1D3 !important;
+    }
+
+    /* 1. Outer Radiant Bloom Halo */
     .border-beam-bloom {
       position: absolute;
       inset: -2px;
       border-radius: inherit;
+      background: conic-gradient(
+        from var(--beam-angle),
+        transparent 0%, transparent 58%,
+        rgba(0, 225, 211, 0.18) 62%,
+        rgba(100, 70, 255, 0.38) 67%,
+        rgba(255, 50, 100, 0.65) 70%,
+        rgba(255, 255, 255, 0.95) 70.5%,
+        rgba(255, 120, 40, 0.65) 71.5%,
+        rgba(50, 200, 80, 0.38) 73%,
+        rgba(0, 225, 211, 0.18) 75%,
+        transparent 82%
+      );
+      filter: blur(10px) brightness(1.4) saturate(1.5);
       pointer-events: none;
       z-index: 0;
-      opacity: 0.7;
-      filter: blur(10px);
-      transition: opacity 0.3s var(--ease-out), filter 0.3s var(--ease-out);
-    }
-    .border-beam-bloom::after {
-      content: "";
-      position: absolute;
-      width: 140px;
-      height: 60px;
-      background: radial-gradient(circle, #00E1D3 0%, #7928CA 40%, #FF0080 70%, #FFAA40 90%, transparent 100%);
-      offset-path: rect(0 auto auto 0 round var(--r-card));
-      offset-anchor: 50% 50%;
-      animation: border-beam-travel 5s linear infinite;
+      opacity: 0.8;
+      animation: beam-spin 2s linear infinite;
     }
 
-    /* Sharp border beam line */
-    .border-beam {
+    /* 2. Inner Ambient Glass Glow (::before) */
+    .border-beam-wrap::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background:
+        radial-gradient(ellipse 70px 40px at 33% -7.4%, rgba(255, 50, 100, 0.5), transparent),
+        radial-gradient(ellipse 60px 35px at 12% -5%, rgba(40, 140, 255, 0.5), transparent),
+        radial-gradient(ellipse 40px 70px at 2.1% 68.3%, rgba(50, 200, 80, 0.5), transparent),
+        radial-gradient(ellipse 20px 35px at 2.1% 68.3%, rgba(30, 185, 170, 0.5), transparent),
+        radial-gradient(ellipse 180px 32px at 74.4% 100%, rgba(100, 70, 255, 0.5), transparent),
+        radial-gradient(ellipse 85px 26px at 55% 100%, rgba(40, 140, 255, 0.5), transparent),
+        radial-gradient(ellipse 74px 32px at 93.9% 0%, rgba(255, 120, 40, 0.5), transparent),
+        radial-gradient(ellipse 26px 42px at 100% 27.1%, rgba(240, 50, 180, 0.5), transparent),
+        radial-gradient(ellipse 52px 48px at 100% 27.1%, rgba(180, 40, 240, 0.5), transparent);
+      box-shadow: inset 0 0 14px 1px rgba(255, 255, 255, 0.22);
+      -webkit-mask-image:
+        conic-gradient(
+          from var(--beam-angle),
+          transparent 0%, transparent 30%,
+          rgba(255, 255, 255, 0.1) 36%, rgba(255, 255, 255, 0.35) 44%,
+          white 52%, white 80%,
+          rgba(255, 255, 255, 0.35) 86%, rgba(255, 255, 255, 0.1) 92%,
+          transparent 95%, transparent 100%
+        ),
+        linear-gradient(white, transparent 28px, transparent calc(100% - 28px), white),
+        linear-gradient(to right, white, transparent 28px, transparent calc(100% - 28px), white);
+      -webkit-mask-composite: source-in, source-over;
+      mask-image:
+        conic-gradient(
+          from var(--beam-angle),
+          transparent 0%, transparent 30%,
+          rgba(255, 255, 255, 0.1) 36%, rgba(255, 255, 255, 0.35) 44%,
+          white 52%, white 80%,
+          rgba(255, 255, 255, 0.35) 86%, rgba(255, 255, 255, 0.1) 92%,
+          transparent 95%, transparent 100%
+        ),
+        linear-gradient(white, transparent 28px, transparent calc(100% - 28px), white),
+        linear-gradient(to right, white, transparent 28px, transparent calc(100% - 28px), white);
+      mask-composite: intersect, add;
+      pointer-events: none;
+      z-index: 1;
+      opacity: 0.65;
+      clip-path: inset(0 round var(--r-card));
+      animation: beam-spin 2s linear infinite, beam-hue-shift 12s ease-in-out infinite;
+    }
+
+    /* 3. Razor-Sharp Chromatic Laser Border (::after) */
+    .border-beam-wrap::after {
+      content: "";
       position: absolute;
       inset: 0;
       border-radius: inherit;
       padding: 1.5px;
+      clip-path: inset(0 round var(--r-card));
+      background:
+        conic-gradient(
+          from var(--beam-angle),
+          transparent 0%, transparent 54%,
+          rgba(255, 255, 255, 0.2) 57%,
+          rgba(255, 255, 255, 0.5) 60%,
+          rgba(255, 255, 255, 0.9) 63%,
+          #ffffff 66%,
+          rgba(255, 255, 255, 0.9) 69%,
+          rgba(255, 255, 255, 0.5) 72%,
+          rgba(255, 255, 255, 0.2) 75%,
+          transparent 78%, transparent 100%
+        ),
+        radial-gradient(ellipse 70px 40px at 33% -7.4%, rgb(255, 50, 100), transparent),
+        radial-gradient(ellipse 60px 35px at 12% -5%, rgb(40, 140, 255), transparent),
+        radial-gradient(ellipse 40px 70px at 2.1% 68.3%, rgb(50, 200, 80), transparent),
+        radial-gradient(ellipse 20px 35px at 2.1% 68.3%, rgb(30, 185, 170), transparent),
+        radial-gradient(ellipse 180px 32px at 74.4% 100%, rgb(100, 70, 255), transparent),
+        radial-gradient(ellipse 85px 26px at 55% 100%, rgb(40, 140, 255), transparent),
+        radial-gradient(ellipse 74px 32px at 93.9% 0%, rgb(255, 120, 40), transparent),
+        radial-gradient(ellipse 26px 42px at 100% 27.1%, rgb(240, 50, 180), transparent),
+        radial-gradient(ellipse 52px 48px at 100% 27.1%, rgb(180, 40, 240), transparent);
+      -webkit-mask:
+        conic-gradient(
+          from var(--beam-angle),
+          transparent 0%, transparent 30%,
+          rgba(255, 255, 255, 0.1) 36%, rgba(255, 255, 255, 0.35) 44%,
+          white 52%, white 80%,
+          rgba(255, 255, 255, 0.35) 86%, rgba(255, 255, 255, 0.1) 92%,
+          transparent 95%, transparent 100%
+        ),
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+      -webkit-mask-composite: source-in, xor;
+      mask:
+        conic-gradient(
+          from var(--beam-angle),
+          transparent 0%, transparent 30%,
+          rgba(255, 255, 255, 0.1) 36%, rgba(255, 255, 255, 0.35) 44%,
+          white 52%, white 80%,
+          rgba(255, 255, 255, 0.35) 86%, rgba(255, 255, 255, 0.1) 92%,
+          transparent 95%, transparent 100%
+        ),
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+      mask-composite: intersect, exclude;
       pointer-events: none;
-      z-index: 1;
-      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-      -webkit-mask-composite: xor;
-      mask-composite: exclude;
-      overflow: hidden;
-    }
-    .border-beam::after {
-      content: "";
-      position: absolute;
-      width: 140px;
-      height: 60px;
-      background: linear-gradient(to right, transparent 0%, #FFAA40 20%, #FF0080 45%, #7928CA 70%, #00E1D3 95%, transparent 100%);
-      offset-path: rect(0 auto auto 0 round var(--r-card));
-      offset-anchor: 50% 50%;
-      animation: border-beam-travel 5s linear infinite;
+      z-index: 2;
+      animation: beam-spin 2s linear infinite, beam-hue-shift 12s ease-in-out infinite;
     }
 
-    .border-beam-wrap > *:not(.border-beam):not(.border-beam-bloom) {
+    .border-beam-wrap > *:not(.border-beam-bloom) {
       position: relative;
-      z-index: 2;
+      z-index: 3;
     }
 
     .border-beam-wrap:hover {
       transform: translateY(-4px) scale(1.01);
-      border-color: rgba(0, 225, 211, 0.6);
+      box-shadow: 0 22px 50px -10px rgba(0, 225, 211, 0.35) !important;
     }
     .border-beam-wrap:hover .border-beam-bloom {
-      opacity: 0.95;
-      filter: blur(12px);
+      opacity: 1;
+      filter: blur(14px) brightness(1.5) saturate(1.7);
     }
 
-    @keyframes border-beam-travel {
-      0% { offset-distance: 0%; }
-      100% { offset-distance: 100%; }
+    @keyframes beam-spin {
+      to { --beam-angle: 360deg; }
     }
 
-    /* Fallback for browsers without offset-path: rect */
-    @supports not (offset-path: rect(0 auto auto 0 round 1px)) {
-      .border-beam::after,
-      .border-beam-bloom::after {
-        display: none;
-      }
-      .border-beam {
-        background: conic-gradient(from var(--beam-angle), #00E1D3, #7928CA, #FF0080, #FFAA40, #00E1D3);
-        animation: beam-spin 4s linear infinite;
-      }
-      .border-beam-bloom {
-        background: conic-gradient(from var(--beam-angle), #00E1D3, #7928CA, #FF0080, #FFAA40, #00E1D3);
-        animation: beam-spin 4s linear infinite;
-      }
-      @keyframes beam-spin {
-        to { --beam-angle: 360deg; }
-      }
+    @keyframes beam-hue-shift {
+      0% { filter: hue-rotate(calc(var(--beam-hue-base, 0deg) - 30deg)) brightness(1.3) saturate(1.4); }
+      50% { filter: hue-rotate(calc(var(--beam-hue-base, 0deg) + 30deg)) brightness(1.3) saturate(1.4); }
+      100% { filter: hue-rotate(calc(var(--beam-hue-base, 0deg) - 30deg)) brightness(1.3) saturate(1.4); }
     }
 
     @media (prefers-reduced-motion: reduce) {
       .contact-title, .contact-sub, .contact-btn, .back { animation: none; opacity: 1; transform: none; }
       .contact-btn, .contact-btn .icon, .contact-btn .arrow { transition: none; }
-      .border-beam::after, .border-beam-bloom::after, .border-beam, .border-beam-bloom { animation: none; }
+      .border-beam-wrap::before, .border-beam-wrap::after, .border-beam-bloom { animation: none; }
     }
   </style>
 </head>
@@ -264,9 +354,8 @@
 
         <a id="reviewBtn" class="contact-btn border-beam-wrap" href="https://g.page/r/CQbVAW7E-dgFEBM/review" target="_blank" rel="noopener">
           <span class="border-beam-bloom" aria-hidden="true"></span>
-          <span class="border-beam" aria-hidden="true"></span>
           <span class="icon" aria-hidden="true">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
           </span>
           <span class="body">
             <span class="label" id="reviewLabel">Google Review</span>
@@ -326,6 +415,17 @@
     document.getElementById('reviewValue').textContent = t.review;
     document.getElementById('mapsBtn').href = C.mapsUrl || '#';
     document.getElementById('mapsValue').textContent = t.maps;
+
+    // Fallback animation driver for browsers without CSS @property registration
+    if (!window.CSS || !CSS.registerProperty) {
+      let angle = 0;
+      const step = () => {
+        angle = (angle + 2.5) % 360;
+        document.documentElement.style.setProperty('--beam-angle', `${angle}deg`);
+        requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+    }
   </script>
 </body>
 </html>
