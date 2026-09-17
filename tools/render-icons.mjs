@@ -4,6 +4,9 @@ import sharp from "sharp";
 import { fileURLToPath } from "url";
 import path from "path";
 
+// Defense-in-depth: block HEIF/AVIF decoding as recommended by security advisory
+sharp.block({ operation: ["VipsForeignLoadHeif"] });
+
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const src = path.join(root, "public", "assets", "logo.svg");
 const out = (f) => path.join(root, "public", "assets", f);
