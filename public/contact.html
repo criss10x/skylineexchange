@@ -4,14 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Contact Skyline Money Changer Bali — WhatsApp &amp; Location</title>
-  <meta name="description" content="Contact Skyline Money Changer (Skyline Exchange) in Bali — reach us on WhatsApp, Instagram or email, and find our currency exchange location on Google Maps." />
+  <meta name="description" content="Contact Skyline Money Changer (Skyline Exchange) in Bali — reach us on WhatsApp, Instagram, Google Review, and find our currency exchange location on Google Maps." />
   <link rel="canonical" href="https://skylinemoneychanger.com/contact" />
   <meta name="theme-color" content="#00E1D3" />
 
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="Skyline Exchange" />
   <meta property="og:title" content="Contact Skyline Money Changer Bali — WhatsApp &amp; Location" />
-  <meta property="og:description" content="Reach Skyline Exchange, a money changer in Bali, on WhatsApp, Instagram, email, or Google Maps." />
+  <meta property="og:description" content="Reach Skyline Exchange, a money changer in Bali, on WhatsApp, Instagram, Google Review, or Google Maps." />
   <meta property="og:url" content="https://skylinemoneychanger.com/contact" />
   <meta property="og:image" content="https://skylinemoneychanger.com/assets/og-image.png" />
   <meta property="og:locale" content="en_US" />
@@ -34,7 +34,8 @@
       "hasMap": "https://share.google/BxYgdZK0RSgqGEpIy",
       "sameAs": [
         "https://www.instagram.com/skyline_moneychanger",
-        "https://share.google/ZEZ7ue8vtz9mxdwbR"
+        "https://share.google/ZEZ7ue8vtz9mxdwbR",
+        "https://g.page/r/CQbVAW7E-dgFEBM/review"
       ],
       "address": { "@type": "PostalAddress", "addressLocality": "Kuta", "addressRegion": "Bali", "addressCountry": "ID" }
     }
@@ -137,9 +138,108 @@
       .contact-btn .icon { width: 42px; height: 42px; flex-basis: 42px; }
     }
 
+    /* ============================================================
+       Border Beam effect (size: md, colorVariant: colorful, strength: 0.7)
+       ============================================================ */
+    @property --beam-angle {
+      syntax: '<angle>';
+      initial-value: 0deg;
+      inherits: false;
+    }
+
+    .border-beam-wrap {
+      position: relative;
+      border-color: rgba(0, 129, 120, 0.2);
+    }
+
+    /* Outer bloom glow (strength: 0.7) */
+    .border-beam-bloom {
+      position: absolute;
+      inset: -2px;
+      border-radius: inherit;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.7;
+      filter: blur(10px);
+      transition: opacity 0.3s var(--ease-out), filter 0.3s var(--ease-out);
+    }
+    .border-beam-bloom::after {
+      content: "";
+      position: absolute;
+      width: 140px;
+      height: 60px;
+      background: radial-gradient(circle, #00E1D3 0%, #7928CA 40%, #FF0080 70%, #FFAA40 90%, transparent 100%);
+      offset-path: rect(0 auto auto 0 round var(--r-card));
+      offset-anchor: 50% 50%;
+      animation: border-beam-travel 5s linear infinite;
+    }
+
+    /* Sharp border beam line */
+    .border-beam {
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      padding: 1.5px;
+      pointer-events: none;
+      z-index: 1;
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      overflow: hidden;
+    }
+    .border-beam::after {
+      content: "";
+      position: absolute;
+      width: 140px;
+      height: 60px;
+      background: linear-gradient(to right, transparent 0%, #FFAA40 20%, #FF0080 45%, #7928CA 70%, #00E1D3 95%, transparent 100%);
+      offset-path: rect(0 auto auto 0 round var(--r-card));
+      offset-anchor: 50% 50%;
+      animation: border-beam-travel 5s linear infinite;
+    }
+
+    .border-beam-wrap > *:not(.border-beam):not(.border-beam-bloom) {
+      position: relative;
+      z-index: 2;
+    }
+
+    .border-beam-wrap:hover {
+      transform: translateY(-4px) scale(1.01);
+      border-color: rgba(0, 225, 211, 0.6);
+    }
+    .border-beam-wrap:hover .border-beam-bloom {
+      opacity: 0.95;
+      filter: blur(12px);
+    }
+
+    @keyframes border-beam-travel {
+      0% { offset-distance: 0%; }
+      100% { offset-distance: 100%; }
+    }
+
+    /* Fallback for browsers without offset-path: rect */
+    @supports not (offset-path: rect(0 auto auto 0 round 1px)) {
+      .border-beam::after,
+      .border-beam-bloom::after {
+        display: none;
+      }
+      .border-beam {
+        background: conic-gradient(from var(--beam-angle), #00E1D3, #7928CA, #FF0080, #FFAA40, #00E1D3);
+        animation: beam-spin 4s linear infinite;
+      }
+      .border-beam-bloom {
+        background: conic-gradient(from var(--beam-angle), #00E1D3, #7928CA, #FF0080, #FFAA40, #00E1D3);
+        animation: beam-spin 4s linear infinite;
+      }
+      @keyframes beam-spin {
+        to { --beam-angle: 360deg; }
+      }
+    }
+
     @media (prefers-reduced-motion: reduce) {
       .contact-title, .contact-sub, .contact-btn, .back { animation: none; opacity: 1; transform: none; }
       .contact-btn, .contact-btn .icon, .contact-btn .arrow { transition: none; }
+      .border-beam::after, .border-beam-bloom::after, .border-beam, .border-beam-bloom { animation: none; }
     }
   </style>
 </head>
@@ -185,13 +285,15 @@
           <span class="arrow" aria-hidden="true">→</span>
         </a>
 
-        <a id="emailBtn" class="contact-btn" href="#">
+        <a id="reviewBtn" class="contact-btn border-beam-wrap" href="https://g.page/r/CQbVAW7E-dgFEBM/review" target="_blank" rel="noopener">
+          <span class="border-beam-bloom" aria-hidden="true"></span>
+          <span class="border-beam" aria-hidden="true"></span>
           <span class="icon" aria-hidden="true">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
           </span>
           <span class="body">
-            <span class="label" id="emailLabel">Email</span>
-            <span class="value" id="emailValue">Write to us</span>
+            <span class="label" id="reviewLabel">Google Review</span>
+            <span class="value" id="reviewValue">Review us on Google · Support our local business</span>
           </span>
           <span class="arrow" aria-hidden="true">→</span>
         </a>
@@ -227,8 +329,8 @@
   <script>
     const C = window.SITE_CONFIG || {};
     const i18n = {
-      en: { title: "Contact Skyline Exchange", sub: "Money changer in Bali — reach us anytime.", wa: "Chat with us", ig: "Follow our journey", email: "Write to us", maps: "Find us in Bali" },
-      id: { title: "Hubungi Skyline Exchange", sub: "Money changer di Bali — hubungi kami kapan saja.", wa: "Chat dengan kami", ig: "Ikuti kabar kami", email: "Kirim email", maps: "Temukan kami di Bali" }
+      en: { title: "Contact Skyline Exchange", sub: "Money changer in Bali — reach us anytime.", wa: "Chat with us", ig: "Follow our journey", review: "Review us on Google · Support our local business", maps: "Find us in Bali" },
+      id: { title: "Hubungi Skyline Exchange", sub: "Money changer di Bali — hubungi kami kapan saja.", wa: "Chat dengan kami", ig: "Ikuti kabar kami", review: "Beri ulasan di Google · Dukung bisnis lokal kami", maps: "Temukan kami di Bali" }
     };
     const lang = new URLSearchParams(location.search).get('lang') || 'en';
     const t = i18n[lang] || i18n.en;
@@ -243,8 +345,8 @@
     document.getElementById('waValue').textContent = t.wa;
     document.getElementById('igBtn').href = C.instagramUrl || '#';
     document.getElementById('igValue').textContent = t.ig;
-    document.getElementById('emailBtn').href = C.email ? `mailto:${C.email}` : '#';
-    document.getElementById('emailValue').textContent = t.email;
+    document.getElementById('reviewBtn').href = C.reviewUrl || 'https://g.page/r/CQbVAW7E-dgFEBM/review';
+    document.getElementById('reviewValue').textContent = t.review;
     document.getElementById('mapsBtn').href = C.mapsUrl || '#';
     document.getElementById('mapsValue').textContent = t.maps;
   </script>

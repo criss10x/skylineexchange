@@ -13,6 +13,7 @@ window.SITE_CONFIG = {
   instagram: "skyline_moneychanger",
   instagramUrl: "https://www.instagram.com/skyline_moneychanger",
   email: "skyline.exchangebali@gmail.com",
+  reviewUrl: "https://g.page/r/CQbVAW7E-dgFEBM/review",
   mapsUrl: "https://share.google/BxYgdZK0RSgqGEpIy",
 
   // Optional: shown on the "Find us" card only when filled in
@@ -33,6 +34,7 @@ window.SITE_CONFIG = {
       find_sub: "We're getting the store ready. Meanwhile, reach us anytime:",
       wa_sub: "Chat with us",
       ig_sub: "Follow our journey",
+      review_sub: "Review us on Google · Support our local business",
       email_sub: "Write to us",
       maps_sub: "Open in Google Maps",
       hours_title: "Opening hours",
@@ -51,6 +53,7 @@ window.SITE_CONFIG = {
       find_sub: "Toko sedang kami siapkan. Sementara itu, hubungi kami kapan saja:",
       wa_sub: "Chat dengan kami",
       ig_sub: "Ikuti kabar kami",
+      review_sub: "Beri ulasan di Google · Dukung bisnis lokal kami",
       email_sub: "Kirim email",
       maps_sub: "Buka di Google Maps",
       hours_title: "Jam operasional",
