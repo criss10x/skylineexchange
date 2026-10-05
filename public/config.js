@@ -18,22 +18,22 @@ window.SITE_CONFIG = {
 
   // Optional: shown on the "Find us" card only when filled in
   location: "Bali, Indonesia",
-  hours: "", // e.g. "Mon–Sun · 09.00–21.00" — leave empty to hide
+  hours: "", // e.g. "Mon-Sun · 09.00-21.00" - leave empty to hide
 
   // Copy (EN default, ID via toggle)
   i18n: {
     en: {
       eyebrow: "Coming soon",
-      headline: "Better rates are on the horizon.",
-      sub: "Skyline Exchange — a new money changer in Bali. Competitive rates, quick service, and a warm welcome with every exchange.",
+      headline: "Competitive currency exchange in Bali.",
+      sub: "Skyline Exchange is a new authorized money changer in Bali. Clear rates, transparent counts, and friendly in-person service.",
       cta: "Chat on WhatsApp",
       wa_text: "Hi Skyline Exchange! Please let me know when you open.",
       d: "Days", h: "Hours", m: "Minutes", s: "Seconds",
-      live: "We're open — come say hi!",
+      live: "We're open, come say hi!",
       find_title: "Find us",
       find_sub: "We're getting the store ready. Meanwhile, reach us anytime:",
       wa_sub: "Chat with us",
-      ig_sub: "Follow our journey",
+      ig_sub: "Follow us on Instagram",
       review_sub: "Review us on Google · Support our local business",
       email_sub: "Write to us",
       maps_sub: "Open in Google Maps",
@@ -43,16 +43,16 @@ window.SITE_CONFIG = {
     },
     id: {
       eyebrow: "Segera hadir",
-      headline: "Kurs terbaik segera hadir.",
-      sub: "Skyline Exchange — money changer baru di Bali. Kurs bersaing, layanan cepat, dan sambutan ramah di setiap transaksi.",
+      headline: "Penukaran valuta asing terpercaya di Bali.",
+      sub: "Skyline Exchange adalah money changer baru di Bali dengan kurs bersaing, hitungan transparan, dan layanan ramah.",
       cta: "Chat via WhatsApp",
       wa_text: "Halo Skyline Exchange! Kabari saya saat sudah buka ya.",
       d: "Hari", h: "Jam", m: "Menit", s: "Detik",
-      live: "Kami sudah buka — mampir yuk!",
+      live: "Kami sudah buka, silakan mampir!",
       find_title: "Temukan kami",
       find_sub: "Toko sedang kami siapkan. Sementara itu, hubungi kami kapan saja:",
       wa_sub: "Chat dengan kami",
-      ig_sub: "Ikuti kabar kami",
+      ig_sub: "Ikuti kami di Instagram",
       review_sub: "Beri ulasan di Google · Dukung bisnis lokal kami",
       email_sub: "Kirim email",
       maps_sub: "Buka di Google Maps",
