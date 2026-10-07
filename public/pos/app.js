@@ -12,6 +12,13 @@ const i18n = {
     offline: 'Offline (Lokal)',
     syncQueueText: 'antrean offline',
     connectBt: 'Hubungkan Printer BT',
+    themeLight: 'Terang',
+    themeDark: 'Gelap',
+    badgeRequired: '[Wajib Diisi]',
+    badgeRequiredSelect: '[Pilih]',
+    badgeOptional: '[Opsional]',
+    badgeBoardRate: '[Kurs Papan]',
+    badgeAutoCalc: '[Kalkulasi Otomatis]',
     tabPos: 'Kasir Transaksi',
     tabRates: 'Papan Kurs',
     tabDelivery: 'Delivery Valas',
@@ -192,6 +199,13 @@ const i18n = {
     offline: 'Offline (Local)',
     syncQueueText: 'offline queued',
     connectBt: 'Connect BT Printer',
+    themeLight: 'Light',
+    themeDark: 'Dark',
+    badgeRequired: '[Required]',
+    badgeRequiredSelect: '[Select]',
+    badgeOptional: '[Optional]',
+    badgeBoardRate: '[Board Rate]',
+    badgeAutoCalc: '[Auto-calculated]',
     tabPos: 'Cashier POS',
     tabRates: 'Exchange Rates',
     tabDelivery: 'Currency Delivery',
@@ -588,6 +602,44 @@ async function syncOfflineTransactions() {
   }
 }
 
+// ==================== THEME SYSTEM (LIGHT / DARK) ====================
+function initTheme() {
+  const saved = localStorage.getItem('skyline_pos_theme') || 'light';
+  applyTheme(saved);
+}
+
+function applyTheme(theme) {
+  if (theme === 'light') {
+    document.documentElement.classList.add('light');
+  } else {
+    document.documentElement.classList.remove('light');
+  }
+  localStorage.setItem('skyline_pos_theme', theme);
+  updateThemeToggleUI();
+}
+
+function toggleTheme() {
+  const isCurrentlyLight = document.documentElement.classList.contains('light');
+  const newTheme = isCurrentlyLight ? 'dark' : 'light';
+  applyTheme(newTheme);
+  const isEn = state.appLang === 'en';
+  showToast(
+    newTheme === 'light'
+      ? (isEn ? 'Light Theme activated' : 'Mode Terang (Light Theme) diaktifkan')
+      : (isEn ? 'Dark Theme activated' : 'Mode Gelap (Dark Theme) diaktifkan'),
+    'info'
+  );
+}
+
+function updateThemeToggleUI() {
+  const isLight = document.documentElement.classList.contains('light');
+  const icon = document.getElementById('theme-toggle-icon');
+  const text = document.getElementById('theme-toggle-text');
+  const t = i18n[state.appLang] || i18n.id;
+  if (icon) icon.textContent = isLight ? '☀️' : '🌙';
+  if (text) text.textContent = isLight ? (t.themeLight || 'Terang') : (t.themeDark || 'Gelap');
+}
+
 // ==================== DUAL LANGUAGE ENGINE ====================
 function setAppLanguage(lang) {
   state.appLang = lang;
@@ -637,17 +689,23 @@ function setAppLanguage(lang) {
 
   safeSet('lbl-cust-title', t.custTitle);
   safeSet('lbl-cust-name', t.custNameLabel);
+  safeSet('badge-req-cust-name', t.badgeRequired);
   safePlaceholder('cust-name', t.custNamePlaceholder);
   safeSet('lbl-cust-phone', t.custPhoneLabel);
+  safeSet('badge-opt-cust-phone', t.badgeOptional);
   safeSet('lbl-cust-id', t.custIdLabel);
+  safeSet('badge-opt-cust-id', t.badgeOptional);
   safePlaceholder('cust-id', t.custIdPlaceholder);
 
   safeSet('lbl-add-valas-title', t.addValasTitle);
   safeSet('lbl-add-valas-sub', t.addValasSub);
   safeSet('lbl-curr-select', t.currLabel);
+  safeSet('badge-req-curr', t.badgeRequiredSelect);
   safeSet('lbl-amount', t.amountLabel);
+  safeSet('badge-req-amount', t.badgeRequired);
   safePlaceholder('item-amount', t.amountPlaceholder);
   safeSet('lbl-rate', t.rateLabel);
+  safeSet('badge-rate-board', t.badgeBoardRate);
   safeSet('lbl-btn-add-item', t.btnAdd);
   safeSet('lbl-quick-curr', t.quickPick);
   safeSet('chip-custom-curr', lang === 'en' ? '+ Custom' : '+ Kustom');
@@ -666,10 +724,14 @@ function setAppLanguage(lang) {
 
   safeSet('lbl-total-idr', t.totalIdr);
   safeSet('lbl-payment-idr', t.paymentIdr);
+  safeSet('badge-req-payment', t.badgeRequired);
   safeSet('lbl-exact-cash', t.exactCash);
   safeSet('lbl-change-idr', t.changeIdr);
+  safeSet('badge-auto-change', t.badgeAutoCalc);
   safeSet('lbl-btn-submit-tx', t.btnSubmitTx);
   safeSet('lbl-btn-reset', t.btnReset);
+
+  updateThemeToggleUI();
 
   // Tab Rates
   safeSet('lbl-rates-title', t.ratesTitle);
@@ -2088,6 +2150,9 @@ function initEventListeners() {
   document.getElementById('btn-rcpt-lang-id').addEventListener('click', () => setReceiptLanguage('id'));
   document.getElementById('btn-rcpt-lang-en').addEventListener('click', () => setReceiptLanguage('en'));
 
+  // Theme Switcher
+  document.getElementById('btn-theme-toggle')?.addEventListener('click', toggleTheme);
+
   // Navigation Tabs
   document.querySelectorAll('.nav-tab').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -2915,6 +2980,7 @@ window.handleDeleteUser = handleDeleteUser;
 document.addEventListener('DOMContentLoaded', async () => {
   initEventListeners();
   initBluetoothUI();
+  initTheme();
 
   // Load Saved Language Preferences
   if (state.appLang) setAppLanguage(state.appLang);

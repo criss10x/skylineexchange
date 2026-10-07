@@ -37,6 +37,17 @@
       }
     }
   </script>
+  <!-- Inline Theme Script to prevent theme flashing on load -->
+  <script>
+    (function() {
+      var saved = localStorage.getItem('skyline_pos_theme') || 'light';
+      if (saved === 'light') {
+        document.documentElement.classList.add('light');
+      } else {
+        document.documentElement.classList.remove('light');
+      }
+    })();
+  </script>
   <style>
     /* Custom Print CSS for 80mm & 58mm Thermal Printers */
     @media print {
@@ -89,6 +100,353 @@
     }
     .receipt-paper::after {
       background-image: radial-gradient(circle at 6px 6px, transparent 6px, #fafbfc 7px);
+    }
+
+    /* Visual Clarity Field Badges (Mandatory, Optional, Board Rate, Auto-calc) */
+    .badge-mandatory {
+      display: inline-flex;
+      align-items: center;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 4px;
+      background-color: rgba(225, 29, 72, 0.15);
+      color: #fb7185;
+      border: 1px solid rgba(225, 29, 72, 0.35);
+      letter-spacing: 0.02em;
+    }
+    .badge-optional {
+      display: inline-flex;
+      align-items: center;
+      font-size: 10px;
+      font-weight: 500;
+      padding: 1px 6px;
+      border-radius: 4px;
+      background-color: #0c2134;
+      color: #94a3b8;
+      border: 1px solid #1e3a5f;
+    }
+    .badge-calculated {
+      display: inline-flex;
+      align-items: center;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 1px 6px;
+      border-radius: 4px;
+      background-color: rgba(0, 226, 222, 0.12);
+      color: #33ece9;
+      border: 1px solid rgba(0, 226, 222, 0.3);
+    }
+
+    /* ==================== LIGHT THEME DESIGN SYSTEM ==================== */
+    html.light body {
+      background-color: #f8fafc !important;
+      color: #0f172a !important;
+    }
+
+    /* Light Theme Header */
+    html.light header {
+      background-color: #ffffff !important;
+      border-bottom-color: #e2e8f0 !important;
+      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05) !important;
+    }
+    html.light header h1 {
+      color: #0f172a !important;
+    }
+    html.light header p.text-slate-400 {
+      color: #64748b !important;
+    }
+    html.light header nav {
+      border-top-color: #e2e8f0 !important;
+    }
+    html.light .nav-tab {
+      color: #64748b !important;
+    }
+    html.light .nav-tab:hover {
+      color: #0f172a !important;
+    }
+    html.light .nav-tab.active-tab {
+      color: #0d9488 !important;
+      border-bottom-color: #0d9488 !important;
+    }
+
+    /* Header Controls */
+    html.light #connection-badge {
+      background-color: #ecfdf5 !important;
+      color: #059669 !important;
+      border-color: #a7f3d0 !important;
+    }
+    html.light #btn-theme-toggle,
+    html.light #btn-bt-connect,
+    html.light .flex.items-center.p-0\.5.rounded-lg.bg-navy-800,
+    html.light .hidden.md\:flex.items-center.px-2\.5.py-1.rounded-lg.bg-navy-800 {
+      background-color: #f1f5f9 !important;
+      border-color: #cbd5e1 !important;
+      color: #1e293b !important;
+    }
+    html.light #btn-theme-toggle:hover,
+    html.light #btn-bt-connect:hover {
+      background-color: #e2e8f0 !important;
+      border-color: #94a3b8 !important;
+    }
+    html.light #user-header-badge {
+      border-left-color: #cbd5e1 !important;
+    }
+    html.light #user-header-badge .text-slate-300 {
+      color: #475569 !important;
+    }
+    html.light #header-user-name {
+      color: #0f172a !important;
+    }
+
+    /* Cards & Panel Surfaces */
+    html.light .bg-navy-800 {
+      background-color: #ffffff !important;
+      border-color: #e2e8f0 !important;
+      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05) !important;
+    }
+    html.light .bg-navy-850 {
+      background-color: #f8fafc !important;
+      border-color: #e2e8f0 !important;
+    }
+    html.light .bg-navy-900 {
+      background-color: #f8fafc !important;
+      border-color: #cbd5e1 !important;
+    }
+
+    /* Typography Contrast in Light Mode */
+    html.light h1, html.light h2, html.light h3, html.light .text-white {
+      color: #0f172a !important;
+    }
+    html.light .text-slate-100 {
+      color: #0f172a !important;
+    }
+    html.light .text-slate-200 {
+      color: #1e293b !important;
+    }
+    html.light .text-slate-300 {
+      color: #334155 !important;
+    }
+    html.light .text-slate-400 {
+      color: #64748b !important;
+    }
+    html.light .text-slate-500 {
+      color: #64748b !important;
+    }
+
+    /* Form Inputs, Selects, and Textareas */
+    html.light input,
+    html.light select,
+    html.light textarea {
+      background-color: #ffffff !important;
+      border-color: #cbd5e1 !important;
+      color: #0f172a !important;
+    }
+    html.light input::placeholder,
+    html.light textarea::placeholder {
+      color: #94a3b8 !important;
+    }
+    html.light input:focus,
+    html.light select:focus,
+    html.light textarea:focus {
+      border-color: #00b5b1 !important;
+      box-shadow: 0 0 0 2px rgba(0, 181, 177, 0.25) !important;
+      outline: none !important;
+    }
+
+    /* Visual Clarity Field Badges in Light Mode */
+    html.light .badge-mandatory {
+      background-color: #fff1f2 !important;
+      color: #e11d48 !important;
+      border-color: #fecdd3 !important;
+    }
+    html.light .badge-optional {
+      background-color: #f1f5f9 !important;
+      color: #64748b !important;
+      border-color: #e2e8f0 !important;
+    }
+    html.light .badge-calculated {
+      background-color: #ecfeff !important;
+      color: #0e7490 !important;
+      border-color: #a5f3fc !important;
+    }
+
+    html.light input.input-mandatory {
+      background-color: #ffffff !important;
+      border-color: #94a3b8 !important;
+      box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03) !important;
+    }
+    html.light input.input-auto-calculated,
+    html.light #item-rate {
+      background-color: #f8fafc !important;
+      border-color: #cbd5e1 !important;
+      color: #0f766e !important;
+    }
+
+    /* Currency Quick Chips in Light Mode */
+    html.light .chip-curr {
+      background-color: #f1f5f9 !important;
+      color: #334155 !important;
+      border: 1px solid #cbd5e1 !important;
+    }
+    html.light .chip-curr:hover {
+      background-color: #e2e8f0 !important;
+      color: #0f172a !important;
+    }
+    html.light #chip-custom-curr {
+      background-color: #ecfeff !important;
+      color: #0e7490 !important;
+      border-color: #a5f3fc !important;
+    }
+
+    /* 4-Columns Cart Table in Light Mode */
+    html.light table thead {
+      background-color: #f8fafc !important;
+      color: #475569 !important;
+      border-bottom-color: #e2e8f0 !important;
+    }
+    html.light table tbody {
+      border-color: #e2e8f0 !important;
+    }
+    html.light table tbody tr {
+      border-bottom-color: #e2e8f0 !important;
+    }
+    html.light table tbody tr:hover {
+      background-color: #f8fafc !important;
+    }
+    html.light table tbody td {
+      color: #1e293b !important;
+    }
+    html.light #items-count-badge {
+      background-color: #f1f5f9 !important;
+      color: #475569 !important;
+      border: 1px solid #e2e8f0 !important;
+    }
+
+    /* Financial Totals in Light Mode */
+    html.light #lbl-total-idr {
+      color: #0f172a !important;
+    }
+    html.light #calc-total-idr {
+      color: #0d9488 !important;
+    }
+    html.light #btn-exact-cash,
+    html.light .btn-quick-add {
+      background-color: #f1f5f9 !important;
+      color: #334155 !important;
+      border: 1px solid #cbd5e1 !important;
+    }
+    html.light #btn-exact-cash:hover,
+    html.light .btn-quick-add:hover {
+      background-color: #e2e8f0 !important;
+      color: #0f172a !important;
+    }
+
+    /* Kembalian Output Box in Light Mode */
+    html.light #lbl-change-idr {
+      color: #166534 !important;
+    }
+    html.light #calc-change-idr {
+      color: #15803d !important;
+    }
+
+    /* Reset Button in Light Mode */
+    html.light #btn-reset-form {
+      background-color: #f1f5f9 !important;
+      color: #475569 !important;
+      border: 1px solid #cbd5e1 !important;
+    }
+    html.light #btn-reset-form:hover {
+      background-color: #e2e8f0 !important;
+      color: #0f172a !important;
+    }
+
+    /* Receipt Preview Container in Light Mode */
+    html.light .flex.justify-center.bg-navy-950 {
+      background-color: #e2e8f0 !important;
+      border-color: #cbd5e1 !important;
+    }
+    html.light #btn-browser-print {
+      background-color: #f1f5f9 !important;
+      color: #1e293b !important;
+      border-color: #cbd5e1 !important;
+    }
+    html.light #btn-browser-print:hover {
+      background-color: #e2e8f0 !important;
+    }
+
+    /* Tab 4 Summary Figures in Light Mode */
+    html.light #sum-buy-idr { color: #059669 !important; }
+    html.light #sum-sell-idr { color: #d97706 !important; }
+    html.light #sum-turnover-idr { color: #0d9488 !important; }
+
+    /* Tab 5 Settings Panels in Light Mode */
+    html.light #subtab-btn-sheets:not(.bg-emerald-600),
+    html.light #subtab-btn-store:not(.bg-emerald-600),
+    html.light #subtab-btn-users:not(.bg-emerald-600) {
+      color: #64748b !important;
+    }
+    html.light #subtab-btn-sheets:hover,
+    html.light #subtab-btn-store:hover,
+    html.light #subtab-btn-users:hover {
+      color: #0f172a !important;
+    }
+    html.light #subtab-panel-sheets {
+      border-color: #10b981 !important;
+    }
+    html.light #subtab-panel-sheets .bg-navy-900\/90,
+    html.light #subtab-panel-sheets .bg-navy-900\/60 {
+      background-color: #f8fafc !important;
+      border-color: #e2e8f0 !important;
+    }
+    html.light #setting-sheets-url {
+      background-color: #ffffff !important;
+      color: #0f172a !important;
+      border-color: #10b981 !important;
+    }
+    html.light #btn-sheets-test,
+    html.light #btn-open-sheets-guide {
+      background-color: #f1f5f9 !important;
+      color: #1e293b !important;
+      border-color: #cbd5e1 !important;
+    }
+    html.light #btn-sheets-test:hover,
+    html.light #btn-open-sheets-guide:hover {
+      background-color: #e2e8f0 !important;
+    }
+
+    /* Modals in Light Mode */
+    html.light #modal-rate > div,
+    html.light #modal-sheets-guide > div,
+    html.light #modal-add-user > div,
+    html.light #modal-reset-user-pwd > div {
+      background-color: #ffffff !important;
+      border-color: #e2e8f0 !important;
+      color: #0f172a !important;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05) !important;
+    }
+    html.light #modal-sheets-guide .bg-navy-850 {
+      background-color: #f8fafc !important;
+      border-color: #e2e8f0 !important;
+    }
+    html.light #btn-cancel-modal-rate,
+    html.light #btn-close-guide-footer,
+    html.light #btn-cancel-modal-add-user,
+    html.light #btn-cancel-modal-reset-pwd {
+      background-color: #f1f5f9 !important;
+      border: 1px solid #cbd5e1 !important;
+      color: #334155 !important;
+    }
+
+    /* Login Screen in Light Mode */
+    html.light #login-overlay {
+      background-color: rgba(15, 23, 42, 0.65) !important;
+    }
+    html.light #login-overlay > div {
+      background-color: #ffffff !important;
+      border-color: #e2e8f0 !important;
+      color: #0f172a !important;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
     }
   </style>
 </head>
@@ -206,6 +564,12 @@
           <button type="button" id="btn-lang-en" class="px-2 py-0.5 rounded text-[11px] text-slate-400 hover:text-white transition-all">EN</button>
         </div>
 
+        <!-- Theme Toggle: Light / Dark -->
+        <button type="button" id="btn-theme-toggle" class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-navy-800 hover:bg-navy-700 text-slate-200 border border-navy-700 transition-all text-xs font-semibold cursor-pointer shadow-sm select-none" title="Ganti Tema (Light / Dark)">
+          <span id="theme-toggle-icon" class="text-xs">☀️</span>
+          <span id="theme-toggle-text">Terang</span>
+        </button>
+
         <!-- Live Clock -->
         <div class="hidden md:flex items-center px-2.5 py-1 rounded-lg bg-navy-800 text-slate-300 border border-navy-700 font-mono text-[11px]">
           <span id="live-clock">--:--:--</span>
@@ -317,15 +681,24 @@
             </h2>
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
               <div>
-                <label class="block text-slate-400 mb-1 font-medium" id="lbl-cust-name">Nama Customer <span class="text-rose-400">*</span></label>
-                <input type="text" id="cust-name" placeholder="Nama Lengkap Customer" required class="w-full uppercase bg-navy-900 border border-navy-600 rounded-lg px-3 py-2 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand font-semibold">
+                <div class="flex items-center justify-between mb-1">
+                  <label class="block text-slate-300 font-semibold" id="lbl-cust-name">Nama Customer <span class="text-rose-400 font-bold">*</span></label>
+                  <span id="badge-req-cust-name" class="badge-mandatory">[Wajib Diisi]</span>
+                </div>
+                <input type="text" id="cust-name" placeholder="Nama Lengkap Customer" required class="w-full uppercase bg-navy-900 border-2 border-navy-600 rounded-lg px-3 py-2 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand font-semibold input-mandatory">
               </div>
               <div>
-                <label class="block text-slate-400 mb-1 font-medium" id="lbl-cust-phone">No. Telepon / WhatsApp</label>
+                <div class="flex items-center justify-between mb-1">
+                  <label class="block text-slate-400 font-medium" id="lbl-cust-phone">No. Telepon / WhatsApp</label>
+                  <span id="badge-opt-cust-phone" class="badge-optional">[Opsional]</span>
+                </div>
                 <input type="tel" id="cust-phone" placeholder="+628... / Nomor Kontak" class="w-full bg-navy-900 border border-navy-600 rounded-lg px-3 py-2 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand">
               </div>
               <div>
-                <label class="block text-slate-400 mb-1 font-medium" id="lbl-cust-id">No. ID KTP / Paspor</label>
+                <div class="flex items-center justify-between mb-1">
+                  <label class="block text-slate-400 font-medium" id="lbl-cust-id">No. ID KTP / Paspor</label>
+                  <span id="badge-opt-cust-id" class="badge-optional">[Opsional]</span>
+                </div>
                 <input type="text" id="cust-id" placeholder="Nomor KTP atau Paspor" class="w-full uppercase bg-navy-900 border border-navy-600 rounded-lg px-3 py-2 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand font-mono">
               </div>
             </div>
@@ -344,23 +717,32 @@
             <div class="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-end text-xs">
               <!-- Select Currency -->
               <div class="sm:col-span-4">
-                <label class="block text-slate-400 mb-1 font-medium" id="lbl-curr-select">Mata Uang (Valas)</label>
-                <select id="item-currency" class="w-full bg-navy-900 border border-navy-600 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-brand font-medium">
+                <div class="flex items-center justify-between mb-1">
+                  <label class="block text-slate-300 font-semibold" id="lbl-curr-select">Mata Uang (Valas) <span class="text-rose-400 font-bold">*</span></label>
+                  <span id="badge-req-curr" class="badge-mandatory">[Pilih]</span>
+                </div>
+                <select id="item-currency" class="w-full bg-navy-900 border-2 border-navy-600 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-brand font-bold">
                   <!-- Populated dynamically via JS -->
                 </select>
               </div>
 
               <!-- Input Quantity / Amount -->
               <div class="sm:col-span-3">
-                <label class="block text-slate-400 mb-1 font-medium" id="lbl-amount">Jumlah Valas</label>
-                <input type="number" id="item-amount" min="1" step="any" placeholder="Contoh: 100" class="w-full bg-navy-900 border border-navy-600 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-brand font-mono font-bold text-right">
+                <div class="flex items-center justify-between mb-1">
+                  <label class="block text-slate-300 font-semibold" id="lbl-amount">Jumlah Valas <span class="text-rose-400 font-bold">*</span></label>
+                  <span id="badge-req-amount" class="badge-mandatory">[Wajib Diisi]</span>
+                </div>
+                <input type="number" id="item-amount" min="1" step="any" placeholder="Contoh: 100" class="w-full bg-navy-900 border-2 border-navy-600 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-brand font-mono font-bold text-right input-mandatory">
               </div>
 
               <!-- Current Rate (Read-only or overrideable) -->
               <div class="sm:col-span-3">
-                <label class="block text-slate-400 mb-1 font-medium" id="lbl-rate">Kurs (Rate)</label>
+                <div class="flex items-center justify-between mb-1">
+                  <label class="block text-slate-400 font-medium" id="lbl-rate">Kurs (Rate)</label>
+                  <span id="badge-rate-board" class="badge-calculated">[Kurs Papan]</span>
+                </div>
                 <div class="relative">
-                  <input type="number" id="item-rate" step="any" class="w-full bg-navy-900 border border-navy-600 rounded-lg px-3 py-2 text-brand focus:outline-none focus:border-brand font-mono font-bold text-right">
+                  <input type="number" id="item-rate" step="any" class="w-full bg-navy-900/90 border border-navy-600 rounded-lg px-3 py-2 text-brand focus:outline-none focus:border-brand font-mono font-bold text-right input-auto-calculated" title="Kurs terisi otomatis dari papan kurs. Bisa diedit jika ada negosiasi khusus.">
                 </div>
               </div>
 
@@ -452,10 +834,13 @@
               <!-- Pembayaran Input -->
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-navy-700/60 items-center">
                 <div>
-                  <label class="block text-xs font-semibold text-slate-300 mb-1" id="lbl-payment-idr">PEMBAYARAN (IDR)</label>
+                  <div class="flex items-center justify-between mb-1">
+                    <label class="block text-xs font-bold text-slate-200" id="lbl-payment-idr">PEMBAYARAN (IDR) <span class="text-rose-400 font-bold">*</span></label>
+                    <span id="badge-req-payment" class="badge-mandatory">[Wajib Diisi]</span>
+                  </div>
                   <div class="relative">
                     <span class="absolute left-3 top-2.5 text-slate-500 font-mono text-xs">Rp</span>
-                    <input type="number" id="input-payment" min="0" placeholder="0" class="w-full bg-navy-900 border border-navy-600 rounded-lg pl-9 pr-3 py-2 text-slate-100 focus:outline-none focus:border-brand font-mono font-bold text-right text-base">
+                    <input type="number" id="input-payment" min="0" placeholder="0" class="w-full bg-navy-900 border-2 border-navy-600 rounded-lg pl-9 pr-3 py-2 text-slate-100 focus:outline-none focus:border-brand font-mono font-extrabold text-right text-base input-mandatory">
                   </div>
                   <!-- Quick Cash Buttons -->
                   <div class="flex items-center gap-1.5 mt-1.5 flex-wrap text-[10px]">
@@ -471,8 +856,11 @@
 
                 <!-- Kembalian Display -->
                 <div class="bg-navy-900 p-3 rounded-xl border border-navy-700 flex flex-col justify-center">
-                  <span class="text-xs text-slate-400 font-semibold mb-0.5" id="lbl-change-idr">KEMBALIAN (IDR)</span>
-                  <span id="calc-change-idr" class="font-mono font-bold text-lg text-emerald-400">Rp 0</span>
+                  <div class="flex items-center justify-between mb-0.5">
+                    <span class="text-xs text-slate-400 font-semibold" id="lbl-change-idr">KEMBALIAN (IDR)</span>
+                    <span id="badge-auto-change" class="badge-calculated">[Kalkulasi Otomatis]</span>
+                  </div>
+                  <span id="calc-change-idr" class="font-mono font-extrabold text-lg text-emerald-400">Rp 0</span>
                 </div>
               </div>
 
@@ -1196,7 +1584,7 @@
   <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col space-y-2 pointer-events-none"></div>
 
   <!-- Scripts -->
-  <script src="/pos/bluetooth-print.js?v=2.3"></script>
-  <script src="/pos/app.js?v=2.3"></script>
+  <script src="/pos/bluetooth-print.js?v=2.4"></script>
+  <script src="/pos/app.js?v=2.4"></script>
 </body>
 </html>
