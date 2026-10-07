@@ -2,10 +2,10 @@
   "name": "skyline-coming-soon",
   "version": "1.0.0",
   "private": true,
-  "description": "Coming soon page for Skyline Exchange (skylinemoneychanger.com)",
+  "description": "Skyline Exchange Website & POS (skylinemoneychanger.com)",
   "main": "server.js",
   "engines": {
-    "node": ">=20"
+    "node": ">=22.5.0"
   },
   "scripts": {
     "start": "node server.js",

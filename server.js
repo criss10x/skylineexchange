@@ -1,11 +1,13 @@
-/* Skyline Exchange — coming soon server
-   Minimal Express static server, ready for Hostinger hPanel Node.js
-   (listens on process.env.PORT) and any generic Node host. */
+/* Skyline Exchange - Website & POS Server
+   Express server ready for Hostinger hPanel Node.js
+   (listens on process.env.PORT) and local development. */
 "use strict";
 
 const path = require("path");
+const fs = require("fs");
 const express = require("express");
 const compression = require("compression");
+const posRoutes = require("./pos-routes");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -23,10 +25,9 @@ app.use((req, res, next) => {
   next();
 });
 
-// One canonical URL per page: /contact.html and /contact both resolved 200,
-// so send the .html form to the clean URL the canonical tag already declares.
+// Canonical URL redirect for static HTML files (exclude /pos and /pos/)
 app.use((req, res, next) => {
-  if ((req.method === "GET" || req.method === "HEAD") && req.path.endsWith(".html")) {
+  if ((req.method === "GET" || req.method === "HEAD") && req.path.endsWith(".html") && !req.path.startsWith("/pos")) {
     const clean = req.path === "/index.html" ? "/" : req.path.slice(0, -".html".length);
     const query = req.originalUrl.slice(req.path.length);
     return res.redirect(301, clean + query);
@@ -46,13 +47,17 @@ app.use((req, res, next) => {
 });
 
 app.use(compression());
+app.use(express.json());
 
+// Health check
 app.get("/health", (req, res) => {
   res.json({ ok: true, uptime: Math.round(process.uptime()) });
 });
 
-// ponytail: pretty URLs (/contact -> /contact.html) without a static-site generator
-const fs = require("fs");
+// POS Application and API routes
+app.use(posRoutes);
+
+// Pretty URLs (/contact -> /contact.html) without a static-site generator
 app.use((req, res, next) => {
   if (req.method !== "GET" && req.method !== "HEAD") return next();
   let file = req.path;
@@ -68,22 +73,19 @@ app.use((req, res, next) => {
 app.use(
   express.static(PUBLIC_DIR, {
     setHeaders(res, filePath) {
-      // config.js is meant to be edited — never cache it hard
-      if (filePath.endsWith("config.js") || filePath.endsWith(".html")) {
-        res.setHeader("Cache-Control", "no-cache");
+      // config.js and POS files are meant to be updated without stale caches
+      if (filePath.endsWith("config.js") || filePath.endsWith(".html") || filePath.includes("pos")) {
+        res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
       } else if (/[\\/]vendor[\\/]|[\\/]assets[\\/]/.test(filePath)) {
         res.setHeader("Cache-Control", "public, max-age=604800");
       } else if (/\.(css|js)$/.test(filePath)) {
-        // no content hashes in filenames — keep these fresh-ish
         res.setHeader("Cache-Control", "public, max-age=3600, must-revalidate");
       }
     }
   })
 );
 
-// ponytail: specific short redirects w/ pixel
-// Not real content — keep them out of the index (no robots.txt Disallow, or
-// crawlers could never read this header).
+// Specific short redirects w/ pixel
 app.get("/cek", (req, res) => {
   res.set("X-Robots-Tag", "noindex, nofollow");
   const target = "https://script.google.com/macros/s/AKfycbyPAP7FKm1qKsKgUUU15p0WSCgk9KXWem74dpbSdHJy0HGpobIV3SZJ8UR_YZn9GY4dKQ/exec?page=cek";
@@ -101,16 +103,11 @@ fbq('track','Lead');
 </script></body></html>`);
 });
 
-// /go?url= was removed: it forwarded to any URL a visitor supplied, so
-// skylinemoneychanger.com/go?url=<anything> made a third-party page look like
-// it came from this domain. Any new redirect must hardcode its destination
-// the way /cek does.
-
 // Single-page fallback (unknown paths render the page, marked 404 for SEO)
 app.use((req, res) => {
   res.status(404).sendFile(path.join(PUBLIC_DIR, "index.html"));
 });
 
 app.listen(PORT, () => {
-  console.log(`Skyline coming-soon running on http://localhost:${PORT}`);
+  console.log(`Skyline Exchange Website & POS running on http://localhost:${PORT}`);
 });

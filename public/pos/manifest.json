@@ -1,0 +1,17 @@
+{
+  "name": "Skyline Exchange POS",
+  "short_name": "Skyline POS",
+  "description": "Sistem POS & Delivery Money Changer Skyline Exchange Bali",
+  "start_url": "/pos/",
+  "scope": "/pos/",
+  "display": "standalone",
+  "background_color": "#06121e",
+  "theme_color": "#00E2DE",
+  "icons": [
+    {
+      "src": "/pos/icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}
