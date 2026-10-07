@@ -758,7 +758,7 @@ router.get('/api/sheets/export-csv', requireAuth, (req, res) => {
       const rate = r.rate;
       const amount = r.amount;
       const total = r.subtotal_idr;
-      const notes = `"${(r.receipt_no + (r.teller_name ? ' [' + r.teller_name + ']' : '') + (r.notes ? ' ' + r.notes : '')).replace(/"/g, '""')}"`;
+      const notes = `"${(r.notes || '').replace(/"/g, '""')}"`;
       csv += `${dateStr},${name},${curr},${rate},${amount},${total},${notes},\r\n`;
     }
 

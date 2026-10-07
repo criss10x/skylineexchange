@@ -139,10 +139,8 @@ function processSingleTransaction(ss, tx) {
 
   for (var j = 0; j < items.length; j++) {
     var item = items[j];
-    var notesStr = tx.receipt_no || '';
-    if (tx.teller_name) notesStr += ' [' + tx.teller_name + ']';
-    if (tx.customer_phone) notesStr += ' ' + tx.customer_phone;
-    if (tx.notes) notesStr += ' ' + tx.notes;
+    // User requested: NOTES column is left blank (no receipt number or teller)
+    var notesStr = (tx.notes || '').trim();
 
     var rowData = {
       date: dateStr,
@@ -152,7 +150,7 @@ function processSingleTransaction(ss, tx) {
       amount: Number(item.amount) || 0,
       total_rp: Number(item.subtotal_idr) || 0,
       notes: notesStr,
-      receipt_no: tx.receipt_no,
+      receipt_no: tx.receipt_no || '',
       komisi: ''
     };
 
@@ -199,12 +197,23 @@ function writeBuyRow(sheet, data) {
   for (var i = 1; i < searchEnd; i++) {
     var existingNotes = String(dataRange[i][6] || '');
     var existingCurr = String(dataRange[i][2] || '');
-    if (existingNotes.indexOf(data.receipt_no) !== -1 && existingCurr === data.currency) {
+    var existingName = String(dataRange[i][1] || '').trim();
+    var existingAmount = Number(dataRange[i][4]) || 0;
+    var cellNote = sheet.getRange(i + 1, 1).getNote();
+
+    var isDuplicate = (cellNote && data.receipt_no && cellNote.indexOf(data.receipt_no) !== -1 && existingCurr === data.currency) ||
+                      (existingNotes && data.receipt_no && existingNotes.indexOf(data.receipt_no) !== -1 && existingCurr === data.currency) ||
+                      (existingName === data.name && existingCurr === data.currency && existingAmount === data.amount);
+
+    if (isDuplicate) {
       // Update row yang sudah ada
       var targetRow = i + 1;
       sheet.getRange(targetRow, 1, 1, 8).setValues([[
         data.date, data.name, data.currency, data.rate, data.amount, data.total_rp, data.notes, data.komisi
       ]]);
+      if (data.receipt_no) {
+        sheet.getRange(targetRow, 1).setNote(data.receipt_no);
+      }
       return;
     }
   }
@@ -227,15 +236,24 @@ function writeBuyRow(sheet, data) {
     sheet.getRange(emptyRowIdx, 1, 1, 8).setValues([[
       data.date, data.name, data.currency, data.rate, data.amount, data.total_rp, data.notes, data.komisi
     ]]);
+    if (data.receipt_no) {
+      sheet.getRange(emptyRowIdx, 1).setNote(data.receipt_no);
+    }
   } else if (totalRowIdx > 0) {
     // Sisipkan baris baru tepat di atas baris TOTAL (formula SUM akan otomatis menyesuaikan)
     sheet.insertRowBefore(totalRowIdx);
     sheet.getRange(totalRowIdx, 1, 1, 8).setValues([[
       data.date, data.name, data.currency, data.rate, data.amount, data.total_rp, data.notes, data.komisi
     ]]);
+    if (data.receipt_no) {
+      sheet.getRange(totalRowIdx, 1).setNote(data.receipt_no);
+    }
   } else {
     // Fallback jika format sheet bebas
     sheet.appendRow([data.date, data.name, data.currency, data.rate, data.amount, data.total_rp, data.notes, data.komisi]);
+    if (data.receipt_no) {
+      sheet.getRange(sheet.getLastRow(), 1).setNote(data.receipt_no);
+    }
   }
 }
 
@@ -269,6 +287,9 @@ function writeSellRow(sheet, data) {
     sheet.appendRow(['SELL FOREIGN CURRENCY']);
     sheet.appendRow(['DATE', 'NAME', 'CURRENCY', 'RATE', 'AMOUNT', 'TOTAL (RP)', 'NOTES']);
     sheet.appendRow([data.date, data.name, data.currency, data.rate, data.amount, data.total_rp, data.notes]);
+    if (data.receipt_no) {
+      sheet.getRange(sheet.getLastRow(), 1).setNote(data.receipt_no);
+    }
     return;
   }
 
@@ -281,11 +302,22 @@ function writeSellRow(sheet, data) {
     if (i < dataRange.length) {
       var existingNotes = String(dataRange[i][6] || '');
       var existingCurr = String(dataRange[i][2] || '');
-      if (existingNotes.indexOf(data.receipt_no) !== -1 && existingCurr === data.currency) {
+      var existingName = String(dataRange[i][1] || '').trim();
+      var existingAmount = Number(dataRange[i][4]) || 0;
+      var cellNote = sheet.getRange(i + 1, 1).getNote();
+
+      var isDuplicate = (cellNote && data.receipt_no && cellNote.indexOf(data.receipt_no) !== -1 && existingCurr === data.currency) ||
+                        (existingNotes && data.receipt_no && existingNotes.indexOf(data.receipt_no) !== -1 && existingCurr === data.currency) ||
+                        (existingName === data.name && existingCurr === data.currency && existingAmount === data.amount);
+
+      if (isDuplicate) {
         var targetRow = i + 1;
         sheet.getRange(targetRow, 1, 1, 7).setValues([[
           data.date, data.name, data.currency, data.rate, data.amount, data.total_rp, data.notes
         ]]);
+        if (data.receipt_no) {
+          sheet.getRange(targetRow, 1).setNote(data.receipt_no);
+        }
         return;
       }
     }
@@ -308,12 +340,18 @@ function writeSellRow(sheet, data) {
     sheet.getRange(emptySlotIdx, 1, 1, 7).setValues([[
       data.date, data.name, data.currency, data.rate, data.amount, data.total_rp, data.notes
     ]]);
+    if (data.receipt_no) {
+      sheet.getRange(emptySlotIdx, 1).setNote(data.receipt_no);
+    }
   } else {
     // Sisipkan tepat sebelum MODAL AWAL
     sheet.insertRowBefore(sellEndIdx);
     sheet.getRange(sellEndIdx, 1, 1, 7).setValues([[
       data.date, data.name, data.currency, data.rate, data.amount, data.total_rp, data.notes
     ]]);
+    if (data.receipt_no) {
+      sheet.getRange(sellEndIdx, 1).setNote(data.receipt_no);
+    }
   }
 }
 
