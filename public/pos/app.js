@@ -29,6 +29,10 @@ const i18n = {
     subtabStore: 'Profil Toko',
 
     // POS Cashier Form
+    legendTitle: 'Petunjuk Kolom:',
+    legendMandatory: 'Border Tebal = Wajib Diisi',
+    legendOptional: 'Border Tipis = Opsional',
+    legendAuto: 'Otomatis / Kurs Papan',
     btnBeli: 'BELI VALAS (BUY)',
     btnJual: 'JUAL VALAS (SELL)',
     modeDelivery: 'Mode Delivery',
@@ -216,6 +220,10 @@ const i18n = {
     subtabStore: 'Store Profile',
 
     // POS Cashier Form
+    legendTitle: 'Field Legend:',
+    legendMandatory: 'Thick Border = Required',
+    legendOptional: 'Thin Border = Optional',
+    legendAuto: 'System Automated',
     btnBeli: 'BUY CURRENCY (WE BUY)',
     btnJual: 'SELL CURRENCY (WE SELL)',
     modeDelivery: 'Delivery Mode',
@@ -677,14 +685,21 @@ function setAppLanguage(lang) {
   safeSet('lbl-subtab-store', t.subtabStore);
 
   // POS Cashier Form
+  safeSet('lbl-legend-title', t.legendTitle);
+  safeSet('lbl-legend-mandatory', t.legendMandatory);
+  safeSet('lbl-legend-optional', t.legendOptional);
+  safeSet('lbl-legend-auto', t.legendAuto);
   safeSet('lbl-type-beli', t.btnBeli);
   safeSet('lbl-type-jual', t.btnJual);
   safeSet('lbl-mode-delivery', t.modeDelivery);
   safeSet('lbl-delivery-addr', t.deliveryAddrLabel);
+  safeSet('badge-req-delivery-addr', t.badgeRequired);
   safePlaceholder('delivery-address', t.deliveryAddrPlaceholder);
   safeSet('lbl-delivery-time', t.deliveryTimeLabel);
+  safeSet('badge-opt-delivery-time', t.badgeOptional);
   safePlaceholder('delivery-time', t.deliveryTimePlaceholder);
   safeSet('lbl-delivery-courier', t.deliveryCourierLabel);
+  safeSet('badge-opt-delivery-courier', t.badgeOptional);
   safePlaceholder('delivery-courier', t.deliveryCourierPlaceholder);
 
   safeSet('lbl-cust-title', t.custTitle);
