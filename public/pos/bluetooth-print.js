@@ -1,6 +1,7 @@
 /**
- * Skyline Exchange - 58mm Bluetooth ESC/POS Thermal Printer Driver
- * Supports Web Bluetooth API with chunked BLE transmission + 32-column formatting
+ * Skyline Exchange - Bluetooth ESC/POS Thermal Printer Driver
+ * Supports Web Bluetooth API with chunked BLE transmission, 80mm & 58mm formatting,
+ * and comprehensive GATT service discovery.
  */
 
 class BluetoothPrinter {
@@ -11,13 +12,29 @@ class BluetoothPrinter {
     this.isConnected = false;
     this.onStatusChange = null;
 
-    // Common Bluetooth Printer GATT Services & Characteristics
+    // Comprehensive list of Bluetooth Thermal Printer GATT Services
     this.serviceUUIDs = [
-      '000018f0-0000-1000-8000-00805f9b34fb',
-      '49535343-fe7d-4ae5-8fa9-9fafd205e455',
-      'e7810a71-73ae-499d-8c15-faa9aef0c3f2',
+      // 1. HM-10 / CC2541 UART (Widely used in Goojprt, Panda, PT-210, MPT-II, POS-5802, Eppos, Iware, etc.)
+      '0000ffe0-0000-1000-8000-00805f9b34fb',
+      // 2. Generic BLE POS Services
+      '0000ff00-0000-1000-8000-00805f9b34fb',
+      '0000fff0-0000-1000-8000-00805f9b34fb',
       '0000e0ff-0000-1000-8000-00805f9b34fb',
-      '0000fff0-0000-1000-8000-00805f9b34fb'
+      // 3. Standard Printer GATT Services
+      '000018f0-0000-1000-8000-00805f9b34fb',
+      '000018f1-0000-1000-8000-00805f9b34fb',
+      // 4. Microchip / ISSC Transparent UART
+      '49535343-fe7d-4ae5-8fa9-9fafd205e455',
+      // 5. PosBank / Xprinter
+      'e7810a71-73ae-499d-8c15-faa9aef0c3f2',
+      // 6. Nordic UART Service (NUS) - used in Zebra, Star Micronics, modern BLE 5 printers
+      '6e400001-b5a3-f393-e0a9-e50e24dcca9e',
+      // 7. Tencent / Asian BLE POS standard
+      '0000fee7-0000-1000-8000-00805f9b34fb',
+      // 8. Other portable thermal printer chipsets (ZJiang, GPrinter, Feasycom)
+      '0000af30-0000-1000-8000-00805f9b34fb',
+      '0000ae00-0000-1000-8000-00805f9b34fb',
+      '0000fd00-0000-1000-8000-00805f9b34fb'
     ];
   }
 
@@ -33,12 +50,15 @@ class BluetoothPrinter {
 
   async connect() {
     if (!this.isSupported()) {
-      throw new Error('Web Bluetooth tidak didukung di browser ini. Gunakan Google Chrome atau Edge.');
+      if (typeof window !== 'undefined' && window.isSecureContext === false) {
+        throw new Error('Web Bluetooth membutuhkan koneksi aman HTTPS atau localhost.');
+      }
+      throw new Error('Web Bluetooth tidak didukung di browser ini. Gunakan Google Chrome atau Microsoft Edge di PC/Android.');
     }
 
     try {
       this.updateStatus('connecting', 'Mencari printer Bluetooth...');
-      
+
       this.device = await navigator.bluetooth.requestDevice({
         acceptAllDevices: true,
         optionalServices: this.serviceUUIDs
@@ -51,10 +71,14 @@ class BluetoothPrinter {
         this.updateStatus('disconnected', 'Printer terputus');
       });
 
+      if (!this.device.gatt) {
+        throw new Error('Perangkat tidak memiliki modul GATT Bluetooth yang kompatibel.');
+      }
+
       this.server = await this.device.gatt.connect();
       this.updateStatus('discovering', 'Menghubungkan ke layanan printer...');
 
-      // Find compatible writable characteristic
+      // Find compatible writable characteristic from recognized services
       let foundChar = null;
       for (const serviceUuid of this.serviceUUIDs) {
         try {
@@ -73,28 +97,37 @@ class BluetoothPrinter {
       }
 
       if (!foundChar) {
-        // Fallback: search all available services
-        const services = await this.server.getPrimaryServices();
-        for (const service of services) {
-          const characteristics = await service.getCharacteristics();
-          for (const c of characteristics) {
-            if (c.properties.write || c.properties.writeWithoutResponse) {
-              foundChar = c;
-              break;
+        // Fallback: search all available services exposed by device
+        try {
+          const services = await this.server.getPrimaryServices();
+          for (const service of services) {
+            try {
+              const characteristics = await service.getCharacteristics();
+              for (const c of characteristics) {
+                if (c.properties.write || c.properties.writeWithoutResponse) {
+                  foundChar = c;
+                  break;
+                }
+              }
+            } catch {
+              // Ignore single service inspection failure
             }
+            if (foundChar) break;
           }
-          if (foundChar) break;
+        } catch {
+          // Fallback discovery completed
         }
       }
 
       if (!foundChar) {
-        throw new Error('Gagal menemukan jalur data printer. Pastikan printer dalam keadaan menyala.');
+        throw new Error('Gagal menemukan jalur tulis printer. Pastikan printer dalam keadaan menyala dan mendukung Bluetooth.');
       }
 
       this.characteristic = foundChar;
       this.isConnected = true;
-      this.updateStatus('connected', `Terhubung: ${this.device.name || 'Thermal Printer'}`);
-      return this.device.name || 'Thermal Printer';
+      const deviceName = this.device.name || 'Thermal Printer';
+      this.updateStatus('connected', `Terhubung: ${deviceName}`);
+      return deviceName;
     } catch (err) {
       this.isConnected = false;
       this.updateStatus('error', err.message);
@@ -103,7 +136,7 @@ class BluetoothPrinter {
   }
 
   async disconnect() {
-    if (this.device && this.device.gatt.connected) {
+    if (this.device && this.device.gatt && this.device.gatt.connected) {
       await this.device.gatt.disconnect();
     }
     this.isConnected = false;
@@ -130,22 +163,41 @@ class BluetoothPrinter {
 
   /**
    * Format 4-Column Table:
-   * 80mm (48 chars): Valas(8), Jml(8), Kurs(14), Subtotal(18) = 48
-   * 58mm (32 chars): Valas(6), Jml(5), Kurs(8), Subtotal(13) = 32
+   * Prevents digit truncation by allocating sufficient columns and wrapping when numbers are wide.
+   * 80mm (48 chars): Valas(6), Jml(10), Kurs(12), Subtotal(20) = 48
+   * 58mm (32 chars): 2-line layout or single-line when compact.
    */
   static formatTableRow(valas, jml, kurs, subtotal, width = 48) {
+    const sVal = String(valas || '');
+    const sJml = String(jml || '');
+    const sKurs = String(kurs || '');
+    const sSub = String(subtotal || '');
+
     if (width === 32) {
-      const c1 = String(valas || '').padEnd(6).slice(0, 6);
-      const c2 = String(jml || '').padStart(5).slice(0, 5);
-      const c3 = String(kurs || '').padStart(8).slice(0, 8);
-      const c4 = String(subtotal || '').padStart(13).slice(0, 13);
+      // 58mm compact layout
+      const singleLine = `${sVal.padEnd(5)} ${sJml.padStart(6)} ${sKurs.padStart(7)} ${sSub.padStart(11)}`;
+      if (singleLine.length <= 32 && sVal.length <= 5 && sJml.length <= 6 && sKurs.length <= 7 && sSub.length <= 11) {
+        return singleLine;
+      }
+      // Clean 2-line format guarantees zero clipped numbers on narrow 58mm paper
+      const line1 = `${sVal} x ${sJml} @ ${sKurs}`;
+      const line2 = sSub.padStart(32);
+      return `${line1}\n${line2}`;
+    }
+
+    // 80mm standard POS layout (48 chars)
+    if (sVal.length <= 6 && sJml.length <= 10 && sKurs.length <= 12 && sSub.length <= 20) {
+      const c1 = sVal.padEnd(6);
+      const c2 = sJml.padStart(10);
+      const c3 = sKurs.padStart(12);
+      const c4 = sSub.padStart(20);
       return `${c1}${c2}${c3}${c4}`;
     }
-    const c1 = String(valas || '').padEnd(8).slice(0, 8);
-    const c2 = String(jml || '').padStart(8).slice(0, 8);
-    const c3 = String(kurs || '').padStart(14).slice(0, 14);
-    const c4 = String(subtotal || '').padStart(18).slice(0, 18);
-    return `${c1}${c2}${c3}${c4}`;
+
+    // Wrap if amounts or rates are unusually large
+    const line1 = `${sVal} x ${sJml} @ ${sKurs}`;
+    const line2 = sSub.padStart(48);
+    return `${line1}\n${line2}`;
   }
 
   /**
@@ -174,6 +226,9 @@ class BluetoothPrinter {
 
     // ESC @ - Initialize printer
     addBytes(0x1B, 0x40);
+
+    // ESC t 0 - Select Code Page 437 (Standard ASCII / European)
+    addBytes(0x1B, 0x74, 0x00);
 
     // Header: Store Name (Center, Double Height & Width, Emphasized)
     addBytes(0x1B, 0x61, 0x01); // Center
@@ -277,7 +332,74 @@ class BluetoothPrinter {
   }
 
   /**
-   * Send ESC/POS bytes to Bluetooth printer in chunked packets
+   * Build Test ESC/POS sample receipt to verify printer connectivity and paper width
+   */
+  buildTestEscPos(settings, lang = 'id') {
+    const isEn = lang === 'en';
+    const is80 = (settings.paper_size || '80') === '80';
+    const width = is80 ? 48 : 32;
+    const dividerDash = '-'.repeat(width);
+    const dividerDouble = '='.repeat(width);
+
+    const encoder = new TextEncoder();
+    const bytes = [];
+    const addBytes = (...arr) => bytes.push(...arr);
+    const addText = (str) => {
+      const encoded = encoder.encode(str);
+      for (let i = 0; i < encoded.length; i++) bytes.push(encoded[i]);
+    };
+    const addLine = (str = '') => addText(str + '\n');
+
+    // Initialize and Code Page 437
+    addBytes(0x1B, 0x40);
+    addBytes(0x1B, 0x74, 0x00);
+
+    // Header
+    addBytes(0x1B, 0x61, 0x01); // Center
+    addBytes(0x1B, 0x21, 0x30); // Double height & width
+    addLine(settings.store_name || 'SKYLINE EXCHANGE');
+    addBytes(0x1B, 0x21, 0x00);
+    addLine(settings.store_address || 'Jl. Bypass Ngurah Rai No. 4X, Kuta, Bali');
+    addLine(`WA: ${settings.store_phone || '+6285-122-777-970'}`);
+
+    addLine(dividerDash);
+    addBytes(0x1B, 0x21, 0x08);
+    addLine(isEn ? '*** BLUETOOTH PRINTER TEST ***' : '*** TES PRINTER BLUETOOTH ***');
+    addBytes(0x1B, 0x21, 0x00);
+    addLine(dividerDash);
+
+    // Left Align Info
+    addBytes(0x1B, 0x61, 0x00);
+    const now = new Date();
+    const timeStr = now.toLocaleDateString(isEn ? 'en-US' : 'id-ID') + ' ' + now.toLocaleTimeString(isEn ? 'en-US' : 'id-ID');
+    addLine(BluetoothPrinter.padLine(isEn ? 'Status' : 'Status', isEn ? 'CONNECTED OK' : 'TERHUBUNG OK', width));
+    addLine(BluetoothPrinter.padLine(isEn ? 'Paper Size' : 'Ukuran Kertas', is80 ? '80 mm (48 Kolom)' : '58 mm (32 Kolom)', width));
+    addLine(BluetoothPrinter.padLine(isEn ? 'Date & Time' : 'Tanggal & Waktu', timeStr, width));
+    addLine(BluetoothPrinter.padLine('Device', this.device ? (this.device.name || 'Thermal BLE') : 'Bluetooth Printer', width));
+
+    addLine(dividerDouble);
+    addLine(BluetoothPrinter.formatTableRow(isEn ? 'CURR' : 'VALAS', isEn ? 'QTY' : 'JML', isEn ? 'RATE' : 'KURS', 'SUB TOTAL', width));
+    addLine(dividerDash);
+    addLine(BluetoothPrinter.formatTableRow('USD', '100', '16,350', 'Rp 1,635,000', width));
+    addLine(dividerDouble);
+    addBytes(0x1B, 0x21, 0x08);
+    addLine(BluetoothPrinter.padLine('TOTAL IDR', 'Rp 1,635,000', width));
+    addBytes(0x1B, 0x21, 0x00);
+    addLine(dividerDash);
+
+    // Footer
+    addBytes(0x1B, 0x61, 0x01);
+    addLine('');
+    addLine(isEn ? 'Printer is verified and ready for cashier.' : 'Printer terverifikasi & siap untuk transaksi kasir.');
+    addLine('SKYLINE EXCHANGE POS');
+    addLine('\n\n\n\n');
+    addBytes(0x1D, 0x56, 0x41, 0x10);
+
+    return new Uint8Array(bytes);
+  }
+
+  /**
+   * Send ESC/POS bytes to Bluetooth printer in chunked packets (20-byte safe BLE MTU)
    */
   async print(escPosBytes) {
     if (!this.isConnected || !this.characteristic) {
@@ -286,20 +408,38 @@ class BluetoothPrinter {
 
     this.updateStatus('printing', 'Mengirim data ke printer...');
 
-    // Chunk size: 64 bytes is ideal for low-energy thermal printers
-    const CHUNK_SIZE = 64;
+    // 20 bytes is the universally safe BLE ATT MTU default (23 bytes minus 3 header bytes)
+    const CHUNK_SIZE = 20;
+    const props = this.characteristic.properties || {};
+    const canWriteWithoutResponse = Boolean(props.writeWithoutResponse);
+    const hasWriteWithoutResponseMethod = typeof this.characteristic.writeValueWithoutResponse === 'function';
+
     for (let offset = 0; offset < escPosBytes.length; offset += CHUNK_SIZE) {
       const chunk = escPosBytes.slice(offset, offset + CHUNK_SIZE);
-      if (this.characteristic.writeValueWithoutResponse) {
-        await this.characteristic.writeValueWithoutResponse(chunk);
-      } else {
-        await this.characteristic.writeValue(chunk);
+      let written = false;
+
+      if (canWriteWithoutResponse && hasWriteWithoutResponseMethod) {
+        try {
+          await this.characteristic.writeValueWithoutResponse(chunk);
+          written = true;
+        } catch {
+          written = false;
+        }
       }
-      // Small pause to prevent buffer overflow on low-cost thermal chips
-      await new Promise(r => setTimeout(r, 20));
+
+      if (!written) {
+        if (typeof this.characteristic.writeValueWithResponse === 'function') {
+          await this.characteristic.writeValueWithResponse(chunk);
+        } else {
+          await this.characteristic.writeValue(chunk);
+        }
+      }
+
+      // 25ms delay to prevent buffer overflow on low-cost thermal printer chips
+      await new Promise(r => setTimeout(r, 25));
     }
 
-    this.updateStatus('connected', 'Selesai mencetak!');
+    this.updateStatus('connected', `Terhubung: ${this.device ? (this.device.name || 'Thermal Printer') : 'Printer'}`);
     return true;
   }
 }

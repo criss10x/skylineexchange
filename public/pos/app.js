@@ -194,7 +194,18 @@ const i18n = {
     btnHistSync: 'Sync Sheets',
     btnHistCsv: 'Export CSV',
     modalGuideTitle: 'Panduan Integrasi Google Sheets (1 Menit Siap)',
-    btnCopyScript: 'Salin Kode Script (1-Click)'
+    btnCopyScript: 'Salin Kode Script (1-Click)',
+
+    // Pengujian & Status Printer
+    printerDiagTitle: 'Pengujian & Status Printer Thermal',
+    printerDiagSub: 'Periksa koneksi printer dan coba cetak contoh struk kasir',
+    btnSettingsConnect: 'Hubungkan BT',
+    btnSettingsDisconnect: 'Putuskan BT',
+    btnSettingsTestBt: 'Tes Cetak BT',
+    btnSettingsTestSys: 'Tes Cetak Browser',
+    printerDiagNote: 'Gunakan Tes Cetak BT untuk printer Bluetooth BLE langsung di Chrome/Edge. Untuk printer USB atau Bluetooth yang terpasang di Windows Driver, gunakan Tes Cetak Browser.',
+    btDisconnectedText: 'Belum Terhubung',
+    btConnectedPrefix: 'Terhubung:'
   },
   en: {
     // Header & Navigation
@@ -385,7 +396,18 @@ const i18n = {
     btnHistSync: 'Sync Sheets',
     btnHistCsv: 'Export CSV',
     modalGuideTitle: 'Google Sheets Integration Guide (Ready in 1 Min)',
-    btnCopyScript: 'Copy Script Code (1-Click)'
+    btnCopyScript: 'Copy Script Code (1-Click)',
+
+    // Printer Diagnostic & Testing
+    printerDiagTitle: 'Thermal Printer Status & Testing',
+    printerDiagSub: 'Verify printer connection and print a test sample receipt',
+    btnSettingsConnect: 'Connect BT',
+    btnSettingsDisconnect: 'Disconnect BT',
+    btnSettingsTestBt: 'Test Print BT',
+    btnSettingsTestSys: 'Test System Print',
+    printerDiagNote: 'Use Test Print BT for direct BLE printers in Chrome/Edge. For USB or Bluetooth printers installed via Windows Driver, use Test System Print.',
+    btDisconnectedText: 'Not Connected',
+    btConnectedPrefix: 'Connected:'
   }
 };
 
@@ -797,6 +819,18 @@ function setAppLanguage(lang) {
   safeSet('lbl-set-disc1', t.settingDisc1);
   safeSet('lbl-set-disc2', t.settingDisc2);
   safeSet('lbl-btn-save-settings', t.btnSaveSettings);
+
+  // Printer Diagnostic & Testing
+  safeSet('lbl-printer-diag-title', t.printerDiagTitle);
+  safeSet('lbl-printer-diag-sub', t.printerDiagSub);
+  safeSet('lbl-btn-settings-connect', printer.isConnected ? t.btnSettingsDisconnect : t.btnSettingsConnect);
+  safeSet('lbl-btn-settings-test-bt', t.btnSettingsTestBt);
+  safeSet('lbl-btn-settings-test-sys', t.btnSettingsTestSys);
+  safeSet('lbl-printer-diag-note', t.printerDiagNote);
+  const settingsStatusText = document.getElementById('settings-bt-status-text');
+  if (settingsStatusText && !printer.isConnected) {
+    settingsStatusText.textContent = t.btDisconnectedText;
+  }
 
   // Google Sheets Card & Guide Modal
   safeSet('lbl-sheets-card-title', t.sheetsCardTitle);
@@ -1569,6 +1603,9 @@ async function processTransaction() {
     showToast(isEn ? `Transaction saved in local offline memory. No: ${payload.receipt_no}` : `Transaksi disimpan di memori lokal (Offline). No: ${payload.receipt_no}`, 'warning');
   }
 
+  // Update on-screen printable receipt
+  renderReceiptData(payload);
+
   // Attempt Bluetooth Print with chosen receipt language
   if (printer.isConnected) {
     try {
@@ -1605,14 +1642,102 @@ function resetForm() {
   showToast(state.appLang === 'en' ? 'Cashier form reset' : 'Formulir kasir telah di-reset', 'info');
 }
 
-// ==================== PRINT ACTIONS ====================
+// ==================== PRINT ACTIONS & RECEIPT RENDERING ====================
+
+function renderReceiptData(tx) {
+  if (!tx) return;
+  const isEn = state.receiptLang === 'en';
+  const locale = isEn ? 'en-US' : 'id-ID';
+
+  const rcptNoEl = document.getElementById('rcpt-no');
+  if (rcptNoEl) rcptNoEl.textContent = tx.receipt_no || 'SE-DRAFT';
+
+  const rcptDateEl = document.getElementById('rcpt-datetime');
+  if (rcptDateEl) rcptDateEl.textContent = tx.created_at_formatted || (new Date().toLocaleDateString(locale) + ' ' + new Date().toLocaleTimeString(locale));
+
+  const rcptTypeEl = document.getElementById('rcpt-type');
+  if (rcptTypeEl) {
+    rcptTypeEl.textContent = tx.type === 'BELI' 
+      ? (isEn ? 'BUY CURRENCY (BUY)' : 'BELI VALAS (BUY)') 
+      : (isEn ? 'SELL CURRENCY (SELL)' : 'JUAL VALAS (SELL)');
+  }
+
+  const rcptCustEl = document.getElementById('rcpt-cust-name');
+  if (rcptCustEl) rcptCustEl.textContent = (tx.customer_name || 'CUSTOMER').toUpperCase();
+
+  const rcptTellerEl = document.getElementById('rcpt-teller');
+  if (rcptTellerEl) rcptTellerEl.textContent = tx.teller_name || 'TELLER 01';
+
+  const rcptSignTellerEl = document.getElementById('rcpt-sign-teller');
+  if (rcptSignTellerEl) rcptSignTellerEl.textContent = `( ${(tx.teller_name || 'TELLER 01').toUpperCase()} )`;
+
+  const rcptSignCustEl = document.getElementById('rcpt-sign-customer');
+  if (rcptSignCustEl) rcptSignCustEl.textContent = `( ${(tx.customer_signature_name || tx.customer_name || 'CUSTOMER').toUpperCase()} )`;
+
+  const signInput = document.getElementById('input-signature-customer');
+  if (signInput) {
+    signInput.value = (tx.customer_signature_name || tx.customer_name || '').toUpperCase();
+  }
+
+  const phoneRow = document.getElementById('rcpt-phone-row');
+  const phoneVal = document.getElementById('rcpt-cust-phone');
+  if (phoneRow && phoneVal) {
+    if (tx.customer_phone) {
+      phoneVal.textContent = tx.customer_phone;
+      phoneRow.classList.remove('hidden');
+    } else {
+      phoneRow.classList.add('hidden');
+    }
+  }
+
+  const idRow = document.getElementById('rcpt-id-row');
+  const idVal = document.getElementById('rcpt-cust-id');
+  if (idRow && idVal) {
+    if (tx.customer_id_no) {
+      idVal.textContent = tx.customer_id_no;
+      idRow.classList.remove('hidden');
+    } else {
+      idRow.classList.add('hidden');
+    }
+  }
+
+  const rcptItemsBody = document.getElementById('rcpt-items-body');
+  if (rcptItemsBody) {
+    rcptItemsBody.innerHTML = '';
+    (tx.items || []).forEach(item => {
+      const rcptRow = document.createElement('div');
+      rcptRow.className = 'grid grid-cols-12 py-0.5 text-black';
+      rcptRow.innerHTML = `
+        <div class="col-span-3 text-left font-bold">${item.currency_code}</div>
+        <div class="col-span-2 text-right">${(item.amount || 0).toLocaleString(isEn ? 'en-US' : 'id-ID')}</div>
+        <div class="col-span-3 text-right">${(item.rate || 0).toLocaleString('id-ID')}</div>
+        <div class="col-span-4 text-right font-medium">${(item.subtotal_idr || 0).toLocaleString('id-ID')}</div>
+      `;
+      rcptItemsBody.appendChild(rcptRow);
+    });
+  }
+
+  const rcptTotalEl = document.getElementById('rcpt-total');
+  if (rcptTotalEl) rcptTotalEl.textContent = 'Rp ' + (tx.total_idr || 0).toLocaleString('id-ID');
+
+  const rcptPayEl = document.getElementById('rcpt-payment');
+  if (rcptPayEl) rcptPayEl.textContent = 'Rp ' + (tx.paid_amount || tx.total_idr || 0).toLocaleString('id-ID');
+
+  const rcptChgEl = document.getElementById('rcpt-change');
+  if (rcptChgEl) rcptChgEl.textContent = 'Rp ' + (tx.change_amount || 0).toLocaleString('id-ID');
+}
 
 async function handleDirectBtPrint() {
   const currentData = state.currentReceipt || buildCurrentFormReceiptData();
   const isEn = state.appLang === 'en';
 
   if (!currentData || !currentData.items || currentData.items.length === 0) {
-    showToast(isEn ? 'No transaction to print' : 'Belum ada transaksi untuk dicetak', 'warning');
+    const askTest = confirm(isEn 
+      ? 'No active transaction to print. Would you like to print a test receipt to verify your Bluetooth printer?' 
+      : 'Belum ada transaksi aktif. Apakah Anda ingin mencetak struk tes untuk memeriksa printer Bluetooth?');
+    if (askTest) {
+      await handleTestBtPrint();
+    }
     return;
   }
 
@@ -1621,7 +1746,9 @@ async function handleDirectBtPrint() {
       showToast(isEn ? 'Connecting to Bluetooth printer...' : 'Menghubungkan ke printer Bluetooth...', 'info');
       await printer.connect();
     } catch (err) {
-      showToast(`${isEn ? 'Bluetooth connection failed' : 'Koneksi Bluetooth gagal'}: ${err.message}`, 'error');
+      if (err.name !== 'NotFoundError') {
+        showToast(`${isEn ? 'Bluetooth connection failed' : 'Koneksi Bluetooth gagal'}: ${err.message}`, 'error');
+      }
       return;
     }
   }
@@ -1632,6 +1759,67 @@ async function handleDirectBtPrint() {
     showToast(isEn ? 'Receipt printed successfully!' : 'Struk berhasil dicetak!', 'success');
   } catch (err) {
     showToast(`Bluetooth print error: ${err.message}`, 'error');
+  }
+}
+
+async function handleTestBtPrint() {
+  const isEn = state.appLang === 'en';
+  if (!printer.isSupported()) {
+    showToast(isEn 
+      ? 'Web Bluetooth is not supported in this browser. Please use Google Chrome or Microsoft Edge on PC or Android.' 
+      : 'Web Bluetooth tidak didukung di browser ini. Gunakan Google Chrome atau Microsoft Edge di PC atau Android.', 'warning');
+    return;
+  }
+
+  if (!printer.isConnected) {
+    try {
+      showToast(isEn ? 'Connecting to Bluetooth printer...' : 'Menghubungkan ke printer Bluetooth...', 'info');
+      await printer.connect();
+    } catch (err) {
+      if (err.name !== 'NotFoundError') {
+        showToast(`${isEn ? 'Bluetooth connection failed' : 'Koneksi Bluetooth gagal'}: ${err.message}`, 'error');
+      }
+      return;
+    }
+  }
+
+  try {
+    showToast(isEn ? 'Printing Bluetooth test receipt...' : 'Mencetak struk tes Bluetooth...', 'info');
+    const escPosBytes = printer.buildTestEscPos(state.settings, state.receiptLang);
+    await printer.print(escPosBytes);
+    showToast(isEn ? 'Bluetooth test receipt printed successfully!' : 'Struk tes Bluetooth berhasil dicetak!', 'success');
+  } catch (err) {
+    showToast(`Bluetooth print error: ${err.message}`, 'error');
+  }
+}
+
+function handleTestBrowserPrint() {
+  const isEn = state.receiptLang === 'en';
+  const now = new Date();
+  const locale = isEn ? 'en-US' : 'id-ID';
+  const testTx = {
+    receipt_no: 'TEST-PRINTER',
+    type: 'BELI',
+    customer_name: 'TEST CUSTOMER',
+    customer_phone: '+6281234567890',
+    customer_id_no: 'ID-TEST-001',
+    teller_name: state.settings.default_teller || 'TELLER 01',
+    total_idr: 1635000,
+    paid_amount: 1635000,
+    change_amount: 0,
+    is_delivery: 0,
+    delivery_address: '',
+    items: [
+      { currency_code: 'USD', amount: 100, rate: 16350, subtotal_idr: 1635000 }
+    ],
+    created_at_formatted: now.toLocaleDateString(locale) + ' ' + now.toLocaleTimeString(locale)
+  };
+
+  const prev = state.currentReceipt;
+  renderReceiptData(testTx);
+  window.print();
+  if (prev) {
+    setTimeout(() => renderReceiptData(prev), 1000);
   }
 }
 
@@ -1930,48 +2118,7 @@ async function reprintTransaction(id) {
       const locale = state.receiptLang === 'en' ? 'en-US' : 'id-ID';
       tx.created_at_formatted = new Date(tx.created_at).toLocaleDateString(locale) + ' ' + new Date(tx.created_at).toLocaleTimeString(locale);
       state.currentReceipt = tx;
-
-      document.getElementById('rcpt-no').textContent = tx.receipt_no;
-      document.getElementById('rcpt-datetime').textContent = tx.created_at_formatted;
-      document.getElementById('rcpt-type').textContent = tx.type === 'BELI' 
-        ? (state.receiptLang === 'en' ? 'BUY CURRENCY (BUY)' : 'BELI VALAS (BUY)') 
-        : (state.receiptLang === 'en' ? 'SELL CURRENCY (SELL)' : 'JUAL VALAS (SELL)');
-      document.getElementById('rcpt-cust-name').textContent = tx.customer_name.toUpperCase();
-      document.getElementById('rcpt-teller').textContent = tx.teller_name;
-      document.getElementById('rcpt-sign-teller').textContent = `( ${tx.teller_name.toUpperCase()} )`;
-      document.getElementById('rcpt-sign-customer').textContent = `( ${(tx.customer_signature_name || tx.customer_name).toUpperCase()} )`;
-      document.getElementById('input-signature-customer').value = (tx.customer_signature_name || tx.customer_name).toUpperCase();
-
-      const phoneRow = document.getElementById('rcpt-phone-row');
-      const idRow = document.getElementById('rcpt-id-row');
-      if (tx.customer_phone) {
-        document.getElementById('rcpt-cust-phone').textContent = tx.customer_phone;
-        phoneRow.classList.remove('hidden');
-      } else phoneRow.classList.add('hidden');
-
-      if (tx.customer_id_no) {
-        document.getElementById('rcpt-cust-id').textContent = tx.customer_id_no;
-        idRow.classList.remove('hidden');
-      } else idRow.classList.add('hidden');
-
-      const rcptItemsBody = document.getElementById('rcpt-items-body');
-      rcptItemsBody.innerHTML = '';
-      (tx.items || []).forEach(item => {
-        const rcptRow = document.createElement('div');
-        rcptRow.className = 'grid grid-cols-12 py-0.5 text-black';
-        rcptRow.innerHTML = `
-          <div class="col-span-3 text-left font-bold">${item.currency_code}</div>
-          <div class="col-span-2 text-right">${item.amount.toLocaleString(state.receiptLang === 'en' ? 'en-US' : 'id-ID')}</div>
-          <div class="col-span-3 text-right">${item.rate.toLocaleString('id-ID')}</div>
-          <div class="col-span-4 text-right font-medium">${item.subtotal_idr.toLocaleString('id-ID')}</div>
-        `;
-        rcptItemsBody.appendChild(rcptRow);
-      });
-
-      document.getElementById('rcpt-total').textContent = 'Rp ' + tx.total_idr.toLocaleString('id-ID');
-      document.getElementById('rcpt-payment').textContent = 'Rp ' + tx.paid_amount.toLocaleString('id-ID');
-      document.getElementById('rcpt-change').textContent = 'Rp ' + tx.change_amount.toLocaleString('id-ID');
-
+      renderReceiptData(tx);
       switchTab('tab-pos');
       showToast(`${state.appLang === 'en' ? 'Receipt loaded' : 'Struk dimuat'}: ${tx.receipt_no}`, 'info');
     }
@@ -2103,20 +2250,64 @@ function initBluetoothUI() {
   const nameLabel = document.getElementById('bt-printer-name');
   const statusDot = document.getElementById('bt-status-dot');
 
+  const btnSettingsConnect = document.getElementById('btn-settings-bt-connect');
+  const btnSettingsBtTest = document.getElementById('btn-settings-bt-test');
+  const btnSettingsBrowserTest = document.getElementById('btn-settings-browser-test');
+  const settingsStatusBadge = document.getElementById('settings-bt-status-badge');
+  const settingsStatusText = document.getElementById('settings-bt-status-text');
+
   printer.onStatusChange = ({ connected, status, text }) => {
+    const isEn = state.appLang === 'en';
     if (connected) {
       statusDot.className = 'w-2 h-2 rounded-full bg-brand animate-pulse';
-      nameLabel.textContent = text || 'Printer Terhubung';
+      nameLabel.textContent = text || (isEn ? 'Printer Connected' : 'Printer Terhubung');
       btnConnect.classList.add('border-brand/60', 'text-brand');
+
+      if (settingsStatusBadge) {
+        settingsStatusBadge.className = 'px-2.5 py-1 rounded-full text-[11px] font-bold bg-brand/20 text-brand border border-brand/40 flex items-center gap-1.5';
+      }
+      if (settingsStatusText) {
+        settingsStatusText.textContent = text || (isEn ? 'Connected' : 'Terhubung');
+      }
+      if (btnSettingsConnect) {
+        btnSettingsConnect.innerHTML = `
+          <svg class="w-3.5 h-3.5 text-rose-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          <span>${isEn ? 'Disconnect BT' : 'Putuskan BT'}</span>
+        `;
+        btnSettingsConnect.classList.add('border-rose-500/40', 'text-rose-400');
+        btnSettingsConnect.classList.remove('border-brand/40', 'text-brand');
+      }
     } else {
       statusDot.className = 'w-2 h-2 rounded-full bg-slate-500';
       nameLabel.textContent = i18n[state.appLang].connectBt;
       btnConnect.classList.remove('border-brand/60', 'text-brand');
+
+      if (settingsStatusBadge) {
+        settingsStatusBadge.className = 'px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-700/60 text-slate-300 border border-slate-600 flex items-center gap-1.5';
+      }
+      if (settingsStatusText) {
+        settingsStatusText.textContent = isEn ? 'Not Connected' : 'Belum Terhubung';
+      }
+      if (btnSettingsConnect) {
+        btnSettingsConnect.innerHTML = `
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6.5 6.5l11 11L12 23V1l5.5 5.5-11 11"/></svg>
+          <span id="lbl-btn-settings-connect">${isEn ? 'Connect BT' : 'Hubungkan BT'}</span>
+        `;
+        btnSettingsConnect.classList.remove('border-rose-500/40', 'text-rose-400');
+        btnSettingsConnect.classList.add('border-brand/40', 'text-brand');
+      }
     }
   };
 
-  btnConnect.addEventListener('click', async () => {
+  const handleToggleBt = async () => {
     const isEn = state.appLang === 'en';
+    if (!printer.isSupported()) {
+      showToast(isEn 
+        ? 'Web Bluetooth is not supported in this browser. Please use Google Chrome or Microsoft Edge on PC or Android.' 
+        : 'Web Bluetooth tidak didukung di browser ini. Gunakan Google Chrome atau Microsoft Edge di PC atau Android.', 'warning');
+      return;
+    }
+
     if (printer.isConnected) {
       if (confirm(isEn ? 'Disconnect current Bluetooth thermal printer?' : 'Putuskan koneksi dengan printer thermal Bluetooth saat ini?')) {
         await printer.disconnect();
@@ -2124,15 +2315,28 @@ function initBluetoothUI() {
       }
       return;
     }
+
     try {
+      showToast(isEn ? 'Searching for Bluetooth thermal printer...' : 'Mencari printer thermal Bluetooth...', 'info');
       const deviceName = await printer.connect();
-      showToast(`${isEn ? 'Connected to' : 'Terhubung ke'} ${deviceName}`, 'success');
+      showToast(`${isEn ? 'Connected to' : 'Terhubung ke'} ${deviceName}!`, 'success');
     } catch (err) {
       if (err.name !== 'NotFoundError') {
         showToast(`Bluetooth: ${err.message}`, 'error');
       }
     }
-  });
+  };
+
+  btnConnect.addEventListener('click', handleToggleBt);
+  if (btnSettingsConnect) {
+    btnSettingsConnect.addEventListener('click', handleToggleBt);
+  }
+  if (btnSettingsBtTest) {
+    btnSettingsBtTest.addEventListener('click', handleTestBtPrint);
+  }
+  if (btnSettingsBrowserTest) {
+    btnSettingsBrowserTest.addEventListener('click', handleTestBrowserPrint);
+  }
 
   btnDirectPrint.addEventListener('click', handleDirectBtPrint);
 }

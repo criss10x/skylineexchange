@@ -258,6 +258,9 @@
     }
     html.light #btn-theme-toggle,
     html.light #btn-bt-connect,
+    html.light #btn-settings-bt-connect,
+    html.light #btn-settings-browser-test,
+    html.light #settings-bt-status-badge,
     html.light .flex.items-center.p-0\.5.rounded-lg.bg-navy-800,
     html.light .hidden.md\:flex.items-center.px-2\.5.py-1.rounded-lg.bg-navy-800 {
       background-color: #f1f5f9 !important;
@@ -265,7 +268,9 @@
       color: #1e293b !important;
     }
     html.light #btn-theme-toggle:hover,
-    html.light #btn-bt-connect:hover {
+    html.light #btn-bt-connect:hover,
+    html.light #btn-settings-bt-connect:hover,
+    html.light #btn-settings-browser-test:hover {
       background-color: #e2e8f0 !important;
       border-color: #94a3b8 !important;
     }
@@ -1493,6 +1498,46 @@
             </div>
           </div>
 
+          <!-- Bluetooth & Thermal Printer Diagnostic & Test Section -->
+          <div class="pt-3 border-t border-navy-700/80 bg-navy-900/60 p-4 rounded-xl border border-navy-700">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-lg bg-brand/10 border border-brand/30 flex items-center justify-center text-brand">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6.5 6.5l11 11L12 23V1l5.5 5.5-11 11"/></svg>
+                </div>
+                <div>
+                  <div class="font-bold text-slate-100 text-xs sm:text-sm" id="lbl-printer-diag-title">Pengujian & Status Printer Thermal</div>
+                  <div class="text-[11px] text-slate-400" id="lbl-printer-diag-sub">Periksa koneksi printer dan coba cetak contoh struk kasir</div>
+                </div>
+              </div>
+              <div id="settings-bt-status-badge" class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-700/60 text-slate-300 border border-slate-600 flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-slate-400"></span>
+                <span id="settings-bt-status-text">Belum Terhubung</span>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+              <button type="button" id="btn-settings-bt-connect" class="py-2.5 px-3 rounded-lg bg-navy-800 hover:bg-navy-700 border border-brand/40 text-brand text-xs font-bold flex items-center justify-center gap-1.5 transition-colors">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6.5 6.5l11 11L12 23V1l5.5 5.5-11 11"/></svg>
+                <span id="lbl-btn-settings-connect">Hubungkan BT</span>
+              </button>
+
+              <button type="button" id="btn-settings-bt-test" class="py-2.5 px-3 rounded-lg bg-brand hover:bg-brand-hover text-navy-950 text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-sm">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                <span id="lbl-btn-settings-test-bt">Tes Cetak BT</span>
+              </button>
+
+              <button type="button" id="btn-settings-browser-test" class="py-2.5 px-3 rounded-lg bg-navy-800 hover:bg-navy-700 border border-navy-600 text-slate-200 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                <span id="lbl-btn-settings-test-sys">Tes Cetak Browser</span>
+              </button>
+            </div>
+
+            <p class="text-[11px] text-slate-400 mt-2.5 leading-relaxed" id="lbl-printer-diag-note">
+              Gunakan <strong>Tes Cetak BT</strong> untuk printer Bluetooth BLE langsung di Chrome/Edge. Untuk printer USB atau Bluetooth yang terpasang di Windows Driver, gunakan <strong>Tes Cetak Browser</strong>.
+            </p>
+          </div>
+
           <div class="pt-2 border-t border-navy-700/80">
             <div class="flex items-center justify-between mb-2">
               <label class="text-slate-300 font-semibold" id="lbl-set-permit">Nomor Izin KUPVA / Bank Indonesia</label>
@@ -1773,7 +1818,7 @@
   <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col space-y-2 pointer-events-none"></div>
 
   <!-- Scripts -->
-  <script src="/pos/bluetooth-print.js?v=2.5"></script>
-  <script src="/pos/app.js?v=2.5"></script>
+  <script src="/pos/bluetooth-print.js?v=2.6"></script>
+  <script src="/pos/app.js?v=2.6"></script>
 </body>
 </html>
