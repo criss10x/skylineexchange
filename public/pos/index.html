@@ -315,9 +315,12 @@
     }
     html.light #btn-theme-toggle,
     html.light #btn-bt-connect,
+    html.light #btn-usb-connect,
     html.light #btn-settings-bt-connect,
+    html.light #btn-settings-usb-connect,
     html.light #btn-settings-browser-test,
     html.light #settings-bt-status-badge,
+    html.light #settings-usb-status-badge,
     html.light .flex.items-center.p-0\.5.rounded-lg.bg-navy-800,
     html.light .hidden.md\:flex.items-center.px-2\.5.py-1.rounded-lg.bg-navy-800 {
       background-color: #f1f5f9 !important;
@@ -326,7 +329,9 @@
     }
     html.light #btn-theme-toggle:hover,
     html.light #btn-bt-connect:hover,
+    html.light #btn-usb-connect:hover,
     html.light #btn-settings-bt-connect:hover,
+    html.light #btn-settings-usb-connect:hover,
     html.light #btn-settings-browser-test:hover {
       background-color: #e2e8f0 !important;
       border-color: #94a3b8 !important;
@@ -770,12 +775,24 @@
         </button>
 
         <!-- Bluetooth Thermal Printer Button -->
-        <button id="btn-bt-connect" class="flex items-center gap-1.5 px-3 py-1 rounded-full bg-navy-700 hover:bg-navy-600 text-slate-200 border border-navy-600 hover:border-brand/40 transition-colors">
+        <button id="btn-bt-connect" class="flex items-center gap-1.5 px-3 py-1 rounded-full bg-navy-700 hover:bg-navy-600 text-slate-200 border border-navy-600 hover:border-brand/40 transition-colors" title="Hubungkan Printer Thermal via Bluetooth">
           <svg class="w-3.5 h-3.5 text-brand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M6.5 6.5l11 11L12 23V1l5.5 5.5-11 11"/>
           </svg>
           <span id="bt-printer-name" class="font-medium">Hubungkan Printer BT</span>
           <span id="bt-status-dot" class="w-2 h-2 rounded-full bg-slate-500"></span>
+        </button>
+
+        <!-- USB Thermal Printer Button -->
+        <button id="btn-usb-connect" class="flex items-center gap-1.5 px-3 py-1 rounded-full bg-navy-700 hover:bg-navy-600 text-slate-200 border border-navy-600 hover:border-brand/40 transition-colors" title="Hubungkan Printer Thermal via USB">
+          <svg class="w-3.5 h-3.5 text-brand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="7" y="2" width="10" height="7" rx="1"/>
+            <rect x="5" y="9" width="14" height="11" rx="2"/>
+            <line x1="9" y1="5" x2="9" y2="7"/>
+            <line x1="15" y1="5" x2="15" y2="7"/>
+          </svg>
+          <span id="usb-printer-name" class="font-medium">Hubungkan Printer USB</span>
+          <span id="usb-status-dot" class="w-2 h-2 rounded-full bg-slate-500"></span>
         </button>
 
         <!-- Language Switcher: ID / EN -->
@@ -1275,9 +1292,9 @@
                 <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6.5 6.5l11 11L12 23V1l5.5 5.5-11 11"/></svg>
                 <span id="lbl-btn-print-bt">Cetak BT</span>
               </button>
-              <button type="button" id="btn-browser-print" class="py-2.5 px-2 rounded-lg bg-navy-700 hover:bg-navy-600 text-slate-200 font-semibold text-xs flex items-center justify-center gap-1.5 border border-navy-600 transition-colors">
+              <button type="button" id="btn-browser-print" class="py-2.5 px-2 rounded-lg bg-navy-700 hover:bg-navy-600 text-slate-200 font-semibold text-xs flex items-center justify-center gap-1.5 border border-navy-600 transition-colors" title="Cetak ke Printer USB via WebUSB atau Windows Driver">
                 <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-                <span id="lbl-btn-print-browser">Cetak Browser</span>
+                <span id="lbl-btn-print-browser">Cetak USB / Driver</span>
               </button>
               <button type="button" id="btn-share-wa" class="col-span-2 sm:col-span-1 py-2.5 px-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors">
                 <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
@@ -1555,28 +1572,41 @@
             </div>
           </div>
 
-          <!-- Bluetooth & Thermal Printer Diagnostic & Test Section -->
+          <!-- Bluetooth & USB Thermal Printer Diagnostic & Test Section -->
           <div class="pt-3 border-t border-navy-700/80 bg-navy-900/60 p-4 rounded-xl border border-navy-700">
-            <div class="flex items-center justify-between mb-3">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
               <div class="flex items-center gap-2">
                 <div class="w-8 h-8 rounded-lg bg-brand/10 border border-brand/30 flex items-center justify-center text-brand">
-                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6.5 6.5l11 11L12 23V1l5.5 5.5-11 11"/></svg>
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="7" y="2" width="10" height="7" rx="1"/><rect x="5" y="9" width="14" height="11" rx="2"/><line x1="9" y1="5" x2="9" y2="7"/><line x1="15" y1="5" x2="15" y2="7"/></svg>
                 </div>
                 <div>
-                  <div class="font-bold text-slate-100 text-xs sm:text-sm" id="lbl-printer-diag-title">Pengujian & Status Printer Thermal</div>
-                  <div class="text-[11px] text-slate-400" id="lbl-printer-diag-sub">Periksa koneksi printer dan coba cetak contoh struk kasir</div>
+                  <div class="font-bold text-slate-100 text-xs sm:text-sm" id="lbl-printer-diag-title">Pengujian & Status Printer Thermal (Bluetooth & USB)</div>
+                  <div class="text-[11px] text-slate-400" id="lbl-printer-diag-sub">Periksa koneksi printer Bluetooth atau kabel USB dan coba cetak contoh struk kasir</div>
                 </div>
               </div>
-              <div id="settings-bt-status-badge" class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-700/60 text-slate-300 border border-slate-600 flex items-center gap-1.5">
-                <span class="w-2 h-2 rounded-full bg-slate-400"></span>
-                <span id="settings-bt-status-text">Belum Terhubung</span>
+              <div class="flex items-center gap-2 flex-wrap">
+                <!-- BT Status Badge -->
+                <div id="settings-bt-status-badge" class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-700/60 text-slate-300 border border-slate-600 flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-slate-400"></span>
+                  <span id="settings-bt-status-text">BT: Belum Terhubung</span>
+                </div>
+                <!-- USB Status Badge -->
+                <div id="settings-usb-status-badge" class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-700/60 text-slate-300 border border-slate-600 flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-slate-400"></span>
+                  <span id="settings-usb-status-text">USB: Belum Terhubung</span>
+                </div>
               </div>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
               <button type="button" id="btn-settings-bt-connect" class="py-2.5 px-3 rounded-lg bg-navy-800 hover:bg-navy-700 border border-brand/40 text-brand text-xs font-bold flex items-center justify-center gap-1.5 transition-colors">
                 <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6.5 6.5l11 11L12 23V1l5.5 5.5-11 11"/></svg>
                 <span id="lbl-btn-settings-connect">Hubungkan BT</span>
+              </button>
+
+              <button type="button" id="btn-settings-usb-connect" class="py-2.5 px-3 rounded-lg bg-navy-800 hover:bg-navy-700 border border-brand/40 text-brand text-xs font-bold flex items-center justify-center gap-1.5 transition-colors">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="7" y="2" width="10" height="7" rx="1"/><rect x="5" y="9" width="14" height="11" rx="2"/><line x1="9" y1="5" x2="9" y2="7"/><line x1="15" y1="5" x2="15" y2="7"/></svg>
+                <span id="lbl-btn-settings-usb-connect">Hubungkan USB</span>
               </button>
 
               <button type="button" id="btn-settings-bt-test" class="py-2.5 px-3 rounded-lg bg-brand hover:bg-brand-hover text-navy-950 text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-sm">
@@ -1586,12 +1616,12 @@
 
               <button type="button" id="btn-settings-browser-test" class="py-2.5 px-3 rounded-lg bg-navy-800 hover:bg-navy-700 border border-navy-600 text-slate-200 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors">
                 <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-                <span id="lbl-btn-settings-test-sys">Tes Cetak Browser</span>
+                <span id="lbl-btn-settings-test-sys">Tes Cetak USB / Driver</span>
               </button>
             </div>
 
             <p class="text-[11px] text-slate-400 mt-2.5 leading-relaxed" id="lbl-printer-diag-note">
-              Gunakan <strong>Tes Cetak BT</strong> untuk printer Bluetooth BLE langsung di Chrome/Edge. Untuk printer USB atau Bluetooth yang terpasang di Windows Driver, gunakan <strong>Tes Cetak Browser</strong>.
+              Gunakan <strong>Tes Cetak BT</strong> untuk printer Bluetooth BLE. Untuk printer kabel USB langsung, gunakan <strong>Hubungkan USB</strong> (WebUSB) atau <strong>Tes Cetak USB / Driver</strong> jika printer menggunakan Windows Driver.
             </p>
           </div>
 
@@ -1875,7 +1905,8 @@
   <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col space-y-2 pointer-events-none"></div>
 
   <!-- Scripts -->
-  <script src="/pos/bluetooth-print.js?v=2.8"></script>
-  <script src="/pos/app.js?v=2.8"></script>
+  <script src="/pos/bluetooth-print.js?v=2.9"></script>
+  <script src="/pos/usb-print.js?v=2.9"></script>
+  <script src="/pos/app.js?v=2.9"></script>
 </body>
 </html>

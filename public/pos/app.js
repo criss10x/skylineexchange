@@ -12,6 +12,7 @@ const i18n = {
     offline: 'Offline (Lokal)',
     syncQueueText: 'antrean offline',
     connectBt: 'Hubungkan Printer BT',
+    connectUsb: 'Hubungkan Printer USB',
     themeLight: 'Terang',
     themeDark: 'Gelap',
     badgeRequired: '[Wajib Diisi]',
@@ -112,7 +113,7 @@ const i18n = {
     rcptDisclaimer2: '* Uang yang sudah ditukar tidak dapat dikembalikan.',
     rcptThanks: 'TERIMA KASIH ATAS KUNJUNGAN ANDA',
     btnPrintBt: 'Cetak BT',
-    btnPrintBrowser: 'Cetak Browser',
+    btnPrintBrowser: 'Cetak USB / Driver',
     btnShareWa: 'Kirim WA',
 
     // Tab Rates
@@ -197,15 +198,20 @@ const i18n = {
     btnCopyScript: 'Salin Kode Script (1-Click)',
 
     // Pengujian & Status Printer
-    printerDiagTitle: 'Pengujian & Status Printer Thermal',
-    printerDiagSub: 'Periksa koneksi printer dan coba cetak contoh struk kasir',
+    printerDiagTitle: 'Pengujian & Status Printer Thermal (Bluetooth & USB)',
+    printerDiagSub: 'Periksa koneksi printer Bluetooth atau kabel USB dan coba cetak contoh struk kasir',
     btnSettingsConnect: 'Hubungkan BT',
     btnSettingsDisconnect: 'Putuskan BT',
+    btnSettingsConnectUsb: 'Hubungkan USB',
+    btnSettingsDisconnectUsb: 'Putuskan USB',
     btnSettingsTestBt: 'Tes Cetak BT',
-    btnSettingsTestSys: 'Tes Cetak Browser',
-    printerDiagNote: 'Gunakan Tes Cetak BT untuk printer Bluetooth BLE langsung di Chrome/Edge. Untuk printer USB atau Bluetooth yang terpasang di Windows Driver, gunakan Tes Cetak Browser.',
-    btDisconnectedText: 'Belum Terhubung',
-    btConnectedPrefix: 'Terhubung:'
+    btnSettingsTestSys: 'Tes Cetak USB / Driver',
+    printerDiagNote: 'Gunakan Tes Cetak BT untuk printer Bluetooth BLE. Untuk printer kabel USB langsung, gunakan Hubungkan USB (WebUSB) atau Tes Cetak USB / Driver jika printer menggunakan Windows Driver.',
+    btDisconnectedText: 'BT: Belum Terhubung',
+    btConnectedPrefix: 'BT: Terhubung',
+    usbDisconnectedText: 'USB: Belum Terhubung',
+    usbConnectedPrefix: 'USB: Terhubung',
+    connectUsb: 'Hubungkan Printer USB'
   },
   en: {
     // Header & Navigation
@@ -214,6 +220,7 @@ const i18n = {
     offline: 'Offline (Local)',
     syncQueueText: 'offline queued',
     connectBt: 'Connect BT Printer',
+    connectUsb: 'Connect USB Printer',
     themeLight: 'Light',
     themeDark: 'Dark',
     badgeRequired: '[Required]',
@@ -314,7 +321,7 @@ const i18n = {
     rcptDisclaimer2: '* Exchanged currency cannot be returned or refunded.',
     rcptThanks: 'THANK YOU FOR YOUR VISIT',
     btnPrintBt: 'Print BT',
-    btnPrintBrowser: 'System Print',
+    btnPrintBrowser: 'Print USB / Driver',
     btnShareWa: 'Share WA',
 
     // Tab Rates
@@ -399,15 +406,20 @@ const i18n = {
     btnCopyScript: 'Copy Script Code (1-Click)',
 
     // Printer Diagnostic & Testing
-    printerDiagTitle: 'Thermal Printer Status & Testing',
-    printerDiagSub: 'Verify printer connection and print a test sample receipt',
+    printerDiagTitle: 'Thermal Printer Status & Testing (Bluetooth & USB)',
+    printerDiagSub: 'Verify Bluetooth or USB printer connection and print a test sample receipt',
     btnSettingsConnect: 'Connect BT',
     btnSettingsDisconnect: 'Disconnect BT',
+    btnSettingsConnectUsb: 'Connect USB',
+    btnSettingsDisconnectUsb: 'Disconnect USB',
     btnSettingsTestBt: 'Test Print BT',
-    btnSettingsTestSys: 'Test System Print',
-    printerDiagNote: 'Use Test Print BT for direct BLE printers in Chrome/Edge. For USB or Bluetooth printers installed via Windows Driver, use Test System Print.',
-    btDisconnectedText: 'Not Connected',
-    btConnectedPrefix: 'Connected:'
+    btnSettingsTestSys: 'Test USB / Driver Print',
+    printerDiagNote: 'Use Test Print BT for direct BLE printers. For direct USB cable printers, use Connect USB (WebUSB) or Test USB / Driver Print if using Windows Printer Driver.',
+    btDisconnectedText: 'BT: Not Connected',
+    btConnectedPrefix: 'BT: Connected',
+    usbDisconnectedText: 'USB: Not Connected',
+    usbConnectedPrefix: 'USB: Connected',
+    connectUsb: 'Connect USB Printer'
   }
 };
 
@@ -462,8 +474,9 @@ async function authFetch(url, options = {}) {
   return res;
 }
 
-// Initialize Printer Instance
+// Initialize Printer Instances
 const printer = new window.BluetoothPrinter();
+const usbPrinter = typeof window.UsbPrinter !== 'undefined' ? new window.UsbPrinter() : null;
 
 // ==================== TOAST NOTIFICATION ====================
 function showToast(message, type = 'info') {
@@ -824,12 +837,26 @@ function setAppLanguage(lang) {
   safeSet('lbl-printer-diag-title', t.printerDiagTitle);
   safeSet('lbl-printer-diag-sub', t.printerDiagSub);
   safeSet('lbl-btn-settings-connect', printer.isConnected ? t.btnSettingsDisconnect : t.btnSettingsConnect);
+  safeSet('lbl-btn-settings-usb-connect', (usbPrinter && usbPrinter.isConnected) ? t.btnSettingsDisconnectUsb : t.btnSettingsConnectUsb);
   safeSet('lbl-btn-settings-test-bt', t.btnSettingsTestBt);
   safeSet('lbl-btn-settings-test-sys', t.btnSettingsTestSys);
   safeSet('lbl-printer-diag-note', t.printerDiagNote);
+  safeSet('lbl-btn-print-browser', t.btnPrintBrowser);
   const settingsStatusText = document.getElementById('settings-bt-status-text');
   if (settingsStatusText && !printer.isConnected) {
     settingsStatusText.textContent = t.btDisconnectedText;
+  }
+  const settingsUsbStatusText = document.getElementById('settings-usb-status-text');
+  if (settingsUsbStatusText && (!usbPrinter || !usbPrinter.isConnected)) {
+    settingsUsbStatusText.textContent = t.usbDisconnectedText;
+  }
+  const usbPrinterName = document.getElementById('usb-printer-name');
+  if (usbPrinterName && (!usbPrinter || !usbPrinter.isConnected)) {
+    usbPrinterName.textContent = t.connectUsb;
+  }
+  const btPrinterName = document.getElementById('bt-printer-name');
+  if (btPrinterName && !printer.isConnected) {
+    btPrinterName.textContent = t.connectBt;
   }
 
   // Google Sheets Card & Guide Modal
@@ -1607,8 +1634,16 @@ async function processTransaction() {
   // Update on-screen printable receipt
   renderReceiptData(payload);
 
-  // Attempt Bluetooth Print with chosen receipt language
-  if (printer.isConnected) {
+  // Attempt Thermal Print (USB or Bluetooth) with chosen receipt language
+  if (usbPrinter && usbPrinter.isConnected) {
+    try {
+      const escPosBytes = printer.buildEscPos(payload, state.settings, state.receiptLang);
+      await usbPrinter.print(escPosBytes);
+      showToast(isEn ? 'Receipt printed to USB printer!' : 'Struk berhasil dicetak ke printer USB!', 'success');
+    } catch (err) {
+      showToast(`${isEn ? 'USB print failed' : 'Gagal mencetak USB'}: ${err.message}`, 'error');
+    }
+  } else if (printer.isConnected) {
     try {
       const escPosBytes = printer.buildEscPos(payload, state.settings, state.receiptLang);
       await printer.print(escPosBytes);
@@ -1794,7 +1829,7 @@ async function handleTestBtPrint() {
   }
 }
 
-function handleTestBrowserPrint() {
+async function handleTestBrowserPrint() {
   const isEn = state.receiptLang === 'en';
   const now = new Date();
   const locale = isEn ? 'en-US' : 'id-ID';
@@ -1815,6 +1850,18 @@ function handleTestBrowserPrint() {
     ],
     created_at_formatted: now.toLocaleDateString(locale) + ' ' + now.toLocaleTimeString(locale)
   };
+
+  if (usbPrinter && usbPrinter.isConnected) {
+    try {
+      showToast(isEn ? 'Printing USB test receipt...' : 'Mencetak struk tes USB...', 'info');
+      const escPosBytes = printer.buildTestEscPos(state.settings, state.receiptLang);
+      await usbPrinter.print(escPosBytes);
+      showToast(isEn ? 'USB test receipt printed successfully!' : 'Struk tes USB berhasil dicetak!', 'success');
+      return;
+    } catch (err) {
+      console.warn('USB direct test print error, falling back to window.print():', err);
+    }
+  }
 
   const prev = state.currentReceipt;
   renderReceiptData(testTx);
@@ -1851,7 +1898,23 @@ function buildCurrentFormReceiptData() {
   };
 }
 
-function handleBrowserPrint() {
+async function handleBrowserPrint() {
+  const currentData = state.currentReceipt || buildCurrentFormReceiptData();
+  const isEn = state.appLang === 'en';
+
+  if (usbPrinter && usbPrinter.isConnected && currentData && currentData.items && currentData.items.length > 0) {
+    try {
+      showToast(isEn ? 'Printing via USB thermal printer...' : 'Mencetak lewat printer thermal USB...', 'info');
+      const escPosBytes = printer.buildEscPos(currentData, state.settings, state.receiptLang);
+      await usbPrinter.print(escPosBytes);
+      showToast(isEn ? 'Receipt printed via USB successfully!' : 'Struk berhasil dicetak lewat USB!', 'success');
+      return;
+    } catch (err) {
+      console.warn('WebUSB direct print error, falling back to system print:', err);
+      showToast(isEn ? 'Direct WebUSB failed, opening system print...' : 'Koneksi direct USB gagal, membuka dialog cetak sistem...', 'info');
+    }
+  }
+
   window.print();
 }
 
@@ -2260,15 +2323,16 @@ function initBluetoothUI() {
   printer.onStatusChange = ({ connected, status, text }) => {
     const isEn = state.appLang === 'en';
     if (connected) {
-      statusDot.className = 'w-2 h-2 rounded-full bg-brand animate-pulse';
-      nameLabel.textContent = text || (isEn ? 'Printer Connected' : 'Printer Terhubung');
-      btnConnect.classList.add('border-brand/60', 'text-brand');
+      if (statusDot) statusDot.className = 'w-2 h-2 rounded-full bg-brand animate-pulse';
+      if (nameLabel) nameLabel.textContent = text || (isEn ? 'Printer Connected' : 'Printer Terhubung');
+      if (btnConnect) btnConnect.classList.add('border-brand/60', 'text-brand');
 
       if (settingsStatusBadge) {
         settingsStatusBadge.className = 'px-2.5 py-1 rounded-full text-[11px] font-bold bg-brand/20 text-brand border border-brand/40 flex items-center gap-1.5';
       }
       if (settingsStatusText) {
-        settingsStatusText.textContent = text || (isEn ? 'Connected' : 'Terhubung');
+        const cleanName = (text || '').replace(/^Terhubung:\s*/i, '');
+        settingsStatusText.textContent = cleanName ? `BT: ${cleanName}` : (isEn ? 'BT: Connected' : 'BT: Terhubung');
       }
       if (btnSettingsConnect) {
         btnSettingsConnect.innerHTML = `
@@ -2279,15 +2343,15 @@ function initBluetoothUI() {
         btnSettingsConnect.classList.remove('border-brand/40', 'text-brand');
       }
     } else {
-      statusDot.className = 'w-2 h-2 rounded-full bg-slate-500';
-      nameLabel.textContent = i18n[state.appLang].connectBt;
-      btnConnect.classList.remove('border-brand/60', 'text-brand');
+      if (statusDot) statusDot.className = 'w-2 h-2 rounded-full bg-slate-500';
+      if (nameLabel) nameLabel.textContent = i18n[state.appLang].connectBt;
+      if (btnConnect) btnConnect.classList.remove('border-brand/60', 'text-brand');
 
       if (settingsStatusBadge) {
         settingsStatusBadge.className = 'px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-700/60 text-slate-300 border border-slate-600 flex items-center gap-1.5';
       }
       if (settingsStatusText) {
-        settingsStatusText.textContent = isEn ? 'Not Connected' : 'Belum Terhubung';
+        settingsStatusText.textContent = isEn ? 'BT: Not Connected' : 'BT: Belum Terhubung';
       }
       if (btnSettingsConnect) {
         btnSettingsConnect.innerHTML = `
@@ -2328,7 +2392,9 @@ function initBluetoothUI() {
     }
   };
 
-  btnConnect.addEventListener('click', handleToggleBt);
+  if (btnConnect) {
+    btnConnect.addEventListener('click', handleToggleBt);
+  }
   if (btnSettingsConnect) {
     btnSettingsConnect.addEventListener('click', handleToggleBt);
   }
@@ -2339,7 +2405,101 @@ function initBluetoothUI() {
     btnSettingsBrowserTest.addEventListener('click', handleTestBrowserPrint);
   }
 
-  btnDirectPrint.addEventListener('click', handleDirectBtPrint);
+  if (btnDirectPrint) {
+    btnDirectPrint.addEventListener('click', handleDirectBtPrint);
+  }
+}
+
+// ==================== USB PRINTER UI ====================
+function initUsbUI() {
+  if (!usbPrinter) return;
+
+  const btnConnect = document.getElementById('btn-usb-connect');
+  const nameLabel = document.getElementById('usb-printer-name');
+  const statusDot = document.getElementById('usb-status-dot');
+
+  const btnSettingsConnect = document.getElementById('btn-settings-usb-connect');
+  const settingsStatusBadge = document.getElementById('settings-usb-status-badge');
+  const settingsStatusText = document.getElementById('settings-usb-status-text');
+
+  usbPrinter.onStatusChange = ({ connected, status, text }) => {
+    const isEn = state.appLang === 'en';
+    if (connected) {
+      if (statusDot) statusDot.className = 'w-2 h-2 rounded-full bg-brand animate-pulse';
+      if (nameLabel) nameLabel.textContent = text || (isEn ? 'USB Connected' : 'USB Terhubung');
+      if (btnConnect) btnConnect.classList.add('border-brand/60', 'text-brand');
+
+      if (settingsStatusBadge) {
+        settingsStatusBadge.className = 'px-2.5 py-1 rounded-full text-[11px] font-bold bg-brand/20 text-brand border border-brand/40 flex items-center gap-1.5';
+      }
+      if (settingsStatusText) {
+        const cleanName = (text || '').replace(/^Terhubung:\s*/i, '');
+        settingsStatusText.textContent = cleanName ? `USB: ${cleanName}` : (isEn ? 'USB: Connected' : 'USB: Terhubung');
+      }
+      if (btnSettingsConnect) {
+        btnSettingsConnect.innerHTML = `
+          <svg class="w-3.5 h-3.5 text-rose-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          <span>${isEn ? 'Disconnect USB' : 'Putuskan USB'}</span>
+        `;
+        btnSettingsConnect.classList.add('border-rose-500/40', 'text-rose-400');
+        btnSettingsConnect.classList.remove('border-brand/40', 'text-brand');
+      }
+    } else {
+      if (statusDot) statusDot.className = 'w-2 h-2 rounded-full bg-slate-500';
+      if (nameLabel) nameLabel.textContent = i18n[state.appLang].connectUsb || (isEn ? 'Connect USB Printer' : 'Hubungkan Printer USB');
+      if (btnConnect) btnConnect.classList.remove('border-brand/60', 'text-brand');
+
+      if (settingsStatusBadge) {
+        settingsStatusBadge.className = 'px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-700/60 text-slate-300 border border-slate-600 flex items-center gap-1.5';
+      }
+      if (settingsStatusText) {
+        settingsStatusText.textContent = isEn ? 'USB: Not Connected' : 'USB: Belum Terhubung';
+      }
+      if (btnSettingsConnect) {
+        btnSettingsConnect.innerHTML = `
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="7" y="2" width="10" height="7" rx="1"/><rect x="5" y="9" width="14" height="11" rx="2"/><line x1="9" y1="5" x2="9" y2="7"/><line x1="15" y1="5" x2="15" y2="7"/></svg>
+          <span id="lbl-btn-settings-usb-connect">${isEn ? 'Connect USB' : 'Hubungkan USB'}</span>
+        `;
+        btnSettingsConnect.classList.remove('border-rose-500/40', 'text-rose-400');
+        btnSettingsConnect.classList.add('border-brand/40', 'text-brand');
+      }
+    }
+  };
+
+  const handleToggleUsb = async () => {
+    const isEn = state.appLang === 'en';
+    if (!usbPrinter.isSupported()) {
+      showToast(isEn 
+        ? 'WebUSB is not supported in this browser. Please use Google Chrome or Microsoft Edge on PC or Android.' 
+        : 'WebUSB tidak didukung di browser ini. Gunakan Google Chrome atau Microsoft Edge di PC atau Android.', 'warning');
+      return;
+    }
+
+    if (usbPrinter.isConnected) {
+      if (confirm(isEn ? 'Disconnect current USB thermal printer?' : 'Putuskan koneksi dengan printer thermal USB saat ini?')) {
+        await usbPrinter.disconnect();
+        showToast(isEn ? 'USB printer disconnected' : 'Printer USB diputuskan', 'info');
+      }
+      return;
+    }
+
+    try {
+      showToast(isEn ? 'Selecting USB thermal printer...' : 'Memilih printer thermal USB...', 'info');
+      const deviceName = await usbPrinter.connect();
+      showToast(`${isEn ? 'Connected to' : 'Terhubung ke'} ${deviceName}!`, 'success');
+    } catch (err) {
+      if (err.name !== 'NotFoundError') {
+        showToast(`USB: ${err.message}`, 'warning');
+      }
+    }
+  };
+
+  if (btnConnect) {
+    btnConnect.addEventListener('click', handleToggleUsb);
+  }
+  if (btnSettingsConnect) {
+    btnSettingsConnect.addEventListener('click', handleToggleUsb);
+  }
 }
 
 // ==================== EVENT LISTENERS SETUP ====================
@@ -3200,6 +3360,7 @@ window.handleDeleteUser = handleDeleteUser;
 document.addEventListener('DOMContentLoaded', async () => {
   initEventListeners();
   initBluetoothUI();
+  initUsbUI();
   initTheme();
 
   // Load Saved Language Preferences
