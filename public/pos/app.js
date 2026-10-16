@@ -761,7 +761,7 @@ function setAppLanguage(lang) {
 
   safeSet('lbl-total-idr', t.totalIdr);
   safeSet('lbl-payment-idr', t.paymentIdr);
-  safeSet('badge-req-payment', t.badgeRequired);
+  safeSet('badge-req-payment', t.badgeOptional);
   safeSet('lbl-exact-cash', t.exactCash);
   safeSet('lbl-change-idr', t.changeIdr);
   safeSet('badge-auto-change', t.badgeAutoCalc);
@@ -1452,8 +1452,9 @@ function renderCart() {
   document.getElementById('calc-total-idr').textContent = 'Rp ' + total.toLocaleString('id-ID');
   document.getElementById('calc-change-idr').textContent = 'Rp ' + change.toLocaleString('id-ID');
 
+  const effectivePayment = payment > 0 ? payment : total;
   document.getElementById('rcpt-total').textContent = 'Rp ' + total.toLocaleString('id-ID');
-  document.getElementById('rcpt-payment').textContent = 'Rp ' + payment.toLocaleString('id-ID');
+  document.getElementById('rcpt-payment').textContent = 'Rp ' + effectivePayment.toLocaleString('id-ID');
   document.getElementById('rcpt-change').textContent = 'Rp ' + change.toLocaleString('id-ID');
 
   updateLiveReceiptMetadata();
