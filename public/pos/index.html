@@ -51,6 +51,10 @@
   <style>
     /* Custom Print CSS for 80mm & 58mm Thermal Printers */
     @media print {
+      @page {
+        size: auto;
+        margin: 0mm;
+      }
       html, body {
         width: 100% !important;
         height: auto !important;
@@ -60,55 +64,94 @@
         background: #fff !important;
         overflow: visible !important;
       }
-      body * {
-        visibility: hidden;
+      /* Hide all non-printable elements completely so they take 0 layout space */
+      header,
+      nav,
+      #toast-container,
+      .no-print,
+      #tab-rates,
+      #tab-delivery,
+      #tab-history,
+      #tab-settings,
+      #tab-sheets,
+      .lg\:col-span-7,
+      #btn-direct-bt-print,
+      #btn-browser-print,
+      #btn-share-wa,
+      .receipt-actions,
+      #input-signature-customer,
+      #lbl-sign-prompt,
+      #modal-reset-user-pwd,
+      #modal-edit-rate,
+      #modal-sheets-guide,
+      #modal-user-mgmt,
+      #modal-printer-guide {
+        display: none !important;
       }
-      .tab-content, .lg\:col-span-5, .bg-navy-800, .bg-navy-950, #receipt-container-wrapper {
+
+      /* Ensure tab containers and receipt wrappers do not collapse or add margins */
+      main,
+      #tab-pos,
+      #tab-pos.hidden,
+      .tab-content,
+      .tab-content.hidden,
+      .grid,
+      .lg\:grid-cols-12,
+      .lg\:col-span-5,
+      #receipt-container-wrapper {
+        display: block !important;
+        visibility: visible !important;
+        position: static !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        box-shadow: none !important;
+        background: transparent !important;
         overflow: visible !important;
         max-height: none !important;
         height: auto !important;
-        position: static !important;
-        border: none !important;
-        box-shadow: none !important;
-        padding: 0 !important;
-        margin: 0 !important;
       }
-      #printable-receipt, #printable-receipt * {
+
+      body * {
+        visibility: hidden;
+      }
+
+      /* Position receipt precisely at top-left of thermal paper roll */
+      #printable-receipt,
+      #printable-receipt * {
         visibility: visible !important;
+        color: #000 !important;
       }
       #printable-receipt {
-        position: static !important;
-        margin: 0 auto !important;
-        padding: 2mm 3mm 8mm 3mm !important;
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
+        margin: 0 !important;
+        padding: 2mm 3mm 6mm 3mm !important;
         font-family: 'Courier New', Courier, monospace !important;
         line-height: 1.25 !important;
         color: #000 !important;
         background: #fff !important;
         box-shadow: none !important;
-        overflow: visible !important;
-        max-height: none !important;
-        height: auto !important;
+        border: none !important;
         page-break-inside: avoid !important;
       }
-      #printable-receipt::before, #printable-receipt::after {
+      #printable-receipt::before,
+      #printable-receipt::after {
         display: none !important;
       }
-      .no-print, #input-signature-customer, #lbl-sign-prompt {
-        display: none !important;
-      }
+
       body.paper-58mm #printable-receipt {
         width: 58mm !important;
         max-width: 58mm !important;
         font-size: 11px !important;
       }
-      body.paper-80mm #printable-receipt, body:not(.paper-58mm) #printable-receipt {
+      body.paper-80mm #printable-receipt,
+      body:not(.paper-58mm) #printable-receipt {
         width: 80mm !important;
         max-width: 80mm !important;
         font-size: 12.5px !important;
-      }
-      @page {
-        size: auto;
-        margin: 0mm;
       }
     }
 
@@ -318,9 +361,12 @@
     html.light #btn-usb-connect,
     html.light #btn-settings-bt-connect,
     html.light #btn-settings-usb-connect,
+    html.light #btn-settings-serial-connect,
     html.light #btn-settings-browser-test,
     html.light #settings-bt-status-badge,
     html.light #settings-usb-status-badge,
+    html.light #settings-serial-status-badge,
+    html.light #btn-open-printer-guide,
     html.light .flex.items-center.p-0\.5.rounded-lg.bg-navy-800,
     html.light .hidden.md\:flex.items-center.px-2\.5.py-1.rounded-lg.bg-navy-800 {
       background-color: #f1f5f9 !important;
@@ -332,7 +378,9 @@
     html.light #btn-usb-connect:hover,
     html.light #btn-settings-bt-connect:hover,
     html.light #btn-settings-usb-connect:hover,
-    html.light #btn-settings-browser-test:hover {
+    html.light #btn-settings-serial-connect:hover,
+    html.light #btn-settings-browser-test:hover,
+    html.light #btn-open-printer-guide:hover {
       background-color: #e2e8f0 !important;
       border-color: #94a3b8 !important;
     }
@@ -1572,7 +1620,7 @@
             </div>
           </div>
 
-          <!-- Bluetooth & USB Thermal Printer Diagnostic & Test Section -->
+          <!-- Bluetooth, USB & Serial Thermal Printer Diagnostic & Test Section -->
           <div class="pt-3 border-t border-navy-700/80 bg-navy-900/60 p-4 rounded-xl border border-navy-700">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
               <div class="flex items-center gap-2">
@@ -1580,8 +1628,8 @@
                   <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="7" y="2" width="10" height="7" rx="1"/><rect x="5" y="9" width="14" height="11" rx="2"/><line x1="9" y1="5" x2="9" y2="7"/><line x1="15" y1="5" x2="15" y2="7"/></svg>
                 </div>
                 <div>
-                  <div class="font-bold text-slate-100 text-xs sm:text-sm" id="lbl-printer-diag-title">Pengujian & Status Printer Thermal (Bluetooth & USB)</div>
-                  <div class="text-[11px] text-slate-400" id="lbl-printer-diag-sub">Periksa koneksi printer Bluetooth atau kabel USB dan coba cetak contoh struk kasir</div>
+                  <div class="font-bold text-slate-100 text-xs sm:text-sm" id="lbl-printer-diag-title">Pengujian & Status Printer Thermal (Bluetooth, USB & Serial COM)</div>
+                  <div class="text-[11px] text-slate-400" id="lbl-printer-diag-sub">Periksa koneksi printer Bluetooth, kabel USB, atau Serial COM yang sudah Paired di Windows</div>
                 </div>
               </div>
               <div class="flex items-center gap-2 flex-wrap">
@@ -1594,6 +1642,11 @@
                 <div id="settings-usb-status-badge" class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-700/60 text-slate-300 border border-slate-600 flex items-center gap-1.5">
                   <span class="w-2 h-2 rounded-full bg-slate-400"></span>
                   <span id="settings-usb-status-text">USB: Belum Terhubung</span>
+                </div>
+                <!-- Serial / COM Status Badge -->
+                <div id="settings-serial-status-badge" class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-700/60 text-slate-300 border border-slate-600 flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-slate-400"></span>
+                  <span id="settings-serial-status-text">Serial COM: Belum Terhubung</span>
                 </div>
               </div>
             </div>
@@ -1609,9 +1662,9 @@
                 <span id="lbl-btn-settings-usb-connect">Hubungkan USB</span>
               </button>
 
-              <button type="button" id="btn-settings-bt-test" class="py-2.5 px-3 rounded-lg bg-brand hover:bg-brand-hover text-navy-950 text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-sm">
-                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-                <span id="lbl-btn-settings-test-bt">Tes Cetak BT</span>
+              <button type="button" id="btn-settings-serial-connect" class="py-2.5 px-3 rounded-lg bg-navy-800 hover:bg-navy-700 border border-brand/40 text-brand text-xs font-bold flex items-center justify-center gap-1.5 transition-colors" title="Hubungkan Printer Bluetooth Paired atau USB Serial via Port COM">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M3 12h3m12 0h3M12 3v3m0 12v3"/></svg>
+                <span id="lbl-btn-settings-serial-connect">Hubungkan Serial / COM</span>
               </button>
 
               <button type="button" id="btn-settings-browser-test" class="py-2.5 px-3 rounded-lg bg-navy-800 hover:bg-navy-700 border border-navy-600 text-slate-200 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors">
@@ -1620,9 +1673,15 @@
               </button>
             </div>
 
-            <p class="text-[11px] text-slate-400 mt-2.5 leading-relaxed" id="lbl-printer-diag-note">
-              Gunakan <strong>Tes Cetak BT</strong> untuk printer Bluetooth BLE. Untuk printer kabel USB langsung, gunakan <strong>Hubungkan USB</strong> (WebUSB) atau <strong>Tes Cetak USB / Driver</strong> jika printer menggunakan Windows Driver.
-            </p>
+            <div class="mt-3 pt-3 border-t border-navy-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <p class="text-[11px] text-slate-400 leading-relaxed" id="lbl-printer-diag-note">
+                Printer Bluetooth sudah berstatus <strong>"Paired"</strong> di Windows? Hubungkan lewat <strong>Serial / COM</strong> atau langsung cetak lewat <strong>Tes Cetak USB / Driver</strong>.
+              </p>
+              <button type="button" id="btn-open-printer-guide" class="shrink-0 px-3 py-1.5 rounded-lg bg-navy-800 hover:bg-navy-700 text-brand border border-brand/40 text-xs font-bold flex items-center gap-1.5 transition-colors">
+                <span>❓</span>
+                <span id="lbl-btn-printer-guide">Panduan Printer Paired / Driver</span>
+              </button>
+            </div>
           </div>
 
           <div class="pt-2 border-t border-navy-700/80">
@@ -1901,12 +1960,74 @@
     </div>
   </div>
 
+  <!-- ==================== MODAL: PANDUAN PRINTER THERMAL (PAIRED / DRIVER) ==================== -->
+  <div id="modal-printer-guide" class="fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-3 hidden">
+    <div class="bg-navy-800 border border-navy-700 rounded-2xl w-full max-w-lg p-5 sm:p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between pb-3 border-b border-navy-700">
+        <div class="flex items-center gap-2">
+          <span class="text-xl">🖨️</span>
+          <h3 class="font-bold text-white text-base sm:text-lg">Panduan Printer Kasir (Paired / Driver)</h3>
+        </div>
+        <button type="button" id="btn-close-modal-printer-guide" class="text-slate-400 hover:text-white text-2xl font-bold leading-none">&times;</button>
+      </div>
+
+      <div class="space-y-4 text-xs sm:text-sm text-slate-300">
+        <!-- Kasus 1: Printer Paired di Windows Bluetooth -->
+        <div class="p-3.5 rounded-xl bg-navy-900 border border-navy-700 space-y-2">
+          <div class="font-bold text-brand flex items-center gap-1.5">
+            <span>🔵</span>
+            <span>Kasus 1: Printer Berstatus "Paired" di Windows Bluetooth</span>
+          </div>
+          <p class="leading-relaxed text-slate-300">
+            Di Windows, printer Bluetooth yang berstatus <em>Paired</em> beroperasi lewat <strong>Virtual COM Port (Bluetooth Serial)</strong> atau terdaftar sebagai Printer Windows.
+          </p>
+          <div class="bg-navy-950 p-2.5 rounded-lg border border-navy-800 space-y-1.5 text-xs">
+            <div class="font-semibold text-slate-200">Cara Mencetak:</div>
+            <div><strong>Opsi A (Paling Mudah):</strong> Klik tombol <strong class="text-white bg-navy-700 px-1.5 py-0.5 rounded">Cetak USB / Driver</strong>. Di jendela cetak Chrome, pilih nama printer Anda di <em>Destination</em>.</div>
+            <div><strong>Opsi B (Direct ESC/POS):</strong> Klik <strong class="text-brand bg-navy-800 px-1.5 py-0.5 rounded">Hubungkan Serial / COM</strong>, lalu pilih port COM printer Bluetooth Anda. Struk akan keluar langsung tanpa dialog cetak.</div>
+          </div>
+        </div>
+
+        <!-- Kasus 2: Printer Kabel USB -->
+        <div class="p-3.5 rounded-xl bg-navy-900 border border-navy-700 space-y-2">
+          <div class="font-bold text-emerald-400 flex items-center gap-1.5">
+            <span>🔌</span>
+            <span>Kasus 2: Printer Menggunakan Kabel USB</span>
+          </div>
+          <div class="bg-navy-950 p-2.5 rounded-lg border border-navy-800 space-y-1.5 text-xs">
+            <div><strong>Jika Driver Windows Sudah Terpasang:</strong> Port USB dikunci eksklusif oleh Windows. Cukup klik tombol <strong class="text-white bg-navy-700 px-1.5 py-0.5 rounded">Cetak USB / Driver</strong>.</div>
+            <div><strong>Jika Tanpa Driver Windows:</strong> Klik <strong class="text-brand bg-navy-800 px-1.5 py-0.5 rounded">Hubungkan USB</strong> untuk mengirim data langsung via WebUSB.</div>
+          </div>
+        </div>
+
+        <!-- Tips Pengaturan Jendela Cetak Chrome -->
+        <div class="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs space-y-1.5">
+          <div class="font-bold flex items-center gap-1 text-amber-300">
+            <span>⚙️</span>
+            <span>Tips Cetak Rapi di Jendela Browser (Cetak USB / Driver):</span>
+          </div>
+          <ul class="list-disc list-inside space-y-1 text-slate-300 pl-1">
+            <li><strong>Destination (Tujuan):</strong> Pilih printer thermal Anda (contoh: POS-58, POS-80, atau nama printer kasir Anda).</li>
+            <li><strong>Paper Size (Ukuran Kertas):</strong> Pilih Roll Paper / 80mm / 58mm.</li>
+            <li><strong>Margins (Margin):</strong> Pilih <strong>None (Tidak Ada)</strong> agar struk pas dan tidak terpotong.</li>
+            <li><strong>Headers and footers:</strong> Hilangkan centang agar URL dan tanggal website tidak tercetak di struk.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="pt-2 flex justify-end">
+        <button type="button" id="btn-done-modal-printer-guide" class="py-2 px-5 rounded-lg bg-brand hover:bg-brand-hover text-navy-950 font-bold text-xs sm:text-sm">Saya Mengerti</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Notification Toast Container -->
   <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col space-y-2 pointer-events-none"></div>
 
   <!-- Scripts -->
-  <script src="/pos/bluetooth-print.js?v=2.9"></script>
-  <script src="/pos/usb-print.js?v=2.9"></script>
-  <script src="/pos/app.js?v=2.9"></script>
+  <script src="/pos/bluetooth-print.js?v=3.0"></script>
+  <script src="/pos/usb-print.js?v=3.0"></script>
+  <script src="/pos/serial-print.js?v=3.0"></script>
+  <script src="/pos/app.js?v=3.0"></script>
 </body>
 </html>

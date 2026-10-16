@@ -198,20 +198,25 @@ const i18n = {
     btnCopyScript: 'Salin Kode Script (1-Click)',
 
     // Pengujian & Status Printer
-    printerDiagTitle: 'Pengujian & Status Printer Thermal (Bluetooth & USB)',
-    printerDiagSub: 'Periksa koneksi printer Bluetooth atau kabel USB dan coba cetak contoh struk kasir',
+    printerDiagTitle: 'Pengujian & Status Printer Thermal (Bluetooth, USB & Serial COM)',
+    printerDiagSub: 'Periksa koneksi printer Bluetooth, kabel USB, atau Serial COM yang sudah Paired di Windows',
     btnSettingsConnect: 'Hubungkan BT',
     btnSettingsDisconnect: 'Putuskan BT',
     btnSettingsConnectUsb: 'Hubungkan USB',
     btnSettingsDisconnectUsb: 'Putuskan USB',
+    btnSettingsConnectSerial: 'Hubungkan Serial / COM',
+    btnSettingsDisconnectSerial: 'Putuskan Serial / COM',
     btnSettingsTestBt: 'Tes Cetak BT',
     btnSettingsTestSys: 'Tes Cetak USB / Driver',
-    printerDiagNote: 'Gunakan Tes Cetak BT untuk printer Bluetooth BLE. Untuk printer kabel USB langsung, gunakan Hubungkan USB (WebUSB) atau Tes Cetak USB / Driver jika printer menggunakan Windows Driver.',
+    printerDiagNote: 'Printer Bluetooth sudah berstatus "Paired" di Windows? Hubungkan lewat Serial / COM atau langsung cetak lewat Tes Cetak USB / Driver.',
     btDisconnectedText: 'BT: Belum Terhubung',
     btConnectedPrefix: 'BT: Terhubung',
     usbDisconnectedText: 'USB: Belum Terhubung',
     usbConnectedPrefix: 'USB: Terhubung',
-    connectUsb: 'Hubungkan Printer USB'
+    serialDisconnectedText: 'Serial COM: Belum Terhubung',
+    serialConnectedPrefix: 'Serial COM: Terhubung',
+    connectUsb: 'Hubungkan Printer USB',
+    lblBtnPrinterGuide: 'Panduan Printer Paired / Driver'
   },
   en: {
     // Header & Navigation
@@ -406,20 +411,25 @@ const i18n = {
     btnCopyScript: 'Copy Script Code (1-Click)',
 
     // Printer Diagnostic & Testing
-    printerDiagTitle: 'Thermal Printer Status & Testing (Bluetooth & USB)',
-    printerDiagSub: 'Verify Bluetooth or USB printer connection and print a test sample receipt',
+    printerDiagTitle: 'Thermal Printer Status & Testing (Bluetooth, USB & Serial COM)',
+    printerDiagSub: 'Verify Bluetooth, USB cable, or paired Windows Bluetooth COM port printer and print a sample receipt',
     btnSettingsConnect: 'Connect BT',
     btnSettingsDisconnect: 'Disconnect BT',
     btnSettingsConnectUsb: 'Connect USB',
     btnSettingsDisconnectUsb: 'Disconnect USB',
+    btnSettingsConnectSerial: 'Connect Serial / COM',
+    btnSettingsDisconnectSerial: 'Disconnect Serial / COM',
     btnSettingsTestBt: 'Test Print BT',
     btnSettingsTestSys: 'Test USB / Driver Print',
-    printerDiagNote: 'Use Test Print BT for direct BLE printers. For direct USB cable printers, use Connect USB (WebUSB) or Test USB / Driver Print if using Windows Printer Driver.',
+    printerDiagNote: 'Bluetooth printer already paired in Windows? Connect via Serial / COM or print directly using Test USB / Driver Print.',
     btDisconnectedText: 'BT: Not Connected',
     btConnectedPrefix: 'BT: Connected',
     usbDisconnectedText: 'USB: Not Connected',
     usbConnectedPrefix: 'USB: Connected',
-    connectUsb: 'Connect USB Printer'
+    serialDisconnectedText: 'Serial COM: Not Connected',
+    serialConnectedPrefix: 'Serial COM: Connected',
+    connectUsb: 'Connect USB Printer',
+    lblBtnPrinterGuide: 'Paired Printer & Driver Guide'
   }
 };
 
@@ -477,6 +487,7 @@ async function authFetch(url, options = {}) {
 // Initialize Printer Instances
 const printer = new window.BluetoothPrinter();
 const usbPrinter = typeof window.UsbPrinter !== 'undefined' ? new window.UsbPrinter() : null;
+const serialPrinter = typeof window.SerialPrinter !== 'undefined' ? new window.SerialPrinter() : null;
 
 // ==================== TOAST NOTIFICATION ====================
 function showToast(message, type = 'info') {
@@ -838,6 +849,8 @@ function setAppLanguage(lang) {
   safeSet('lbl-printer-diag-sub', t.printerDiagSub);
   safeSet('lbl-btn-settings-connect', printer.isConnected ? t.btnSettingsDisconnect : t.btnSettingsConnect);
   safeSet('lbl-btn-settings-usb-connect', (usbPrinter && usbPrinter.isConnected) ? t.btnSettingsDisconnectUsb : t.btnSettingsConnectUsb);
+  safeSet('lbl-btn-settings-serial-connect', (serialPrinter && serialPrinter.isConnected) ? t.btnSettingsDisconnectSerial : t.btnSettingsConnectSerial);
+  safeSet('lbl-btn-printer-guide', t.lblBtnPrinterGuide);
   safeSet('lbl-btn-settings-test-bt', t.btnSettingsTestBt);
   safeSet('lbl-btn-settings-test-sys', t.btnSettingsTestSys);
   safeSet('lbl-printer-diag-note', t.printerDiagNote);
@@ -849,6 +862,10 @@ function setAppLanguage(lang) {
   const settingsUsbStatusText = document.getElementById('settings-usb-status-text');
   if (settingsUsbStatusText && (!usbPrinter || !usbPrinter.isConnected)) {
     settingsUsbStatusText.textContent = t.usbDisconnectedText;
+  }
+  const settingsSerialStatusText = document.getElementById('settings-serial-status-text');
+  if (settingsSerialStatusText && (!serialPrinter || !serialPrinter.isConnected)) {
+    settingsSerialStatusText.textContent = t.serialDisconnectedText;
   }
   const usbPrinterName = document.getElementById('usb-printer-name');
   if (usbPrinterName && (!usbPrinter || !usbPrinter.isConnected)) {
@@ -1634,8 +1651,16 @@ async function processTransaction() {
   // Update on-screen printable receipt
   renderReceiptData(payload);
 
-  // Attempt Thermal Print (USB or Bluetooth) with chosen receipt language
-  if (usbPrinter && usbPrinter.isConnected) {
+  // Attempt Thermal Print (Serial / COM, USB, or Bluetooth) with chosen receipt language
+  if (serialPrinter && serialPrinter.isConnected) {
+    try {
+      const escPosBytes = printer.buildEscPos(payload, state.settings, state.receiptLang);
+      await serialPrinter.print(escPosBytes);
+      showToast(isEn ? 'Receipt printed to Serial / COM printer!' : 'Struk berhasil dicetak ke printer Serial / COM!', 'success');
+    } catch (err) {
+      showToast(`${isEn ? 'Serial print failed' : 'Gagal mencetak Serial'}: ${err.message}`, 'error');
+    }
+  } else if (usbPrinter && usbPrinter.isConnected) {
     try {
       const escPosBytes = printer.buildEscPos(payload, state.settings, state.receiptLang);
       await usbPrinter.print(escPosBytes);
@@ -1851,6 +1876,18 @@ async function handleTestBrowserPrint() {
     created_at_formatted: now.toLocaleDateString(locale) + ' ' + now.toLocaleTimeString(locale)
   };
 
+  if (serialPrinter && serialPrinter.isConnected) {
+    try {
+      showToast(isEn ? 'Printing Serial / COM test receipt...' : 'Mencetak struk tes Serial / COM...', 'info');
+      const escPosBytes = printer.buildTestEscPos(state.settings, state.receiptLang);
+      await serialPrinter.print(escPosBytes);
+      showToast(isEn ? 'Serial / COM test receipt printed successfully!' : 'Struk tes Serial / COM berhasil dicetak!', 'success');
+      return;
+    } catch (err) {
+      console.warn('Serial test print error, falling back to other methods:', err);
+    }
+  }
+
   if (usbPrinter && usbPrinter.isConnected) {
     try {
       showToast(isEn ? 'Printing USB test receipt...' : 'Mencetak struk tes USB...', 'info');
@@ -1865,8 +1902,19 @@ async function handleTestBrowserPrint() {
 
   const prev = state.currentReceipt;
   renderReceiptData(testTx);
+
+  const tabPos = document.getElementById('tab-pos');
+  const wasHidden = tabPos && tabPos.classList.contains('hidden');
+  if (wasHidden) tabPos.classList.remove('hidden');
+
   window.print();
-  if (prev) {
+
+  if (wasHidden) {
+    setTimeout(() => {
+      tabPos.classList.add('hidden');
+      if (prev) renderReceiptData(prev);
+    }, 500);
+  } else if (prev) {
     setTimeout(() => renderReceiptData(prev), 1000);
   }
 }
@@ -1902,7 +1950,27 @@ async function handleBrowserPrint() {
   const currentData = state.currentReceipt || buildCurrentFormReceiptData();
   const isEn = state.appLang === 'en';
 
-  if (usbPrinter && usbPrinter.isConnected && currentData && currentData.items && currentData.items.length > 0) {
+  if (!currentData || !currentData.items || currentData.items.length === 0) {
+    showToast(isEn ? 'Add transaction items first' : 'Tambahkan item transaksi terlebih dahulu', 'warning');
+    return;
+  }
+
+  // Always refresh on-screen printable receipt DOM before printing
+  renderReceiptData(currentData);
+
+  if (serialPrinter && serialPrinter.isConnected) {
+    try {
+      showToast(isEn ? 'Printing via Serial / COM...' : 'Mencetak lewat Serial / COM...', 'info');
+      const escPosBytes = printer.buildEscPos(currentData, state.settings, state.receiptLang);
+      await serialPrinter.print(escPosBytes);
+      showToast(isEn ? 'Receipt printed via Serial / COM!' : 'Struk berhasil dicetak lewat Serial / COM!', 'success');
+      return;
+    } catch (err) {
+      console.warn('Serial print error, falling back to system print:', err);
+    }
+  }
+
+  if (usbPrinter && usbPrinter.isConnected) {
     try {
       showToast(isEn ? 'Printing via USB thermal printer...' : 'Mencetak lewat printer thermal USB...', 'info');
       const escPosBytes = printer.buildEscPos(currentData, state.settings, state.receiptLang);
@@ -1915,7 +1983,15 @@ async function handleBrowserPrint() {
     }
   }
 
+  const tabPos = document.getElementById('tab-pos');
+  const wasHidden = tabPos && tabPos.classList.contains('hidden');
+  if (wasHidden) tabPos.classList.remove('hidden');
+
   window.print();
+
+  if (wasHidden) {
+    setTimeout(() => tabPos.classList.add('hidden'), 500);
+  }
 }
 
 function handleShareWhatsApp() {
@@ -2499,6 +2575,107 @@ function initUsbUI() {
   }
   if (btnSettingsConnect) {
     btnSettingsConnect.addEventListener('click', handleToggleUsb);
+  }
+}
+
+// ==================== SERIAL / COM PRINTER UI ====================
+function initSerialUI() {
+  if (!serialPrinter) return;
+
+  const btnSettingsConnect = document.getElementById('btn-settings-serial-connect');
+  const settingsStatusBadge = document.getElementById('settings-serial-status-badge');
+  const settingsStatusText = document.getElementById('settings-serial-status-text');
+
+  serialPrinter.onStatusChange = ({ connected, status, text }) => {
+    const isEn = state.appLang === 'en';
+    if (connected) {
+      if (settingsStatusBadge) {
+        settingsStatusBadge.className = 'px-2.5 py-1 rounded-full text-[11px] font-bold bg-brand/20 text-brand border border-brand/40 flex items-center gap-1.5';
+      }
+      if (settingsStatusText) {
+        const cleanName = (text || '').replace(/^Terhubung:\s*/i, '');
+        settingsStatusText.textContent = cleanName ? `Serial: ${cleanName}` : (isEn ? 'Serial COM: Connected' : 'Serial COM: Terhubung');
+      }
+      if (btnSettingsConnect) {
+        btnSettingsConnect.innerHTML = `
+          <svg class="w-3.5 h-3.5 text-rose-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          <span>${isEn ? 'Disconnect Serial' : 'Putuskan Serial'}</span>
+        `;
+        btnSettingsConnect.classList.add('border-rose-500/40', 'text-rose-400');
+        btnSettingsConnect.classList.remove('border-brand/40', 'text-brand');
+      }
+    } else {
+      if (settingsStatusBadge) {
+        settingsStatusBadge.className = 'px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-700/60 text-slate-300 border border-slate-600 flex items-center gap-1.5';
+      }
+      if (settingsStatusText) {
+        settingsStatusText.textContent = isEn ? 'Serial COM: Not Connected' : 'Serial COM: Belum Terhubung';
+      }
+      if (btnSettingsConnect) {
+        btnSettingsConnect.innerHTML = `
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M3 12h3m12 0h3M12 3v3m0 12v3"/></svg>
+          <span id="lbl-btn-settings-serial-connect">${isEn ? 'Connect Serial / COM' : 'Hubungkan Serial / COM'}</span>
+        `;
+        btnSettingsConnect.classList.remove('border-rose-500/40', 'text-rose-400');
+        btnSettingsConnect.classList.add('border-brand/40', 'text-brand');
+      }
+    }
+  };
+
+  const handleToggleSerial = async () => {
+    const isEn = state.appLang === 'en';
+    if (!serialPrinter.isSupported()) {
+      showToast(isEn 
+        ? 'Web Serial is not supported in this browser. Please use Google Chrome or Microsoft Edge on PC.' 
+        : 'Web Serial tidak didukung di browser ini. Gunakan Google Chrome atau Microsoft Edge di PC.', 'warning');
+      return;
+    }
+
+    if (serialPrinter.isConnected) {
+      if (confirm(isEn ? 'Disconnect current Serial / COM printer?' : 'Putuskan koneksi dengan printer Serial / COM saat ini?')) {
+        await serialPrinter.disconnect();
+        showToast(isEn ? 'Serial printer disconnected' : 'Printer Serial diputuskan', 'info');
+      }
+      return;
+    }
+
+    try {
+      showToast(isEn ? 'Selecting Serial / Bluetooth COM port...' : 'Memilih port Serial / Bluetooth COM...', 'info');
+      const portName = await serialPrinter.connect();
+      showToast(`${isEn ? 'Connected to' : 'Terhubung ke'} ${portName}!`, 'success');
+    } catch (err) {
+      if (err.name !== 'NotFoundError') {
+        showToast(`Serial: ${err.message}`, 'warning');
+      }
+    }
+  };
+
+  if (btnSettingsConnect) {
+    btnSettingsConnect.addEventListener('click', handleToggleSerial);
+  }
+}
+
+// ==================== PRINTER TROUBLESHOOTING GUIDE MODAL ====================
+function initPrinterGuideModal() {
+  const modal = document.getElementById('modal-printer-guide');
+  const btnOpen = document.getElementById('btn-open-printer-guide');
+  const btnClose = document.getElementById('btn-close-modal-printer-guide');
+  const btnDone = document.getElementById('btn-done-modal-printer-guide');
+
+  if (btnOpen) {
+    btnOpen.addEventListener('click', () => {
+      if (modal) modal.classList.remove('hidden');
+    });
+  }
+  if (btnClose) {
+    btnClose.addEventListener('click', () => {
+      if (modal) modal.classList.add('hidden');
+    });
+  }
+  if (btnDone) {
+    btnDone.addEventListener('click', () => {
+      if (modal) modal.classList.add('hidden');
+    });
   }
 }
 
@@ -3361,6 +3538,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   initEventListeners();
   initBluetoothUI();
   initUsbUI();
+  initSerialUI();
+  initPrinterGuideModal();
   initTheme();
 
   // Load Saved Language Preferences
