@@ -1,0 +1,54 @@
+[
+  {
+    "key": "store_name",
+    "value": "Skyline Exchange"
+  },
+  {
+    "key": "store_address",
+    "value": "Jl. Bypass Ngurah Rai No. 4X, Kuta, Bali"
+  },
+  {
+    "key": "store_phone",
+    "value": "+6285-122-777-970"
+  },
+  {
+    "key": "store_permit",
+    "value": ""
+  },
+  {
+    "key": "show_permit",
+    "value": "0"
+  },
+  {
+    "key": "default_teller",
+    "value": "TELLER 01"
+  },
+  {
+    "key": "brand_color",
+    "value": "#00E2DE"
+  },
+  {
+    "key": "paper_size",
+    "value": "80"
+  },
+  {
+    "key": "disclaimer_1",
+    "value": "Periksa fisik uang sebelum meninggalkan kasir."
+  },
+  {
+    "key": "disclaimer_2",
+    "value": "Uang yang sudah ditukar tidak dapat dikembalikan."
+  },
+  {
+    "key": "google_sheets_id",
+    "value": "15lmFybUAOq4M8qpza8fPKWS-OfwWwck5L_b45eZ3oBo"
+  },
+  {
+    "key": "google_sheets_url",
+    "value": ""
+  },
+  {
+    "key": "google_sheets_auto_sync",
+    "value": "1"
+  }
+]

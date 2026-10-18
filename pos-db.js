@@ -235,6 +235,48 @@ function restoreUsersFromFile() {
   }
 }
 
+// Auto Backup & Restore for settings to guarantee persistence (including Google Sheets Web App URL)
+function getSettingsBackupFilePath() {
+  try {
+    const parentDir = path.resolve(__dirname, '..');
+    const storageDir = path.join(parentDir, 'skyline_storage');
+    if (fs.existsSync(storageDir)) {
+      return path.join(storageDir, 'skyline_settings_backup.json');
+    }
+  } catch (e) {}
+  return path.join(__dirname, 'skyline_settings_backup.json');
+}
+
+function backupSettingsToFile() {
+  try {
+    const rows = db.prepare('SELECT key, value FROM settings').all();
+    const backupFile = getSettingsBackupFilePath();
+    fs.writeFileSync(backupFile, JSON.stringify(rows, null, 2), 'utf8');
+  } catch (err) {
+    console.warn('Settings backup write failed:', err.message);
+  }
+}
+
+function restoreSettingsFromFile() {
+  try {
+    const backupFile = getSettingsBackupFilePath();
+    if (!fs.existsSync(backupFile)) return;
+    const raw = fs.readFileSync(backupFile, 'utf8');
+    const rows = JSON.parse(raw);
+    if (!Array.isArray(rows)) return;
+
+    const upsertStmt = db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)');
+    for (const r of rows) {
+      if (r.key && r.value !== undefined) {
+        upsertStmt.run(r.key, String(r.value));
+      }
+    }
+    console.log('Persistent settings restored from backup.');
+  } catch (err) {
+    console.warn('Settings restore failed:', err.message);
+  }
+}
+
 // Seed Super Admin Krisna if not exists
 const checkAdmin = db.prepare('SELECT id FROM users WHERE username = ?').get('Krisna');
 if (!checkAdmin) {
@@ -257,16 +299,21 @@ if (!checkFanny) {
   console.log('Registered Teller user "Fanny" initialized.');
 }
 
-// Restore any additional cashiers from backup file
+// Restore any additional cashiers and persistent settings from backup files
 restoreUsersFromFile();
+restoreSettingsFromFile();
 
-// Save updated backup file
+// Save updated backup files
 backupUsersToFile();
+backupSettingsToFile();
 
 db.hashPassword = hashPassword;
 db.verifyPassword = verifyPassword;
 db.createToken = createToken;
 db.verifyToken = verifyToken;
 db.backupUsersToFile = backupUsersToFile;
+db.backupSettingsToFile = backupSettingsToFile;
+db.restoreSettingsFromFile = restoreSettingsFromFile;
 
 module.exports = db;
+

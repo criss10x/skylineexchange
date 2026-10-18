@@ -677,6 +677,13 @@
       color: #0f172a !important;
       border-color: #10b981 !important;
     }
+    html.light #btn-save-sheets-config {
+      background-color: #0d9488 !important;
+      color: #ffffff !important;
+    }
+    html.light #btn-save-sheets-config:hover {
+      background-color: #0f766e !important;
+    }
     html.light #btn-sheets-test,
     html.light #btn-open-sheets-guide {
       background-color: #f1f5f9 !important;
@@ -1597,6 +1604,10 @@
             </div>
             <input type="url" id="setting-sheets-url" placeholder="https://script.google.com/macros/s/AKfycb.../exec" class="w-full bg-navy-950 border-2 border-emerald-500/70 rounded-xl px-3.5 py-2.5 text-slate-100 font-mono text-xs sm:text-sm focus:outline-none focus:border-brand shadow-inner">
             <p class="text-[11px] text-slate-400 mt-1">Tempelkan URL Web App yang Anda dapatkan dari menu Extensions > Apps Script di Google Sheets Anda.</p>
+            <div class="flex items-center gap-1.5 mt-2 text-[11px] text-emerald-400 font-medium">
+              <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              <span id="lbl-sheets-persisted-note">Tersimpan permanen: Cukup simpan sekali, URL tidak perlu dimasukkan lagi setiap login.</span>
+            </div>
           </div>
 
           <div class="flex items-center gap-2 pt-1 px-1">
@@ -1609,12 +1620,16 @@
 
         <!-- Action Buttons -->
         <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-navy-700">
+          <button type="button" id="btn-save-sheets-config" class="py-2.5 px-4 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-navy-950 font-bold flex items-center gap-1.5 transition-all text-xs shadow-md">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            <span id="lbl-btn-sheets-save">Simpan URL & Pengaturan</span>
+          </button>
           <button type="button" id="btn-sheets-test" class="py-2.5 px-4 rounded-lg bg-navy-700 hover:bg-navy-600 text-slate-200 font-semibold flex items-center gap-1.5 transition-all text-xs">
             <svg class="w-4 h-4 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M22 12h-4M6 12H2M12 6V2M12 22v-4"/></svg>
             <span id="lbl-btn-sheets-test">Tes Koneksi Google Sheets</span>
           </button>
-          <button type="button" id="btn-sheets-sync-today" class="py-2.5 px-4 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold flex items-center gap-1.5 transition-all text-xs shadow-md">
-            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <button type="button" id="btn-sheets-sync-today" class="py-2.5 px-4 rounded-lg bg-navy-700 hover:bg-navy-600 text-slate-200 font-semibold flex items-center gap-1.5 transition-all text-xs">
+            <svg class="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             <span id="lbl-btn-sheets-sync-today">Backup Hari Ini ke Google Sheets</span>
           </button>
           <button type="button" id="btn-open-sheets-guide" class="py-2.5 px-4 rounded-lg bg-navy-900 hover:bg-navy-700 border border-navy-600 text-brand font-semibold flex items-center gap-1.5 transition-all text-xs">
@@ -1997,8 +2012,8 @@
           <li class="flex items-start gap-3">
             <span class="w-6 h-6 rounded-full bg-brand/20 text-brand font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">4</span>
             <div>
-              <strong class="text-white block mb-0.5" id="lbl-step4-title">Tempelkan URL di POS & Tes:</strong>
-              <span id="lbl-step4-desc">Tempelkan URL tersebut ke kolom <strong>URL Web App Google Apps Script</strong> di Pengaturan POS ini, lalu klik tombol <strong>Tes Koneksi</strong>. Selesai!</span>
+              <strong class="text-white block mb-0.5" id="lbl-step4-title">Tempelkan URL di POS, Simpan & Tes:</strong>
+              <span id="lbl-step4-desc">Tempelkan URL tersebut ke kolom <strong>URL Web App Google Apps Script</strong> di tab Integrasi Google Sheets, klik tombol <strong>Simpan URL & Pengaturan</strong> (tersimpan permanen selamanya), lalu klik <strong>Tes Koneksi</strong>. Selesai!</span>
             </div>
           </li>
         </ol>

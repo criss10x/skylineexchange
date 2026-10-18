@@ -18,22 +18,56 @@ function getSetting(key) {
   }
 }
 
-// Helper: Send payload to Google Apps Script Web App
+// Helper: Send payload to Google Apps Script Web App with validation & timeout
 async function sendToGoogleSheets(url, payload) {
-  if (!url || typeof url !== 'string' || !url.startsWith('http')) {
+  if (!url || typeof url !== 'string' || !url.trim().startsWith('http')) {
     throw new Error('URL Web App Google Sheets belum diatur atau tidak valid.');
   }
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-    redirect: 'follow'
-  });
-  const text = await response.text();
+
+  const cleanUrl = url.trim();
+
+  // Validate URL format to prevent common user configuration errors
+  if (cleanUrl.includes('docs.google.com/spreadsheets')) {
+    throw new Error('URL yang dimasukkan adalah link Google Sheets biasa, bukan URL Web App Apps Script. Silakan buka Extensions -> Apps Script -> Deploy -> New deployment -> Web app.');
+  }
+  if (cleanUrl.endsWith('/dev')) {
+    throw new Error('URL berakhiran /dev (Test Deployment) memerlukan otentikasi login Google. Harap gunakan URL Web App dari Deploy -> New deployment yang berakhiran /exec.');
+  }
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 seconds timeout
+
   try {
-    return JSON.parse(text);
-  } catch (e) {
-    return { success: response.ok, raw: text, message: 'Respons Google Sheets: ' + text.substring(0, 100) };
+    const response = await fetch(cleanUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      redirect: 'follow',
+      signal: controller.signal
+    });
+
+    clearTimeout(timeoutId);
+    const text = await response.text();
+
+    // Check for Google login redirect HTML (caused when "Who has access" is not set to "Anyone")
+    if (text.includes('accounts.google.com') || text.includes('ServiceLogin') || text.includes('<!DOCTYPE') || text.includes('<html')) {
+      throw new Error('Google meminta login akun (Akses Ditolak). Solusi: Di Google Sheets, buka Extensions -> Apps Script -> Deploy -> Manage deployments -> klik ikon Edit (pensil) -> Ubah opsi "Who has access" menjadi "Anyone" (Siapa saja) -> klik Deploy ulang.');
+    }
+
+    try {
+      return JSON.parse(text);
+    } catch (parseErr) {
+      if (response.ok) {
+        return { success: true, message: 'Respons Google Sheets diterima: ' + text.substring(0, 100) };
+      }
+      throw new Error('Respons tidak dikenal dari Google Sheets: ' + text.substring(0, 150));
+    }
+  } catch (fetchErr) {
+    clearTimeout(timeoutId);
+    if (fetchErr.name === 'AbortError') {
+      throw new Error('Koneksi ke Google Sheets timeout (melebihi 15 detik). Periksa koneksi internet atau script Google.');
+    }
+    throw fetchErr;
   }
 }
 
@@ -629,14 +663,47 @@ router.get('/api/settings', (req, res) => {
   }
 });
 
-router.post('/api/settings', requireAuth, requireAdmin, (req, res) => {
+router.post('/api/settings', requireAuth, (req, res) => {
   try {
+    const isAdmin = req.user && req.user.role === 'ADMIN';
     const settings = req.body;
     const stmt = db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)');
     for (const [key, value] of Object.entries(settings)) {
+      // Cashiers/tellers can configure Google Sheets integration; general store settings require Admin
+      if (!isAdmin && !key.startsWith('google_sheets_')) {
+        continue;
+      }
       stmt.run(key, String(value));
     }
-    res.json({ success: true });
+    if (db.backupSettingsToFile) db.backupSettingsToFile();
+    res.json({ success: true, message: 'Pengaturan berhasil disimpan secara permanen.' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// Dedicated Google Sheets Configuration Endpoint (available to all authenticated users)
+router.post('/api/sheets/config', requireAuth, (req, res) => {
+  try {
+    const { url, auto_sync } = req.body;
+    if (url !== undefined) {
+      const cleanUrl = String(url).trim();
+      db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run('google_sheets_url', cleanUrl);
+    }
+    if (auto_sync !== undefined) {
+      const syncVal = (auto_sync === true || auto_sync === '1' || auto_sync === 1) ? '1' : '0';
+      db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run('google_sheets_auto_sync', syncVal);
+    }
+    if (db.backupSettingsToFile) db.backupSettingsToFile();
+
+    res.json({
+      success: true,
+      message: 'URL dan konfigurasi Google Sheets berhasil disimpan secara permanen.',
+      data: {
+        google_sheets_url: getSetting('google_sheets_url'),
+        google_sheets_auto_sync: getSetting('google_sheets_auto_sync')
+      }
+    });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -688,14 +755,19 @@ router.get('/api/reports/summary', requireAuth, (req, res) => {
 // Test Connection (Ping)
 router.post('/api/sheets/test', requireAuth, async (req, res) => {
   try {
-    const url = req.body.url || getSetting('google_sheets_url');
-    if (!url || url.trim() === '') {
+    const rawUrl = req.body.url || getSetting('google_sheets_url');
+    if (!rawUrl || rawUrl.trim() === '') {
       return res.status(400).json({
         success: false,
         message: 'URL Web App Google Sheets belum diisi. Masukkan URL Apps Script terlebih dahulu.'
       });
     }
-    const result = await sendToGoogleSheets(url, { action: 'ping' });
+    const cleanUrl = rawUrl.trim();
+    const result = await sendToGoogleSheets(cleanUrl, { action: 'ping' });
+    if (result && result.success) {
+      db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run('google_sheets_url', cleanUrl);
+      if (db.backupSettingsToFile) db.backupSettingsToFile();
+    }
     res.json(result);
   } catch (err) {
     res.status(500).json({

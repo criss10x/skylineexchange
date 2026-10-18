@@ -189,6 +189,8 @@ const i18n = {
     sheetsRuleMapping: 'Sistem Tab:',
     setSheetsUrl: 'URL Web App Google Apps Script',
     setSheetsAutoSync: 'Otomatis kirim transaksi ke Google Sheets setiap kali transaksi disimpan atau dicetak',
+    btnSheetsSave: 'Simpan URL & Pengaturan',
+    sheetsPersistedNote: 'Tersimpan permanen: Cukup simpan sekali, URL tidak perlu dimasukkan lagi setiap login.',
     btnSheetsTest: 'Tes Koneksi Google Sheets',
     btnSheetsSyncToday: 'Backup Hari Ini ke Google Sheets',
     btnSheetsGuide: 'Panduan 1 Menit & Salin Script',
@@ -402,6 +404,8 @@ const i18n = {
     sheetsRuleMapping: 'Tab System:',
     setSheetsUrl: 'Google Apps Script Web App URL',
     setSheetsAutoSync: 'Auto-sync transaction to Google Sheets whenever transaction is saved or printed',
+    btnSheetsSave: 'Save URL & Settings',
+    sheetsPersistedNote: 'Permanently saved: Save once, the URL does not need to be re-entered on login.',
     btnSheetsTest: 'Test Google Sheets Connection',
     btnSheetsSyncToday: 'Backup Today to Google Sheets',
     btnSheetsGuide: '1-Minute Guide & Copy Script',
@@ -942,6 +946,8 @@ function setAppLanguage(lang) {
   safeSet('lbl-sheets-rule-mapping', t.sheetsRuleMapping);
   safeSet('lbl-set-sheets-url', t.setSheetsUrl);
   safeSet('lbl-set-sheets-auto-sync', t.setSheetsAutoSync);
+  safeSet('lbl-btn-sheets-save', t.btnSheetsSave);
+  safeSet('lbl-sheets-persisted-note', t.sheetsPersistedNote);
   safeSet('lbl-btn-sheets-test', t.btnSheetsTest);
   safeSet('lbl-btn-sheets-sync-today', t.btnSheetsSyncToday);
   safeSet('lbl-btn-sheets-guide', t.btnSheetsGuide);
@@ -1064,14 +1070,42 @@ function setReceiptLanguage(lang, showToastNotification = true) {
 
 // ==================== SETTINGS & RATES LOADING ====================
 async function loadSettings() {
+  const cachedUrl = localStorage.getItem('skyline_pos_sheets_url') || '';
+  const cachedAutoSync = localStorage.getItem('skyline_pos_sheets_auto_sync');
+
   try {
     const res = await authFetch('/api/settings');
     const data = await res.json();
     if (data.success && data.data) {
       state.settings = { ...state.settings, ...data.data };
+
+      // Fallback: If server has no sheets URL, but localStorage has cached it, restore it
+      if ((!state.settings.google_sheets_url || state.settings.google_sheets_url.trim() === '') && cachedUrl) {
+        state.settings.google_sheets_url = cachedUrl;
+        if (cachedAutoSync !== null) {
+          state.settings.google_sheets_auto_sync = cachedAutoSync;
+        }
+        // Silently push to server so server DB and backup file have it
+        authFetch('/api/sheets/config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            url: cachedUrl,
+            auto_sync: state.settings.google_sheets_auto_sync
+          })
+        }).catch(() => {});
+      } else if (state.settings.google_sheets_url && state.settings.google_sheets_url.trim() !== '') {
+        // Cache server value to localStorage
+        localStorage.setItem('skyline_pos_sheets_url', state.settings.google_sheets_url.trim());
+        localStorage.setItem('skyline_pos_sheets_auto_sync', state.settings.google_sheets_auto_sync || '1');
+      }
+
       applySettingsToUI();
     }
   } catch {
+    if (cachedUrl && (!state.settings.google_sheets_url || state.settings.google_sheets_url.trim() === '')) {
+      state.settings.google_sheets_url = cachedUrl;
+    }
     applySettingsToUI();
   }
 }
@@ -2951,6 +2985,11 @@ function initEventListeners() {
       google_sheets_auto_sync: document.getElementById('setting-sheets-auto-sync')?.checked ? '1' : '0'
     };
 
+    if (payload.google_sheets_url) {
+      localStorage.setItem('skyline_pos_sheets_url', payload.google_sheets_url);
+      localStorage.setItem('skyline_pos_sheets_auto_sync', payload.google_sheets_auto_sync);
+    }
+
     try {
       const res = await authFetch('/api/settings', {
         method: 'POST',
@@ -2962,6 +3001,8 @@ function initEventListeners() {
         state.settings = { ...state.settings, ...payload };
         applySettingsToUI();
         showToast(isEn ? 'Settings saved successfully!' : 'Pengaturan berhasil disimpan!', 'success');
+      } else {
+        showToast(data.message || (isEn ? 'Failed to save settings' : 'Gagal menyimpan ke server'), 'error');
       }
     } catch {
       showToast(isEn ? 'Failed to save settings' : 'Gagal menyimpan ke server', 'error');
@@ -2991,6 +3032,7 @@ function initEventListeners() {
   document.getElementById('form-reset-user-pwd')?.addEventListener('submit', handleResetPasswordSubmit);
 
   // Google Sheets Integration Listeners
+  document.getElementById('btn-save-sheets-config')?.addEventListener('click', handleSaveSheetsConfig);
   document.getElementById('btn-sheets-test')?.addEventListener('click', testGoogleSheetsConnection);
   document.getElementById('btn-sheets-sync-today')?.addEventListener('click', () => syncTransactionsToGoogleSheets());
   document.getElementById('btn-open-sheets-guide')?.addEventListener('click', openGoogleSheetsGuideModal);
@@ -3083,20 +3125,96 @@ async function testGoogleSheetsConnection() {
   }
 }
 
-async function saveGoogleSheetsSettings(url) {
+async function handleSaveSheetsConfig() {
+  const isEn = state.appLang === 'en';
+  const urlInput = document.getElementById('setting-sheets-url');
+  const btn = document.getElementById('btn-save-sheets-config');
+  const alertBox = document.getElementById('sheets-status-alert');
+  const rawUrl = (urlInput?.value || '').trim();
   const autoSync = document.getElementById('setting-sheets-auto-sync')?.checked ? '1' : '0';
-  const payload = {
-    google_sheets_url: url || (document.getElementById('setting-sheets-url')?.value || '').trim(),
-    google_sheets_auto_sync: autoSync
-  };
+
+  if (!rawUrl) {
+    showToast(isEn ? 'Please enter the Google Apps Script Web App URL first.' : 'Silakan masukkan URL Web App Google Apps Script terlebih dahulu.', 'warning');
+    urlInput?.focus();
+    return;
+  }
+
+  // Pre-validate URL format
+  if (rawUrl.includes('docs.google.com/spreadsheets')) {
+    showToast(isEn ? 'This is a spreadsheet link, not Apps Script Web App URL.' : 'Tautan ini adalah link Google Sheets biasa, bukan URL Web App Apps Script.', 'error');
+    if (alertBox) {
+      alertBox.className = 'p-3 rounded-lg text-xs border bg-amber-950/60 border-amber-500/40 text-amber-200 block';
+      alertBox.innerHTML = `
+        <div class="font-bold text-amber-300">⚠️ ${isEn ? 'Incorrect URL Type' : 'Format URL Keliru'}:</div>
+        <div class="mt-1 text-slate-300">${isEn ? 'Please copy the Web App URL from Extensions -> Apps Script -> Deploy -> New deployment (ends in /exec).' : 'Buka menu Extensions -> Apps Script -> Deploy -> New deployment -> Web app untuk mendapatkan URL Web App (berakhiran /exec).'}</div>
+      `;
+    }
+    urlInput?.focus();
+    return;
+  }
+
+  const origHtml = btn ? btn.innerHTML : '';
+  if (btn) {
+    btn.innerHTML = `<span class="inline-block animate-spin mr-1">↻</span> ${isEn ? 'Saving...' : 'Menyimpan...'}`;
+    btn.disabled = true;
+  }
+
   try {
-    await authFetch('/api/settings', {
+    const res = await authFetch('/api/sheets/config', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+      body: JSON.stringify({ url: rawUrl, auto_sync: autoSync })
     });
-    state.settings.google_sheets_url = payload.google_sheets_url;
-    state.settings.google_sheets_auto_sync = payload.google_sheets_auto_sync;
+    const data = await res.json();
+
+    if (data.success) {
+      state.settings.google_sheets_url = rawUrl;
+      state.settings.google_sheets_auto_sync = autoSync;
+      localStorage.setItem('skyline_pos_sheets_url', rawUrl);
+      localStorage.setItem('skyline_pos_sheets_auto_sync', autoSync);
+
+      showToast(isEn ? 'Google Sheets URL saved permanently!' : 'URL Google Sheets berhasil disimpan secara permanen!', 'success');
+      if (alertBox) {
+        alertBox.className = 'p-3 rounded-lg text-xs border bg-emerald-950/60 border-emerald-500/40 text-emerald-200 block';
+        alertBox.innerHTML = `
+          <div class="font-bold text-emerald-300">✓ ${isEn ? 'Settings Saved Permanently' : 'Pengaturan Tersimpan Permanen'}</div>
+          <div class="mt-1 text-slate-300">${isEn ? 'The Google Apps Script URL has been saved. You do not need to re-enter it when logging in.' : 'URL Apps Script telah tersimpan aman di database server & browser. Anda tidak perlu memasukkannya lagi setiap kali login.'}</div>
+        `;
+      }
+    } else {
+      showToast(data.message || (isEn ? 'Failed to save configuration.' : 'Gagal menyimpan pengaturan.'), 'error');
+    }
+  } catch (err) {
+    localStorage.setItem('skyline_pos_sheets_url', rawUrl);
+    localStorage.setItem('skyline_pos_sheets_auto_sync', autoSync);
+    state.settings.google_sheets_url = rawUrl;
+    state.settings.google_sheets_auto_sync = autoSync;
+    showToast(isEn ? 'Saved to local browser cache.' : 'Tersimpan di cache browser.', 'warning');
+  } finally {
+    if (btn) {
+      btn.innerHTML = origHtml;
+      btn.disabled = false;
+    }
+  }
+}
+
+async function saveGoogleSheetsSettings(url) {
+  const autoSync = document.getElementById('setting-sheets-auto-sync')?.checked ? '1' : '0';
+  const cleanUrl = (url || document.getElementById('setting-sheets-url')?.value || '').trim();
+
+  state.settings.google_sheets_url = cleanUrl;
+  state.settings.google_sheets_auto_sync = autoSync;
+  if (cleanUrl) {
+    localStorage.setItem('skyline_pos_sheets_url', cleanUrl);
+    localStorage.setItem('skyline_pos_sheets_auto_sync', autoSync);
+  }
+
+  try {
+    await authFetch('/api/sheets/config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: cleanUrl, auto_sync: autoSync })
+    });
   } catch (e) {
     console.warn('Failed to auto-save sheets settings:', e);
   }
@@ -3137,9 +3255,22 @@ async function syncTransactionsToGoogleSheets(targetDate) {
       }
     } else {
       showToast(data.message || (isEn ? 'Failed to sync to Google Sheets' : 'Gagal sinkronisasi ke Google Sheets'), 'error');
+      const alertBox = document.getElementById('sheets-status-alert');
+      if (alertBox) {
+        alertBox.className = 'p-3 rounded-lg text-xs border bg-rose-950/60 border-rose-500/40 text-rose-200 block';
+        alertBox.innerHTML = `
+          <div class="font-bold text-rose-300">⚠️ ${isEn ? 'Sync Failed' : 'Sinkronisasi Gagal'}:</div>
+          <div class="mt-0.5 text-slate-300">${data.message || (isEn ? 'Unknown error' : 'Terjadi kesalahan')}</div>
+        `;
+      }
     }
   } catch (err) {
     showToast(isEn ? 'Network error during Google Sheets sync.' : 'Terjadi kesalahan jaringan saat sinkronisasi.', 'error');
+    const alertBox = document.getElementById('sheets-status-alert');
+    if (alertBox) {
+      alertBox.className = 'p-3 rounded-lg text-xs border bg-rose-950/60 border-rose-500/40 text-rose-200 block';
+      alertBox.textContent = `Error: ${err.message}`;
+    }
   }
 }
 
