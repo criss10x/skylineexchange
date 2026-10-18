@@ -2,7 +2,37 @@ const { DatabaseSync } = require('node:sqlite');
 const path = require('node:path');
 const fs = require('node:fs');
 
-const dbPath = path.join(__dirname, 'database.sqlite');
+// Resolve persistent database path (stored outside git working tree on Linux/Hostinger to survive auto-deploys)
+function resolveDbPath() {
+  if (process.env.DB_PATH) return process.env.DB_PATH;
+
+  if (process.platform === 'linux') {
+    try {
+      const parentDir = path.resolve(__dirname, '..');
+      const storageDir = path.join(parentDir, 'skyline_storage');
+      if (!fs.existsSync(storageDir)) {
+        fs.mkdirSync(storageDir, { recursive: true });
+      }
+      const persistentPath = path.join(storageDir, 'database.sqlite');
+      const localPath = path.join(__dirname, 'database.sqlite');
+      // If local db existed previously and persistent doesn't, migrate it
+      if (fs.existsSync(localPath) && !fs.existsSync(persistentPath)) {
+        try {
+          fs.copyFileSync(localPath, persistentPath);
+        } catch (e) {
+          console.warn('Migration copy failed:', e.message);
+        }
+      }
+      return persistentPath;
+    } catch (err) {
+      console.warn('Could not initialize external storage directory:', err.message);
+    }
+  }
+
+  return path.join(__dirname, 'database.sqlite');
+}
+
+const dbPath = resolveDbPath();
 const db = new DatabaseSync(dbPath);
 
 // Enable WAL mode and foreign keys for high reliability
@@ -158,6 +188,53 @@ function verifyToken(token) {
   }
 }
 
+// Auto Backup & Restore for users to guarantee persistence across deployments
+function getBackupFilePath() {
+  try {
+    const parentDir = path.resolve(__dirname, '..');
+    const storageDir = path.join(parentDir, 'skyline_storage');
+    if (fs.existsSync(storageDir)) {
+      return path.join(storageDir, 'skyline_users_backup.json');
+    }
+  } catch (e) {}
+  return path.join(__dirname, 'skyline_users_backup.json');
+}
+
+function backupUsersToFile() {
+  try {
+    const users = db.prepare('SELECT id, username, password_hash, salt, display_name, role, created_at FROM users').all();
+    const backupFile = getBackupFilePath();
+    fs.writeFileSync(backupFile, JSON.stringify(users, null, 2), 'utf8');
+  } catch (err) {
+    console.warn('User backup write failed:', err.message);
+  }
+}
+
+function restoreUsersFromFile() {
+  try {
+    const backupFile = getBackupFilePath();
+    if (!fs.existsSync(backupFile)) return;
+    const raw = fs.readFileSync(backupFile, 'utf8');
+    const users = JSON.parse(raw);
+    if (!Array.isArray(users)) return;
+
+    const checkStmt = db.prepare('SELECT id FROM users WHERE username = ?');
+    const insertStmt = db.prepare(`
+      INSERT INTO users (username, password_hash, salt, display_name, role, created_at)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `);
+
+    for (const u of users) {
+      if (!checkStmt.get(u.username)) {
+        insertStmt.run(u.username, u.password_hash, u.salt, u.display_name, u.role, u.created_at || new Date().toISOString());
+        console.log(`User @${u.username} restored from backup.`);
+      }
+    }
+  } catch (err) {
+    console.warn('User restore failed:', err.message);
+  }
+}
+
 // Seed Super Admin Krisna if not exists
 const checkAdmin = db.prepare('SELECT id FROM users WHERE username = ?').get('Krisna');
 if (!checkAdmin) {
@@ -165,13 +242,31 @@ if (!checkAdmin) {
   db.prepare(`
     INSERT INTO users (username, password_hash, salt, display_name, role, created_at)
     VALUES (?, ?, ?, ?, ?, ?)
-  `).run('Krisna', hash, salt, 'Krisna (Owner)', 'ADMIN', new Date().toISOString());
+  `).run('Krisna', hash, salt, 'Krisna (Owner)', 'ADMIN', '2026-10-16T09:48:52.701Z');
   console.log('Default Admin user "Krisna" initialized.');
 }
+
+// Seed Registered Teller Fanny if not exists
+const checkFanny = db.prepare('SELECT id FROM users WHERE username = ?').get('Fanny');
+if (!checkFanny) {
+  const { hash, salt } = hashPassword('Skyline#2026');
+  db.prepare(`
+    INSERT INTO users (username, password_hash, salt, display_name, role, created_at)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `).run('Fanny', hash, salt, 'Stephanie mau bere', 'TELLER', '2026-10-18T03:50:21.858Z');
+  console.log('Registered Teller user "Fanny" initialized.');
+}
+
+// Restore any additional cashiers from backup file
+restoreUsersFromFile();
+
+// Save updated backup file
+backupUsersToFile();
 
 db.hashPassword = hashPassword;
 db.verifyPassword = verifyPassword;
 db.createToken = createToken;
 db.verifyToken = verifyToken;
+db.backupUsersToFile = backupUsersToFile;
 
 module.exports = db;

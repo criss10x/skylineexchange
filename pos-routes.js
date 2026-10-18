@@ -193,6 +193,7 @@ router.post('/api/auth/change-password', requireAuth, (req, res) => {
 
     const { hash, salt } = db.hashPassword(newPassword);
     db.prepare('UPDATE users SET password_hash = ?, salt = ? WHERE id = ?').run(hash, salt, user.id);
+    if (db.backupUsersToFile) db.backupUsersToFile();
     res.json({ success: true, message: 'Password berhasil diperbarui.' });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -245,6 +246,8 @@ router.post('/api/auth/users', requireAuth, requireAdmin, (req, res) => {
       VALUES (?, ?, ?, ?, ?, ?)
     `).run(cleanUser, hash, salt, displayName.trim(), validRole, now);
 
+    if (db.backupUsersToFile) db.backupUsersToFile();
+
     res.json({
       success: true,
       message: 'Akun kasir berhasil didaftarkan.',
@@ -270,6 +273,7 @@ router.put('/api/auth/users/:id/reset-password', requireAuth, requireAdmin, (req
 
     const { hash, salt } = db.hashPassword(newPassword);
     db.prepare('UPDATE users SET password_hash = ?, salt = ? WHERE id = ?').run(hash, salt, id);
+    if (db.backupUsersToFile) db.backupUsersToFile();
     res.json({ success: true, message: 'Password kasir berhasil direset.' });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -289,6 +293,7 @@ router.delete('/api/auth/users/:id', requireAuth, requireAdmin, (req, res) => {
     }
 
     db.prepare('DELETE FROM users WHERE id = ?').run(id);
+    if (db.backupUsersToFile) db.backupUsersToFile();
     res.json({ success: true, message: 'Akun berhasil dihapus.' });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
