@@ -140,7 +140,37 @@ router.get('/api/auth/me', requireAuth, (req, res) => {
     if (!user) {
       return res.status(404).json({ success: false, message: 'Pengguna tidak ditemukan.' });
     }
-    res.json({ success: true, user });
+    res.json({
+      success: true,
+      user: {
+        id: user.id,
+        username: user.username,
+        displayName: user.display_name,
+        display_name: user.display_name,
+        role: user.role,
+        createdAt: user.created_at,
+        created_at: user.created_at
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// Public list of registered cashiers/tellers for login selector & UI (safe: no passwords or salts)
+router.get('/api/auth/cashiers', (req, res) => {
+  try {
+    const cashiers = db.prepare('SELECT id, username, display_name, role FROM users ORDER BY id ASC').all();
+    res.json({
+      success: true,
+      data: cashiers.map(c => ({
+        id: c.id,
+        username: c.username,
+        displayName: c.display_name,
+        display_name: c.display_name,
+        role: c.role
+      }))
+    });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -172,7 +202,17 @@ router.post('/api/auth/change-password', requireAuth, (req, res) => {
 router.get('/api/auth/users', requireAuth, requireAdmin, (req, res) => {
   try {
     const users = db.prepare('SELECT id, username, display_name, role, created_at FROM users ORDER BY id ASC').all();
-    res.json({ success: true, data: users });
+    res.json({
+      success: true,
+      data: users.map(u => ({
+        id: u.id,
+        username: u.username,
+        displayName: u.display_name,
+        display_name: u.display_name,
+        role: u.role,
+        created_at: u.created_at
+      }))
+    });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }

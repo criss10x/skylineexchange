@@ -1,4 +1,4 @@
-const CACHE_NAME = 'skyline-pos-v2.3';
+const CACHE_NAME = 'skyline-pos-v2.4';
 const isPosScope = self.registration.scope.includes('/pos');
 const prefix = isPosScope ? '/pos' : '';
 

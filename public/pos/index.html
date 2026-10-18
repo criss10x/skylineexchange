@@ -721,6 +721,25 @@
       color: #0f172a !important;
       box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
     }
+    html.light #active-cashier-banner {
+      background-color: #f1f5f9 !important;
+      border-color: #cbd5e1 !important;
+    }
+    html.light #active-cashier-banner #pos-active-cashier-name {
+      color: #0f172a !important;
+    }
+    html.light #teller-user-profile-section {
+      background-color: #ffffff !important;
+      border-color: #e2e8f0 !important;
+    }
+    html.light #teller-user-profile-section .bg-navy-900\/90,
+    html.light #teller-user-profile-section .bg-navy-900\/60 {
+      background-color: #f8fafc !important;
+      border-color: #e2e8f0 !important;
+    }
+    html.light #teller-user-profile-section span.text-white {
+      color: #0f172a !important;
+    }
   </style>
 </head>
 <body class="bg-navy-900 text-slate-100 min-h-screen flex flex-col font-sans selection:bg-brand selection:text-navy-950">
@@ -746,6 +765,20 @@
       <!-- Login Form -->
       <form id="form-login" class="space-y-4">
         <div id="login-error-alert" class="hidden p-3 rounded-lg bg-rose-950/70 border border-rose-500/40 text-rose-200 text-xs"></div>
+
+        <!-- Quick Select Registered Cashiers -->
+        <div id="login-cashier-selector-wrapper" class="space-y-1.5 hidden">
+          <div class="flex items-center justify-between">
+            <label class="block text-[11px] font-semibold text-slate-300">Pilih Kasir Terdaftar:</label>
+            <span class="text-[10px] text-emerald-400 font-semibold flex items-center gap-1">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+              <span>Tersimpan di Database</span>
+            </span>
+          </div>
+          <div id="login-cashier-pills" class="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto pr-1">
+            <!-- Rendered dynamically -->
+          </div>
+        </div>
 
         <div>
           <label class="block text-xs font-semibold text-slate-300 mb-1">Username Kasir / Admin</label>
@@ -781,6 +814,13 @@
           <span>Masuk Kasir</span>
           <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
         </button>
+
+        <div class="text-center pt-1 text-[11px] text-slate-400">
+          <span class="inline-flex items-center gap-1">
+            <svg class="w-3.5 h-3.5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <span>Akun kasir tersimpan permanen di database server & lokal</span>
+          </span>
+        </div>
       </form>
     </div>
   </div>
@@ -913,6 +953,16 @@
         
         <!-- LEFT COLUMN: TRANSACTION FORM & CALCULATOR (7 cols) -->
         <div class="lg:col-span-7 space-y-4">
+
+          <!-- Active Cashier Status Bar -->
+          <div id="active-cashier-banner" class="bg-navy-800 border border-navy-700 rounded-xl px-3.5 py-2 flex items-center justify-between shadow-sm">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span class="text-xs text-slate-400" id="lbl-pos-active-cashier">Kasir Bertugas:</span>
+              <span id="pos-active-cashier-name" class="text-xs sm:text-sm font-bold text-white font-sans">Memuat kasir...</span>
+            </div>
+            <span id="pos-active-cashier-role" class="px-2 py-0.5 rounded text-[10px] bg-brand/20 text-brand font-bold border border-brand/30">TELLER</span>
+          </div>
 
           <!-- 1. Transaction Type Selector & Delivery Switch -->
           <div class="bg-navy-800 border border-navy-700 rounded-xl p-3.5 sm:p-4 shadow-sm">
@@ -1741,6 +1791,67 @@
               </button>
             </div>
           </form>
+        </div>
+
+        <!-- Section: Profil Kasir & Daftar Akun (Teller View) -->
+        <div id="teller-user-profile-section" class="hidden bg-navy-850 border border-navy-700 rounded-xl p-4 sm:p-5 space-y-4 shadow-sm">
+          <div class="flex items-center justify-between pb-3 border-b border-navy-700">
+            <div class="flex items-center gap-2.5">
+              <div class="w-9 h-9 rounded-lg bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400">
+                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              </div>
+              <div>
+                <h3 class="text-sm sm:text-base font-bold text-white">Profil Kasir Aktif</h3>
+                <p class="text-xs text-slate-400">Data akun kasir Anda yang aktif bertransaksi di POS</p>
+              </div>
+            </div>
+            <span class="px-2.5 py-1 rounded-full text-[11px] bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/40 flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+              <span>Aktif & Tersimpan</span>
+            </span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+            <div class="bg-navy-900/90 border border-navy-700/80 rounded-lg p-3">
+              <span class="text-slate-400 block mb-1">Nama Kasir di Struk</span>
+              <span id="teller-profile-display-name" class="font-bold text-white text-sm">-</span>
+            </div>
+            <div class="bg-navy-900/90 border border-navy-700/80 rounded-lg p-3">
+              <span class="text-slate-400 block mb-1">Username Login</span>
+              <span id="teller-profile-username" class="font-mono font-bold text-brand text-sm">-</span>
+            </div>
+            <div class="bg-navy-900/90 border border-navy-700/80 rounded-lg p-3">
+              <span class="text-slate-400 block mb-1">Peran (Role)</span>
+              <span id="teller-profile-role" class="font-bold text-slate-200 text-sm">TELLER</span>
+            </div>
+          </div>
+
+          <div class="p-3 rounded-lg bg-navy-900/60 border border-navy-700/70 text-xs text-slate-300 flex items-start gap-2">
+            <svg class="w-4 h-4 text-brand shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            <span>Akun kasir Anda tersimpan permanen di database server dan offline browser. Pendaftaran akun baru dan penghapusan akun dibatasi khusus Administrator.</span>
+          </div>
+
+          <div>
+            <h4 class="text-xs font-bold text-slate-300 mb-2 flex items-center gap-1.5">
+              <svg class="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+              <span>Daftar Kasir & Teller Terdaftar di Toko</span>
+            </h4>
+            <div class="overflow-x-auto rounded-lg border border-navy-700">
+              <table class="w-full text-xs text-left text-slate-300">
+                <thead class="bg-navy-900 text-slate-400 uppercase text-[10px] tracking-wider border-b border-navy-700 font-semibold">
+                  <tr>
+                    <th class="py-2.5 px-3">Username</th>
+                    <th class="py-2.5 px-3">Nama Display (Struk)</th>
+                    <th class="py-2.5 px-3">Role</th>
+                    <th class="py-2.5 px-3 text-right">Status</th>
+                  </tr>
+                </thead>
+                <tbody id="teller-readonly-users-body" class="divide-y divide-navy-700 bg-navy-850/50">
+                  <!-- Rendered dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
 
         <!-- Section: Manajemen Akun Kasir (Admin only) -->

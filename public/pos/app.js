@@ -467,6 +467,46 @@ function escapeHtml(text) {
   return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
+// Active Teller Helper: Resolves the logged-in user's display name or username with fallback
+function getActiveTellerName() {
+  if (state.user) {
+    if (state.user.displayName && typeof state.user.displayName === 'string' && state.user.displayName.trim()) {
+      return state.user.displayName.trim();
+    }
+    if (state.user.display_name && typeof state.user.display_name === 'string' && state.user.display_name.trim()) {
+      return state.user.display_name.trim();
+    }
+    if (state.user.username) {
+      return state.user.username;
+    }
+  }
+  return state.settings.default_teller || 'TELLER 01';
+}
+
+function updateActiveCashierBanner() {
+  const bannerName = document.getElementById('pos-active-cashier-name');
+  const bannerRole = document.getElementById('pos-active-cashier-role');
+  if (!bannerName) return;
+
+  const activeTeller = getActiveTellerName();
+  if (state.user) {
+    const usernameTag = state.user.username ? ` (@${state.user.username})` : '';
+    bannerName.textContent = `${activeTeller}${usernameTag}`;
+    if (bannerRole) {
+      bannerRole.textContent = state.user.role || 'TELLER';
+      bannerRole.className = state.user.role === 'ADMIN'
+        ? 'px-2 py-0.5 rounded text-[10px] bg-brand/20 text-brand font-bold border border-brand/30'
+        : 'px-2 py-0.5 rounded text-[10px] bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30';
+    }
+  } else {
+    bannerName.textContent = activeTeller;
+    if (bannerRole) {
+      bannerRole.textContent = 'GUEST';
+      bannerRole.className = 'px-2 py-0.5 rounded text-[10px] bg-slate-700 text-slate-300 font-bold border border-slate-600';
+    }
+  }
+}
+
 // Auth Fetch Helper: Automatically attaches Authorization Bearer header
 async function authFetch(url, options = {}) {
   options.headers = options.headers || {};
@@ -518,7 +558,7 @@ function showToast(message, type = 'info') {
 
 // ==================== INDEXEDDB LOCAL STORAGE ====================
 const DB_NAME = 'SkylineExchangeDB';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 function openLocalDB() {
   return new Promise((resolve, reject) => {
@@ -534,10 +574,28 @@ function openLocalDB() {
       if (!db.objectStoreNames.contains('local_transactions')) {
         db.createObjectStore('local_transactions', { keyPath: 'receipt_no' });
       }
+      if (!db.objectStoreNames.contains('cached_users')) {
+        db.createObjectStore('cached_users', { keyPath: 'id' });
+      }
     };
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error);
   });
+}
+
+async function saveUsersToIndexedDB(users) {
+  if (!Array.isArray(users) || users.length === 0) return;
+  try {
+    const db = await openLocalDB();
+    if (!db.objectStoreNames.contains('cached_users')) return;
+    const t = db.transaction('cached_users', 'readwrite');
+    const store = t.objectStore('cached_users');
+    for (const u of users) {
+      store.put(u);
+    }
+  } catch (e) {
+    // Silently continue if private browsing limits IndexedDB
+  }
 }
 
 async function saveToOfflineQueue(tx) {
@@ -731,6 +789,7 @@ function setAppLanguage(lang) {
   safeSet('lbl-subtab-store', t.subtabStore);
 
   // POS Cashier Form
+  safeSet('lbl-pos-active-cashier', lang === 'en' ? 'Active Cashier:' : 'Kasir Bertugas:');
   safeSet('lbl-legend-title', t.legendTitle);
   safeSet('lbl-legend-mandatory', t.legendMandatory);
   safeSet('lbl-legend-optional', t.legendOptional);
@@ -1019,11 +1078,19 @@ async function loadSettings() {
 
 function applySettingsToUI() {
   const s = state.settings;
-  document.getElementById('rcpt-store-name').textContent = s.store_name || 'SKYLINE EXCHANGE';
-  document.getElementById('rcpt-store-address').textContent = s.store_address || 'Jl. Bypass Ngurah Rai No. 4X, Kuta, Bali';
-  document.getElementById('rcpt-store-phone').textContent = `WA: ${s.store_phone || '+6285-122-777-970'}`;
-  document.getElementById('rcpt-teller').textContent = s.default_teller || 'TELLER 01';
-  document.getElementById('rcpt-sign-teller').textContent = `( ${(s.default_teller || 'TELLER').toUpperCase()} )`;
+  const storeNameEl = document.getElementById('rcpt-store-name');
+  if (storeNameEl) storeNameEl.textContent = s.store_name || 'SKYLINE EXCHANGE';
+  const storeAddressEl = document.getElementById('rcpt-store-address');
+  if (storeAddressEl) storeAddressEl.textContent = s.store_address || 'Jl. Bypass Ngurah Rai No. 4X, Kuta, Bali';
+  const storePhoneEl = document.getElementById('rcpt-store-phone');
+  if (storePhoneEl) storePhoneEl.textContent = `WA: ${s.store_phone || '+6285-122-777-970'}`;
+
+  const activeTeller = getActiveTellerName();
+  const rcptTellerEl = document.getElementById('rcpt-teller');
+  if (rcptTellerEl) rcptTellerEl.textContent = activeTeller;
+  const rcptSignEl = document.getElementById('rcpt-sign-teller');
+  if (rcptSignEl) rcptSignEl.textContent = `( ${activeTeller.toUpperCase()} )`;
+  updateActiveCashierBanner();
 
   const permitEl = document.getElementById('rcpt-store-permit');
   if (s.show_permit === '1' && s.store_permit) {
@@ -1033,14 +1100,22 @@ function applySettingsToUI() {
     permitEl.classList.add('hidden');
   }
 
-  document.getElementById('setting-store-name').value = s.store_name || '';
-  document.getElementById('setting-store-address').value = s.store_address || '';
-  document.getElementById('setting-store-phone').value = s.store_phone || '';
-  document.getElementById('setting-store-permit').value = s.store_permit || '';
-  document.getElementById('setting-show-permit').checked = s.show_permit === '1';
-  document.getElementById('setting-default-teller').value = s.default_teller || 'TELLER 01';
-  document.getElementById('setting-disclaimer-1').value = s.disclaimer_1 || '';
-  document.getElementById('setting-disclaimer-2').value = s.disclaimer_2 || '';
+  const sName = document.getElementById('setting-store-name');
+  if (sName) sName.value = s.store_name || '';
+  const sAddr = document.getElementById('setting-store-address');
+  if (sAddr) sAddr.value = s.store_address || '';
+  const sPhone = document.getElementById('setting-store-phone');
+  if (sPhone) sPhone.value = s.store_phone || '';
+  const sPermit = document.getElementById('setting-store-permit');
+  if (sPermit) sPermit.value = s.store_permit || '';
+  const sShowPermit = document.getElementById('setting-show-permit');
+  if (sShowPermit) sShowPermit.checked = s.show_permit === '1';
+  const sTeller = document.getElementById('setting-default-teller');
+  if (sTeller) sTeller.value = activeTeller;
+  const sDisc1 = document.getElementById('setting-disclaimer-1');
+  if (sDisc1) sDisc1.value = s.disclaimer_1 || '';
+  const sDisc2 = document.getElementById('setting-disclaimer-2');
+  if (sDisc2) sDisc2.value = s.disclaimer_2 || '';
 
   const sheetsUrlInput = document.getElementById('setting-sheets-url');
   if (sheetsUrlInput) sheetsUrlInput.value = s.google_sheets_url || '';
@@ -1606,7 +1681,7 @@ async function processTransaction() {
     customer_phone: custPhone,
     customer_id_no: custId,
     customer_signature_name: signatureName.toUpperCase() || custName.toUpperCase(),
-    teller_name: state.settings.default_teller || 'TELLER 01',
+    teller_name: getActiveTellerName(),
     total_idr: total,
     paid_amount: payment || total,
     change_amount: change,
@@ -1935,7 +2010,7 @@ function buildCurrentFormReceiptData() {
     customer_phone: custPhone,
     customer_id_no: custId,
     customer_signature_name: signatureName.toUpperCase() || custName.toUpperCase(),
-    teller_name: state.settings.default_teller || 'TELLER 01',
+    teller_name: getActiveTellerName(),
     total_idr: total,
     paid_amount: payment || total,
     change_amount: change,
@@ -3161,8 +3236,13 @@ function showLoginOverlay() {
   }
   const usernameInput = document.getElementById('login-username');
   if (usernameInput) {
+    const lastUser = localStorage.getItem('skyline_last_username') || '';
+    if (lastUser && !usernameInput.value) {
+      usernameInput.value = lastUser;
+    }
     usernameInput.focus();
   }
+  loadPublicCashiers();
 }
 
 function hideLoginOverlay() {
@@ -3176,41 +3256,145 @@ function updateUserHeaderBadge() {
   const nameEl = document.getElementById('header-user-name');
   const roleEl = document.getElementById('header-user-role');
   const adminSection = document.getElementById('admin-user-management-section');
+  const tellerSection = document.getElementById('teller-user-profile-section');
 
   if (state.user && state.token) {
+    // Normalize display name
+    state.user.displayName = state.user.displayName || state.user.display_name || state.user.username;
+    const activeTeller = getActiveTellerName();
+
     if (badge) {
       badge.classList.remove('hidden');
       badge.classList.add('flex');
     }
-    if (nameEl) nameEl.textContent = state.user.username;
+    if (nameEl) {
+      nameEl.textContent = state.user.displayName ? `${state.user.displayName} (@${state.user.username})` : state.user.username;
+    }
     if (roleEl) {
-      roleEl.textContent = state.user.role;
+      roleEl.textContent = state.user.role || 'TELLER';
       roleEl.className = state.user.role === 'ADMIN'
         ? 'px-1.5 py-0.5 rounded text-[9px] bg-brand/20 text-brand font-bold border border-brand/30'
-        : 'px-1.5 py-0.5 rounded text-[9px] bg-slate-700 text-slate-300 font-bold border border-slate-600';
+        : 'px-1.5 py-0.5 rounded text-[9px] bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30';
     }
 
-    if (adminSection) {
-      if (state.user.role === 'ADMIN') {
-        adminSection.classList.remove('hidden');
-      } else {
-        adminSection.classList.add('hidden');
+    // Role-based Section Visibility in Tab 5 Settings
+    if (state.user.role === 'ADMIN') {
+      if (adminSection) adminSection.classList.remove('hidden');
+      if (tellerSection) tellerSection.classList.add('hidden');
+      loadUsersList();
+    } else {
+      if (adminSection) adminSection.classList.add('hidden');
+      if (tellerSection) {
+        tellerSection.classList.remove('hidden');
+        renderTellerProfileCard();
       }
+      loadPublicCashiers();
     }
 
-    if (state.user.displayName) {
-      state.settings.default_teller = state.user.displayName;
-      const tellerInput = document.getElementById('setting-default-teller');
-      if (tellerInput) tellerInput.value = state.user.displayName;
-      const rcptTeller = document.getElementById('rcpt-teller');
-      if (rcptTeller) rcptTeller.textContent = state.user.displayName;
-      const rcptSign = document.getElementById('rcpt-sign-teller');
-      if (rcptSign) rcptSign.textContent = `( ${state.user.displayName.toUpperCase()} )`;
-    }
+    // Synchronize active cashier on POS receipt preview and banner
+    updateActiveCashierBanner();
+    const tellerInput = document.getElementById('setting-default-teller');
+    if (tellerInput) tellerInput.value = activeTeller;
+    const rcptTeller = document.getElementById('rcpt-teller');
+    if (rcptTeller) rcptTeller.textContent = activeTeller;
+    const rcptSign = document.getElementById('rcpt-sign-teller');
+    if (rcptSign) rcptSign.textContent = `( ${activeTeller.toUpperCase()} )`;
   } else {
     if (badge) {
       badge.classList.add('hidden');
       badge.classList.remove('flex');
+    }
+    updateActiveCashierBanner();
+  }
+}
+
+function renderTellerProfileCard() {
+  if (!state.user) return;
+  const activeTeller = getActiveTellerName();
+  const dNameEl = document.getElementById('teller-profile-display-name');
+  if (dNameEl) dNameEl.textContent = activeTeller;
+  const uNameEl = document.getElementById('teller-profile-username');
+  if (uNameEl) uNameEl.textContent = `@${state.user.username}`;
+  const roleEl = document.getElementById('teller-profile-role');
+  if (roleEl) roleEl.textContent = state.user.role || 'TELLER';
+}
+
+function renderLoginCashierPills(cashiers) {
+  const container = document.getElementById('login-cashier-pills');
+  const wrapper = document.getElementById('login-cashier-selector-wrapper');
+  if (!container || !wrapper) return;
+
+  if (!cashiers || cashiers.length === 0) {
+    wrapper.classList.add('hidden');
+    return;
+  }
+
+  wrapper.classList.remove('hidden');
+  container.innerHTML = cashiers.map(c => {
+    const name = c.displayName || c.display_name || c.username;
+    const isOwner = c.role === 'ADMIN';
+    return `
+      <button type="button" onclick="selectCashierForLogin('${escapeHtml(c.username)}')" class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-navy-800 hover:bg-navy-700 border border-navy-600 hover:border-brand text-xs text-slate-200 transition-colors shadow-sm cursor-pointer select-none">
+        <span class="w-2 h-2 rounded-full ${isOwner ? 'bg-brand' : 'bg-emerald-400'}"></span>
+        <span class="font-bold text-white">${escapeHtml(name)}</span>
+        <span class="text-[10px] text-slate-400 font-mono">(@${escapeHtml(c.username)})</span>
+      </button>
+    `;
+  }).join('');
+}
+
+function selectCashierForLogin(username) {
+  const input = document.getElementById('login-username');
+  if (input) {
+    input.value = username;
+    const pwd = document.getElementById('login-password');
+    if (pwd) pwd.focus();
+  }
+}
+window.selectCashierForLogin = selectCashierForLogin;
+
+function renderTellerReadonlyUsers(cashiers) {
+  const tbody = document.getElementById('teller-readonly-users-body');
+  if (!tbody) return;
+  if (!cashiers || cashiers.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" class="p-3 text-center text-slate-400 font-sans">Tidak ada kasir terdaftar</td></tr>';
+    return;
+  }
+  tbody.innerHTML = cashiers.map(c => {
+    const isSelf = state.user && (state.user.username?.toLowerCase() === c.username?.toLowerCase());
+    const roleBadge = c.role === 'ADMIN'
+      ? '<span class="px-2 py-0.5 rounded-full text-[10px] bg-brand/20 text-brand font-bold border border-brand/30">ADMIN</span>'
+      : '<span class="px-2 py-0.5 rounded-full text-[10px] bg-slate-700 text-slate-300 font-bold border border-slate-600">TELLER</span>';
+    return `
+      <tr class="hover:bg-navy-800 transition-colors ${isSelf ? 'bg-emerald-950/20' : ''}">
+        <td class="py-2.5 px-3 font-mono font-bold text-white">@${escapeHtml(c.username)}</td>
+        <td class="py-2.5 px-3 font-medium text-slate-200">${escapeHtml(c.displayName || c.display_name)}</td>
+        <td class="py-2.5 px-3">${roleBadge}</td>
+        <td class="py-2.5 px-3 text-right">
+          ${isSelf
+            ? '<span class="px-2 py-0.5 rounded-full text-[10px] bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30">Akun Anda (Aktif)</span>'
+            : '<span class="text-[11px] text-emerald-400 font-medium">Tersimpan</span>'}
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+async function loadPublicCashiers() {
+  try {
+    const res = await fetch('/api/auth/cashiers');
+    const data = await res.json();
+    if (data.success && Array.isArray(data.data)) {
+      localStorage.setItem('skyline_pos_cached_cashiers', JSON.stringify(data.data));
+      saveUsersToIndexedDB(data.data);
+      renderLoginCashierPills(data.data);
+      renderTellerReadonlyUsers(data.data);
+    }
+  } catch (err) {
+    const cached = JSON.parse(localStorage.getItem('skyline_pos_cached_cashiers') || '[]');
+    if (cached.length > 0) {
+      renderLoginCashierPills(cached);
+      renderTellerReadonlyUsers(cached);
     }
   }
 }
@@ -3246,28 +3430,40 @@ async function handleLogin(e) {
     const data = await res.json();
 
     if (data.success && data.token) {
+      const normUser = {
+        ...data.user,
+        displayName: data.user.displayName || data.user.display_name || data.user.username
+      };
       state.token = data.token;
-      state.user = data.user;
+      state.user = normUser;
+
+      // Remember last username
+      localStorage.setItem('skyline_last_username', username);
 
       if (remember) {
         localStorage.setItem('skyline_pos_token', data.token);
-        localStorage.setItem('skyline_pos_user', JSON.stringify(data.user));
+        localStorage.setItem('skyline_pos_user', JSON.stringify(normUser));
         sessionStorage.removeItem('skyline_pos_token');
         sessionStorage.removeItem('skyline_pos_user');
       } else {
         sessionStorage.setItem('skyline_pos_token', data.token);
-        sessionStorage.setItem('skyline_pos_user', JSON.stringify(data.user));
+        sessionStorage.setItem('skyline_pos_user', JSON.stringify(normUser));
         localStorage.removeItem('skyline_pos_token');
         localStorage.removeItem('skyline_pos_user');
       }
 
       hideLoginOverlay();
-      showToast(isEn ? `Welcome back, ${data.user.displayName}!` : `Selamat datang, ${data.user.displayName}!`, 'success');
+      showToast(isEn ? `Welcome back, ${normUser.displayName}!` : `Selamat datang, ${normUser.displayName}!`, 'success');
 
       await loadSettings();
       await loadRates();
       await loadReportsSummary();
       await loadHistory();
+      if (normUser.role === 'ADMIN') {
+        loadUsersList();
+      } else {
+        loadPublicCashiers();
+      }
     } else {
       if (alertBox) {
         alertBox.textContent = data.message || (isEn ? 'Login failed.' : 'Gagal login.');
@@ -3315,6 +3511,7 @@ function handleLogout(isExpired = false) {
 
 async function checkAuthSession() {
   if (!state.token) {
+    loadPublicCashiers();
     showLoginOverlay();
     return false;
   }
@@ -3322,7 +3519,15 @@ async function checkAuthSession() {
     const res = await authFetch('/api/auth/me');
     const data = await res.json();
     if (data.success && data.user) {
-      state.user = data.user;
+      state.user = {
+        ...data.user,
+        displayName: data.user.displayName || data.user.display_name || data.user.username
+      };
+      if (localStorage.getItem('skyline_pos_token')) {
+        localStorage.setItem('skyline_pos_user', JSON.stringify(state.user));
+      } else {
+        sessionStorage.setItem('skyline_pos_user', JSON.stringify(state.user));
+      }
       hideLoginOverlay();
       return true;
     } else {
@@ -3331,12 +3536,48 @@ async function checkAuthSession() {
     }
   } catch {
     if (!navigator.onLine && state.token && state.user) {
+      state.user.displayName = state.user.displayName || state.user.display_name || state.user.username;
       hideLoginOverlay();
       return true;
     }
+    loadPublicCashiers();
     showLoginOverlay();
     return false;
   }
+}
+
+function renderAdminUsersTable(users, tbody, isEn) {
+  if (!users || users.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="4" class="p-3 text-center text-slate-500 font-sans">${isEn ? 'No cashier accounts registered.' : 'Belum ada akun kasir terdaftar.'}</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = users.map(u => {
+    const isSelf = state.user && (state.user.id === u.id || state.user.userId === u.id || (state.user.username && state.user.username.toLowerCase() === u.username.toLowerCase()));
+    const roleBadge = u.role === 'ADMIN'
+      ? '<span class="px-2 py-0.5 rounded-full text-[10px] bg-brand/20 text-brand font-bold border border-brand/30">ADMIN</span>'
+      : '<span class="px-2 py-0.5 rounded-full text-[10px] bg-slate-700 text-slate-300 font-bold border border-slate-600">TELLER</span>';
+    const dName = u.displayName || u.display_name || '-';
+
+    return `
+      <tr class="hover:bg-navy-800 transition-colors ${isSelf ? 'bg-brand/5' : ''}">
+        <td class="py-2.5 px-3 font-bold text-white font-mono">@${escapeHtml(u.username)}</td>
+        <td class="py-2.5 px-3 font-medium text-slate-200">${escapeHtml(dName)}</td>
+        <td class="py-2.5 px-3">${roleBadge}</td>
+        <td class="py-2.5 px-3 text-right space-x-1">
+          <button type="button" onclick="openResetPasswordModal(${u.id}, '${escapeHtml(u.username)}')" class="py-1 px-2.5 rounded bg-navy-700 hover:bg-navy-600 text-slate-200 text-[11px] font-semibold transition-colors">
+            ${isEn ? 'Reset Pass' : 'Reset Sandi'}
+          </button>
+          ${!isSelf ? `
+            <button type="button" onclick="handleDeleteUser(${u.id}, '${escapeHtml(u.username)}')" class="py-1 px-2.5 rounded bg-rose-950 hover:bg-rose-900 border border-rose-500/40 text-rose-300 text-[11px] font-semibold transition-colors">
+              ${isEn ? 'Delete' : 'Hapus'}
+            </button>
+          ` : `
+            <span class="text-[10px] text-brand font-semibold px-2">${isEn ? '(Active)' : '(Akun ini)'}</span>
+          `}
+        </td>
+      </tr>
+    `;
+  }).join('');
 }
 
 async function loadUsersList() {
@@ -3344,45 +3585,33 @@ async function loadUsersList() {
   if (!tbody) return;
   const isEn = state.appLang === 'en';
 
-  tbody.innerHTML = `<tr><td colspan="4" class="p-3 text-center text-slate-400 font-sans">${isEn ? 'Loading cashier accounts...' : 'Memuat data kasir...'}</td></tr>`;
+  const cachedUsers = JSON.parse(localStorage.getItem('skyline_pos_cached_cashiers') || '[]');
+  if (cachedUsers.length > 0 && tbody.children.length === 0) {
+    renderAdminUsersTable(cachedUsers, tbody, isEn);
+  } else if (tbody.children.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="4" class="p-3 text-center text-slate-400 font-sans">${isEn ? 'Loading cashier accounts...' : 'Memuat data kasir...'}</td></tr>`;
+  }
 
   try {
     const res = await authFetch('/api/auth/users');
     const data = await res.json();
     if (data.success && data.data) {
-      if (data.data.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" class="p-3 text-center text-slate-500 font-sans">${isEn ? 'No cashier accounts registered.' : 'Belum ada akun kasir terdaftar.'}</td></tr>`;
-        return;
+      localStorage.setItem('skyline_pos_cached_cashiers', JSON.stringify(data.data));
+      saveUsersToIndexedDB(data.data);
+      renderAdminUsersTable(data.data, tbody, isEn);
+      renderLoginCashierPills(data.data);
+      renderTellerReadonlyUsers(data.data);
+    } else {
+      if (cachedUsers.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" class="p-3 text-center text-rose-400 font-sans">${data.message || 'Gagal memuat kasir.'}</td></tr>`;
       }
-      tbody.innerHTML = data.data.map(u => {
-        const isSelf = state.user && (state.user.id === u.id || state.user.userId === u.id);
-        const roleBadge = u.role === 'ADMIN'
-          ? '<span class="px-2 py-0.5 rounded-full text-[10px] bg-brand/20 text-brand font-bold border border-brand/30">ADMIN</span>'
-          : '<span class="px-2 py-0.5 rounded-full text-[10px] bg-slate-700 text-slate-300 font-bold border border-slate-600">TELLER</span>';
-
-        return `
-          <tr class="hover:bg-navy-800 transition-colors">
-            <td class="py-2.5 px-3 font-bold text-white font-mono">${escapeHtml(u.username)}</td>
-            <td class="py-2.5 px-3 font-medium text-slate-200">${escapeHtml(u.display_name)}</td>
-            <td class="py-2.5 px-3">${roleBadge}</td>
-            <td class="py-2.5 px-3 text-right space-x-1">
-              <button type="button" onclick="openResetPasswordModal(${u.id}, '${escapeHtml(u.username)}')" class="py-1 px-2.5 rounded bg-navy-700 hover:bg-navy-600 text-slate-200 text-[11px] font-semibold transition-colors">
-                ${isEn ? 'Reset Pass' : 'Reset Sandi'}
-              </button>
-              ${!isSelf ? `
-                <button type="button" onclick="handleDeleteUser(${u.id}, '${escapeHtml(u.username)}')" class="py-1 px-2.5 rounded bg-rose-950 hover:bg-rose-900 border border-rose-500/40 text-rose-300 text-[11px] font-semibold transition-colors">
-                  ${isEn ? 'Delete' : 'Hapus'}
-                </button>
-              ` : `
-                <span class="text-[10px] text-slate-500 italic px-2">${isEn ? '(Active)' : '(Akun ini)'}</span>
-              `}
-            </td>
-          </tr>
-        `;
-      }).join('');
     }
   } catch (err) {
-    tbody.innerHTML = `<tr><td colspan="4" class="p-3 text-center text-rose-400 font-sans">Error: ${err.message}</td></tr>`;
+    if (cachedUsers.length > 0) {
+      renderAdminUsersTable(cachedUsers, tbody, isEn);
+    } else {
+      tbody.innerHTML = `<tr><td colspan="4" class="p-3 text-center text-rose-400 font-sans">Error: ${err.message}</td></tr>`;
+    }
   }
 }
 
@@ -3455,7 +3684,8 @@ async function handleAddUserSubmit(e) {
     if (data.success) {
       showToast(isEn ? 'New cashier account created successfully!' : 'Akun kasir baru berhasil didaftarkan!', 'success');
       closeAddUserModal();
-      loadUsersList();
+      await loadUsersList();
+      await loadPublicCashiers();
     } else {
       showToast(data.message || (isEn ? 'Failed to add user.' : 'Gagal mendaftarkan akun kasir.'), 'error');
     }
@@ -3521,7 +3751,8 @@ async function handleDeleteUser(id, username) {
     const data = await res.json();
     if (data.success) {
       showToast(isEn ? 'Account deleted successfully!' : 'Akun kasir berhasil dihapus!', 'info');
-      loadUsersList();
+      await loadUsersList();
+      await loadPublicCashiers();
     } else {
       showToast(data.message || (isEn ? 'Failed to delete account.' : 'Gagal menghapus akun.'), 'error');
     }
@@ -3579,5 +3810,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadRates();
     await updateOfflineQueueBadge();
     await checkOnlineStatus();
+    if (state.user && state.user.role === 'ADMIN') {
+      loadUsersList();
+    } else {
+      loadPublicCashiers();
+    }
+  } else {
+    loadPublicCashiers();
   }
 });
