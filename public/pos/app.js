@@ -1243,7 +1243,7 @@ function renderRatesSelect() {
   state.rates.forEach((r) => {
     const opt = document.createElement('option');
     opt.value = r.code;
-    const denom = r.denomination && r.denomination !== 'All' ? ` (${r.denomination})` : '';
+    const denom = r.denomination && r.denomination !== 'All' && !r.name.includes(r.denomination) ? ` (${r.denomination})` : '';
     opt.textContent = `${r.code} - ${r.name}${denom}`;
     select.appendChild(opt);
   });
@@ -1310,13 +1310,18 @@ function renderRatesTable() {
   tbody.innerHTML = '';
   state.rates.forEach((r) => {
     const spread = (r.sell_rate - r.buy_rate);
+    const tag = r.code.trim().split(' ')[0].slice(0, 3).toUpperCase();
+    const isSmall = r.code.endsWith(' s') || r.code.includes('20') || r.code.includes('2, 1') || (r.denomination && r.denomination.toLowerCase().includes('small'));
     const tr = document.createElement('tr');
     tr.className = 'hover:bg-navy-700/40 transition-colors';
     tr.innerHTML = `
       <td class="py-3 px-4 font-bold text-white flex items-center gap-2">
-        <span class="w-7 h-7 rounded bg-navy-700 border border-navy-600 flex items-center justify-center text-xs font-mono text-brand">${r.code.slice(0, 3)}</span>
+        <span class="w-7 h-7 rounded bg-navy-700 border border-navy-600 flex items-center justify-center text-xs font-mono text-brand">${tag}</span>
         <div>
-          <div>${r.code}</div>
+          <div class="flex items-center gap-1.5">
+            <span>${r.code}</span>
+            ${isSmall ? `<span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-sans font-semibold border border-amber-500/30">${isEn ? 'Small' : 'Pecahan Kecil'}</span>` : ''}
+          </div>
           <div class="text-[11px] font-sans text-slate-400 font-normal">${r.name}</div>
         </div>
       </td>
@@ -2931,7 +2936,7 @@ function initEventListeners() {
   document.getElementById('form-rate-edit').addEventListener('submit', async (e) => {
     e.preventDefault();
     const id = document.getElementById('edit-rate-id').value;
-    const code = document.getElementById('edit-rate-code').value.trim().toUpperCase();
+    const code = document.getElementById('edit-rate-code').value.trim();
     const name = document.getElementById('edit-rate-name').value.trim();
     const denom = document.getElementById('edit-rate-denom').value.trim() || 'All';
     const buy = parseFloat(document.getElementById('edit-rate-buy').value);

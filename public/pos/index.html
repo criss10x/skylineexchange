@@ -1156,12 +1156,20 @@
             <div class="mt-3 flex items-center gap-1.5 flex-wrap text-[11px]">
               <span class="text-slate-500" id="lbl-quick-curr">Pilihan cepat:</span>
               <button type="button" class="chip-curr px-2 py-0.5 rounded bg-navy-700 hover:bg-navy-600 text-slate-300 font-mono" data-code="USD">USD</button>
+              <button type="button" class="chip-curr px-2 py-0.5 rounded bg-navy-700 hover:bg-navy-600 text-slate-300 font-mono" data-code="USD 20, 10, 5">USD 20,10,5</button>
+              <button type="button" class="chip-curr px-2 py-0.5 rounded bg-navy-700 hover:bg-navy-600 text-slate-300 font-mono" data-code="USD 2, 1">USD 2,1</button>
               <button type="button" class="chip-curr px-2 py-0.5 rounded bg-navy-700 hover:bg-navy-600 text-slate-300 font-mono" data-code="AUD">AUD</button>
               <button type="button" class="chip-curr px-2 py-0.5 rounded bg-navy-700 hover:bg-navy-600 text-slate-300 font-mono" data-code="SGD">SGD</button>
               <button type="button" class="chip-curr px-2 py-0.5 rounded bg-navy-700 hover:bg-navy-600 text-slate-300 font-mono" data-code="EUR">EUR</button>
+              <button type="button" class="chip-curr px-2 py-0.5 rounded bg-navy-700 hover:bg-navy-600 text-slate-300 font-mono" data-code="GBP">GBP</button>
               <button type="button" class="chip-curr px-2 py-0.5 rounded bg-navy-700 hover:bg-navy-600 text-slate-300 font-mono" data-code="JPY">JPY</button>
               <button type="button" class="chip-curr px-2 py-0.5 rounded bg-navy-700 hover:bg-navy-600 text-slate-300 font-mono" data-code="MYR">MYR</button>
-              <button type="button" class="chip-curr px-2 py-0.5 rounded bg-navy-700 hover:bg-navy-600 text-slate-300 font-mono" data-code="GBP">GBP</button>
+              <button type="button" class="chip-curr px-2 py-0.5 rounded bg-navy-700 hover:bg-navy-600 text-slate-300 font-mono" data-code="HKD">HKD</button>
+              <button type="button" class="chip-curr px-2 py-0.5 rounded bg-navy-700 hover:bg-navy-600 text-slate-300 font-mono" data-code="THB">THB</button>
+              <button type="button" class="chip-curr px-2 py-0.5 rounded bg-navy-700 hover:bg-navy-600 text-slate-300 font-mono" data-code="NTD">NTD</button>
+              <button type="button" class="chip-curr px-2 py-0.5 rounded bg-navy-700 hover:bg-navy-600 text-slate-300 font-mono" data-code="PHP">PHP</button>
+              <button type="button" class="chip-curr px-2 py-0.5 rounded bg-navy-700 hover:bg-navy-600 text-slate-300 font-mono" data-code="INR">INR</button>
+              <button type="button" class="chip-curr px-2 py-0.5 rounded bg-navy-700 hover:bg-navy-600 text-slate-300 font-mono" data-code="CNY">CNY</button>
               <button type="button" id="chip-custom-curr" class="px-2 py-0.5 rounded bg-brand/20 hover:bg-brand/30 text-brand font-semibold border border-brand/30 transition-colors">+ Kustom</button>
             </div>
           </div>
@@ -1913,8 +1921,8 @@
       <form id="form-rate-edit" class="space-y-3 text-xs sm:text-sm">
         <input type="hidden" id="edit-rate-id">
         <div>
-          <label class="block text-slate-400 mb-1 font-medium" id="lbl-modal-code">Kode Valas (3 Huruf)</label>
-          <input type="text" id="edit-rate-code" required uppercase placeholder="Contoh: USD" class="w-full uppercase bg-navy-900 border border-navy-600 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-brand font-mono font-bold">
+          <label class="block text-slate-400 mb-1 font-medium" id="lbl-modal-code">Kode Valas (contoh: USD, HKD s, USD 20, 10, 5)</label>
+          <input type="text" id="edit-rate-code" required placeholder="Contoh: USD atau HKD s" class="w-full bg-navy-900 border border-navy-600 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-brand font-mono font-bold">
         </div>
         <div>
           <label class="block text-slate-400 mb-1 font-medium" id="lbl-modal-name">Nama Mata Uang</label>

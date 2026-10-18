@@ -337,7 +337,46 @@ router.delete('/api/auth/users/:id', requireAuth, requireAdmin, (req, res) => {
 // ==================== RATES API ====================
 router.get('/api/rates', requireAuth, (req, res) => {
   try {
-    const rates = db.prepare('SELECT * FROM rates ORDER BY code ASC').all();
+    const rates = db.prepare(`
+      SELECT * FROM rates 
+      ORDER BY 
+        CASE 
+          WHEN code = 'USD' THEN 1
+          WHEN code = 'USD 20, 10, 5' THEN 2
+          WHEN code = 'USD 2, 1' THEN 3
+          WHEN code LIKE 'USD%' THEN 4
+          WHEN code = 'AUD' THEN 10
+          WHEN code = 'SGD' THEN 11
+          WHEN code = 'EUR' THEN 12
+          WHEN code = 'GBP' THEN 13
+          WHEN code = 'JPY' THEN 14
+          WHEN code = 'MYR' THEN 20
+          WHEN code = 'MYR s' THEN 21
+          WHEN code LIKE 'MYR%' THEN 22
+          WHEN code = 'HKD' THEN 30
+          WHEN code = 'HKD s' THEN 31
+          WHEN code LIKE 'HKD%' THEN 32
+          WHEN code = 'THB' THEN 40
+          WHEN code = 'THB s' THEN 41
+          WHEN code LIKE 'THB%' THEN 42
+          WHEN code = 'NTD' THEN 50
+          WHEN code = 'NTD s' THEN 51
+          WHEN code LIKE 'NTD%' THEN 52
+          WHEN code = 'PHP' THEN 60
+          WHEN code = 'PHP s' THEN 61
+          WHEN code LIKE 'PHP%' THEN 62
+          WHEN code = 'INR' THEN 70
+          WHEN code = 'INR s' THEN 71
+          WHEN code LIKE 'INR%' THEN 72
+          WHEN code = 'CNY' THEN 80
+          WHEN code = 'CNY s' THEN 81
+          WHEN code LIKE 'CNY%' THEN 82
+          WHEN code = 'SAR' THEN 90
+          WHEN code = 'KRW' THEN 91
+          ELSE 100
+        END ASC,
+        code ASC
+    `).all();
     res.json({ success: true, data: rates });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -350,13 +389,14 @@ router.post('/api/rates', requireAuth, (req, res) => {
     if (!code || !name || buy_rate == null || sell_rate == null) {
       return res.status(400).json({ success: false, message: 'Data tidak lengkap' });
     }
-    const cleanCode = code.trim().toUpperCase();
+    const cleanCode = code.trim();
     const now = new Date().toISOString();
     const stmt = db.prepare(`
       INSERT INTO rates (code, name, buy_rate, sell_rate, denomination, updated_at)
       VALUES (?, ?, ?, ?, ?, ?)
     `);
     const result = stmt.run(cleanCode, name.trim(), Number(buy_rate), Number(sell_rate), denomination || 'All', now);
+    if (db.backupRatesToFile) db.backupRatesToFile();
     res.json({ success: true, id: result.lastInsertRowid });
   } catch (err) {
     res.status(400).json({ success: false, message: err.message });
@@ -374,6 +414,7 @@ router.put('/api/rates/:id', requireAuth, (req, res) => {
       WHERE id = ?
     `);
     stmt.run(name, Number(buy_rate), Number(sell_rate), denomination || 'All', now, id);
+    if (db.backupRatesToFile) db.backupRatesToFile();
     res.json({ success: true });
   } catch (err) {
     res.status(400).json({ success: false, message: err.message });
@@ -384,6 +425,7 @@ router.delete('/api/rates/:id', requireAuth, (req, res) => {
   try {
     const { id } = req.params;
     db.prepare('DELETE FROM rates WHERE id = ?').run(id);
+    if (db.backupRatesToFile) db.backupRatesToFile();
     res.json({ success: true });
   } catch (err) {
     res.status(400).json({ success: false, message: err.message });
