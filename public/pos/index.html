@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Skyline Exchange - POS Money Changer</title>
   <link rel="manifest" href="/pos/manifest.json">
-  <link rel="icon" type="image/svg+xml" href="/pos/icon.svg">
+  <link rel="icon" id="app-favicon" type="image/svg+xml" href="/assets/favicon.svg">
+  <link rel="apple-touch-icon" id="app-apple-icon" href="/assets/apple-touch-icon.png">
   <meta name="theme-color" content="#00E2DE">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
@@ -45,6 +46,11 @@
         document.documentElement.classList.add('light');
       } else {
         document.documentElement.classList.remove('light');
+      }
+      var savedLogo = localStorage.getItem('skyline_pos_custom_logo');
+      if (savedLogo) {
+        var fav = document.getElementById('app-favicon');
+        if (fav) fav.href = savedLogo;
       }
     })();
   </script>
@@ -1022,10 +1028,8 @@
 
       <!-- Brand Header -->
       <div class="text-center space-y-2">
-        <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-brand/25 to-brand/5 border border-brand/50 flex items-center justify-center mx-auto text-brand shadow-lg">
-          <svg class="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M7 16V4M7 4L3 8M7 4L11 8M17 8V20M17 20L21 16M17 20L13 16"/>
-          </svg>
+        <div id="app-login-logo-box" class="w-16 h-16 rounded-2xl bg-gradient-to-br from-brand/25 to-brand/5 border border-brand/50 flex items-center justify-center mx-auto p-2.5 shadow-lg overflow-hidden">
+          <img id="app-login-logo" src="/assets/logo.svg" alt="Skyline Logo" class="w-full h-full object-contain">
         </div>
         <h2 class="text-xl font-extrabold text-white tracking-tight">Skyline Exchange</h2>
         <p class="text-xs text-slate-400">POS Money Changer (Point of Sale)</p>
@@ -1099,10 +1103,8 @@
     <div class="max-w-7xl mx-auto px-3 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-3">
       <!-- Brand & Title -->
       <div class="flex items-center space-x-3">
-        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-brand/20 to-brand/5 border border-brand/40 flex items-center justify-center p-2 text-brand">
-          <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M7 16V4M7 4L3 8M7 4L11 8M17 8V20M17 20L21 16M17 20L13 16"/>
-          </svg>
+        <div id="app-header-logo-box" class="w-10 h-10 rounded-xl bg-gradient-to-br from-brand/20 to-brand/5 border border-brand/40 flex items-center justify-center p-1.5 overflow-hidden shadow-sm">
+          <img id="app-header-logo" src="/assets/logo.svg" alt="Skyline Logo" class="w-full h-full object-contain">
         </div>
         <div>
           <div class="flex items-center gap-2">
@@ -1544,6 +1546,9 @@
             <div id="receipt-container-wrapper" class="flex justify-center bg-navy-950 p-2 sm:p-4 rounded-xl border border-navy-700/80 overflow-y-auto max-h-[calc(100vh-14rem)] lg:max-h-[760px] receipt-scroll-container">
               <div id="printable-receipt" class="receipt-paper w-full max-w-[380px] p-4 pb-8 text-[12px] select-text transition-all">
                 <!-- Header -->
+                <div id="rcpt-logo-wrapper" class="hidden justify-center mb-1.5 text-center">
+                  <img id="rcpt-logo-img" src="/assets/logo.svg" alt="Logo Struk" class="max-h-12 max-w-[140px] mx-auto object-contain filter grayscale contrast-200">
+                </div>
                 <div class="text-center font-bold text-sm tracking-tight text-black" id="rcpt-store-name">
                   SKYLINE EXCHANGE
                 </div>
@@ -1920,6 +1925,70 @@
         </h2>
 
         <form id="form-settings" class="space-y-4 text-xs sm:text-sm">
+          <!-- ==================== PENGATURAN LOGO & FAVICON ==================== -->
+          <div class="bg-navy-900/60 p-4 rounded-xl border border-navy-700 space-y-3">
+            <div class="flex items-center justify-between pb-2 border-b border-navy-700/80">
+              <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-lg bg-brand/10 border border-brand/30 flex items-center justify-center text-brand">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                </div>
+                <div>
+                  <h3 class="font-bold text-slate-100 text-xs sm:text-sm" id="lbl-logo-title">Logo Aplikasi & Favicon Browser</h3>
+                  <p class="text-[11px] text-slate-400" id="lbl-logo-sub">Ubah logo sistem kasir, ikon tab browser (favicon), dan logo struk</p>
+                </div>
+              </div>
+              <span id="logo-status-tag" class="text-[10px] px-2 py-0.5 rounded-full bg-brand/20 text-brand font-semibold border border-brand/30">Logo Skyline</span>
+            </div>
+
+            <!-- Preview Card -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
+              <!-- Logo Preview Dark & Light -->
+              <div class="flex flex-col items-center justify-center p-3 rounded-lg bg-navy-950 border border-navy-800 text-center">
+                <span class="text-[10px] text-slate-400 mb-1.5 font-medium" id="lbl-logo-preview-dark">Tampilan Dark Theme</span>
+                <div class="w-14 h-14 rounded-xl bg-navy-900 border border-navy-700 flex items-center justify-center p-2 overflow-hidden shadow-inner">
+                  <img id="setting-logo-preview-dark" src="/assets/logo.svg" alt="Preview Dark" class="w-full h-full object-contain">
+                </div>
+              </div>
+
+              <div class="flex flex-col items-center justify-center p-3 rounded-lg bg-slate-100 border border-slate-300 text-center">
+                <span class="text-[10px] text-slate-600 mb-1.5 font-medium" id="lbl-logo-preview-light">Tampilan Light Theme</span>
+                <div class="w-14 h-14 rounded-xl bg-white border border-slate-200 flex items-center justify-center p-2 overflow-hidden shadow-sm">
+                  <img id="setting-logo-preview-light" src="/assets/logo.svg" alt="Preview Light" class="w-full h-full object-contain">
+                </div>
+              </div>
+
+              <!-- Favicon Browser Tab Mimic Preview -->
+              <div class="flex flex-col items-center justify-center p-3 rounded-lg bg-navy-950 border border-navy-800 text-center">
+                <span class="text-[10px] text-slate-400 mb-1.5 font-medium" id="lbl-logo-favicon-tab">Ikon Tab Browser (Favicon)</span>
+                <div class="w-full py-1.5 px-2.5 rounded-md bg-navy-850 border border-navy-700 flex items-center gap-2 max-w-[180px]">
+                  <img id="setting-favicon-preview" src="/assets/favicon.svg" alt="Favicon" class="w-4 h-4 object-contain shrink-0">
+                  <span class="text-[10px] text-slate-200 font-medium truncate">Skyline Exchange - POS</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Upload Controls -->
+            <div class="flex flex-wrap items-center gap-2 pt-1">
+              <label class="py-2 px-3.5 rounded-lg bg-brand hover:bg-brand-hover text-navy-950 font-bold text-xs flex items-center gap-1.5 cursor-pointer transition-all shadow-sm">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                <span id="lbl-btn-upload-logo">Upload Logo / Gambar Baru</span>
+                <input type="file" id="input-store-logo" accept="image/png,image/jpeg,image/svg+xml,image/webp,image/x-icon,image/gif" class="hidden">
+              </label>
+
+              <button type="button" id="btn-reset-store-logo" class="py-2 px-3 rounded-lg bg-navy-700 hover:bg-navy-600 text-slate-300 font-medium text-xs transition-colors flex items-center gap-1.5 border border-navy-600">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                <span id="lbl-btn-reset-logo">Gunakan Logo Default Skyline</span>
+              </button>
+            </div>
+
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2 border-t border-navy-700/60 text-[11px] text-slate-400">
+              <p id="lbl-logo-file-help">Mendukung file: <strong>PNG, SVG, JPG, WebP, ICO</strong> (Otomatis dijadikan logo header, login, dan favicon browser).</p>
+              <label class="flex items-center gap-1.5 text-slate-300 cursor-pointer select-none shrink-0">
+                <input type="checkbox" id="setting-show-rcpt-logo" class="w-4 h-4 text-brand bg-navy-900 border-navy-600 rounded focus:ring-brand">
+                <span id="lbl-show-rcpt-logo">Tampilkan logo di struk thermal</span>
+              </label>
+            </div>
+          </div>
           <div>
             <label class="block text-slate-300 font-semibold mb-1" id="lbl-set-store-name">Nama Money Changer</label>
             <input type="text" id="setting-store-name" value="Skyline Exchange" class="w-full bg-navy-900 border border-navy-600 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-brand font-medium">

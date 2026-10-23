@@ -182,6 +182,19 @@ const i18n = {
     settingDisc2: 'Catatan Disclaimer 2 Struk',
     btnSaveSettings: 'Simpan Pengaturan',
 
+    // Logo & Favicon
+    logoTitle: 'Logo Aplikasi & Favicon Browser',
+    logoSub: 'Ubah logo sistem kasir, ikon tab browser (favicon), dan logo struk',
+    logoTagDefault: 'Logo Default Skyline',
+    logoTagCustom: 'Logo Kustom Aktif',
+    logoPreviewDark: 'Tampilan Dark Theme',
+    logoPreviewLight: 'Tampilan Light Theme',
+    logoFaviconTab: 'Ikon Tab Browser (Favicon)',
+    btnUploadLogo: 'Upload Logo / Gambar Baru',
+    btnResetLogo: 'Gunakan Logo Default Skyline',
+    logoFileHelp: 'Mendukung file: PNG, SVG, JPG, WebP, ICO (Otomatis dijadikan logo header, login, dan favicon browser).',
+    showRcptLogo: 'Tampilkan logo di struk thermal',
+
     // Integrasi Google Sheets
     sheetsCardTitle: 'Integrasi Google Sheets (Pencatatan Cloud Otomatis)',
     sheetsCardSubtitle: 'Mencatat data transaksi langsung ke tab tanggal pada spreadsheet Anda',
@@ -396,6 +409,19 @@ const i18n = {
     settingDisc1: 'Receipt Disclaimer 1',
     settingDisc2: 'Receipt Disclaimer 2',
     btnSaveSettings: 'Save Settings',
+
+    // Logo & Favicon
+    logoTitle: 'App Logo & Browser Favicon',
+    logoSub: 'Change cashier POS logo, browser tab icon (favicon), and receipt logo',
+    logoTagDefault: 'Skyline Default Logo',
+    logoTagCustom: 'Custom Logo Active',
+    logoPreviewDark: 'Dark Theme Preview',
+    logoPreviewLight: 'Light Theme Preview',
+    logoFaviconTab: 'Browser Tab Icon (Favicon)',
+    btnUploadLogo: 'Upload New Logo / Image',
+    btnResetLogo: 'Reset to Skyline Default Logo',
+    logoFileHelp: 'Supports: PNG, SVG, JPG, WebP, ICO (Auto-applied to header, login, and browser favicon).',
+    showRcptLogo: 'Show logo on thermal receipt',
 
     // Google Sheets Integration
     sheetsCardTitle: 'Google Sheets Integration (Auto Cloud Backup)',
@@ -892,6 +918,17 @@ function setAppLanguage(lang) {
 
   // Tab Settings
   safeSet('lbl-settings-title', t.settingsTitle);
+
+  // Logo & Favicon
+  safeSet('lbl-logo-title', t.logoTitle);
+  safeSet('lbl-logo-sub', t.logoSub);
+  safeSet('lbl-logo-preview-dark', t.logoPreviewDark);
+  safeSet('lbl-logo-preview-light', t.logoPreviewLight);
+  safeSet('lbl-logo-favicon-tab', t.logoFaviconTab);
+  safeSet('lbl-btn-upload-logo', t.btnUploadLogo);
+  safeSet('lbl-btn-reset-logo', t.btnResetLogo);
+  safeSet('lbl-logo-file-help', t.logoFileHelp);
+  safeSet('lbl-show-rcpt-logo', t.showRcptLogo);
   safeSet('lbl-set-store-name', t.settingStoreName);
   safeSet('lbl-set-store-addr', t.settingStoreAddr);
   safeSet('lbl-set-store-phone', t.settingStorePhone);
@@ -1072,12 +1109,26 @@ function setReceiptLanguage(lang, showToastNotification = true) {
 async function loadSettings() {
   const cachedUrl = localStorage.getItem('skyline_pos_sheets_url') || '';
   const cachedAutoSync = localStorage.getItem('skyline_pos_sheets_auto_sync');
+  const cachedLogo = localStorage.getItem('skyline_pos_custom_logo') || '';
+  const cachedShowRcptLogo = localStorage.getItem('skyline_pos_show_rcpt_logo');
 
   try {
     const res = await authFetch('/api/settings');
     const data = await res.json();
     if (data.success && data.data) {
       state.settings = { ...state.settings, ...data.data };
+
+      // Restore custom logo from cache if server does not have it, or sync cache with server
+      if (!state.settings.store_logo && cachedLogo) {
+        state.settings.store_logo = cachedLogo;
+      } else if (state.settings.store_logo) {
+        localStorage.setItem('skyline_pos_custom_logo', state.settings.store_logo);
+      }
+      if (state.settings.store_show_rcpt_logo === undefined && cachedShowRcptLogo !== null) {
+        state.settings.store_show_rcpt_logo = cachedShowRcptLogo;
+      } else if (state.settings.store_show_rcpt_logo !== undefined) {
+        localStorage.setItem('skyline_pos_show_rcpt_logo', state.settings.store_show_rcpt_logo);
+      }
 
       // Fallback: If server has no sheets URL, but localStorage has cached it, restore it
       if ((!state.settings.google_sheets_url || state.settings.google_sheets_url.trim() === '') && cachedUrl) {
@@ -1106,6 +1157,12 @@ async function loadSettings() {
     if (cachedUrl && (!state.settings.google_sheets_url || state.settings.google_sheets_url.trim() === '')) {
       state.settings.google_sheets_url = cachedUrl;
     }
+    if (cachedLogo && !state.settings.store_logo) {
+      state.settings.store_logo = cachedLogo;
+    }
+    if (cachedShowRcptLogo !== null && state.settings.store_show_rcpt_logo === undefined) {
+      state.settings.store_show_rcpt_logo = cachedShowRcptLogo;
+    }
     applySettingsToUI();
   }
 }
@@ -1118,6 +1175,11 @@ function applySettingsToUI() {
   if (storeAddressEl) storeAddressEl.textContent = s.store_address || 'Jl. Bypass Ngurah Rai No. 4X, Kuta, Bali';
   const storePhoneEl = document.getElementById('rcpt-store-phone');
   if (storePhoneEl) storePhoneEl.textContent = `WA: ${s.store_phone || '+6285-122-777-970'}`;
+
+  // Logo & Favicon
+  applyStoreLogo(s.store_logo, s.store_show_rcpt_logo);
+  const showRcptLogoEl = document.getElementById('setting-show-rcpt-logo');
+  if (showRcptLogoEl) showRcptLogoEl.checked = s.store_show_rcpt_logo === '1';
 
   const activeTeller = getActiveTellerName();
   const rcptTellerEl = document.getElementById('rcpt-teller');
@@ -1167,6 +1229,67 @@ function applySettingsToUI() {
     }
   }
   applyPaperSize(paperSize);
+}
+
+function applyStoreLogo(logoUrl, showOnReceipt) {
+  const isEn = state.appLang === 'en';
+  const defaultLogo = '/assets/logo.svg';
+  const defaultFavicon = '/assets/favicon.svg';
+  const activeLogo = (logoUrl && String(logoUrl).trim() !== '') ? String(logoUrl).trim() : defaultLogo;
+  const isCustom = activeLogo !== defaultLogo;
+
+  // Header Logo
+  const headerLogo = document.getElementById('app-header-logo');
+  if (headerLogo) headerLogo.src = activeLogo;
+
+  // Login Logo
+  const loginLogo = document.getElementById('app-login-logo');
+  if (loginLogo) loginLogo.src = activeLogo;
+
+  // Settings Previews
+  const previewDark = document.getElementById('setting-logo-preview-dark');
+  if (previewDark) previewDark.src = activeLogo;
+  const previewLight = document.getElementById('setting-logo-preview-light');
+  if (previewLight) previewLight.src = activeLogo;
+  const previewFavicon = document.getElementById('setting-favicon-preview');
+  if (previewFavicon) previewFavicon.src = isCustom ? activeLogo : defaultFavicon;
+
+  // Browser Favicon & Apple Touch Icon
+  const favEl = document.getElementById('app-favicon');
+  if (favEl) {
+    favEl.href = isCustom ? activeLogo : defaultFavicon;
+  }
+  const appleEl = document.getElementById('app-apple-icon');
+  if (appleEl) {
+    appleEl.href = isCustom ? activeLogo : '/assets/apple-touch-icon.png';
+  }
+
+  // Receipt Logo Preview
+  const rcptLogoImg = document.getElementById('rcpt-logo-img');
+  if (rcptLogoImg) rcptLogoImg.src = activeLogo;
+  const rcptLogoWrap = document.getElementById('rcpt-logo-wrapper');
+  const isShowRcpt = showOnReceipt === '1' || showOnReceipt === true || showOnReceipt === 1;
+  if (rcptLogoWrap) {
+    if (isShowRcpt) {
+      rcptLogoWrap.classList.remove('hidden');
+      rcptLogoWrap.classList.add('flex');
+    } else {
+      rcptLogoWrap.classList.add('hidden');
+      rcptLogoWrap.classList.remove('flex');
+    }
+  }
+
+  // Status Tag in Settings
+  const statusTag = document.getElementById('logo-status-tag');
+  if (statusTag) {
+    if (isCustom) {
+      statusTag.textContent = isEn ? 'Custom Logo Active' : 'Logo Kustom Aktif';
+      statusTag.className = 'text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-semibold border border-emerald-500/30';
+    } else {
+      statusTag.textContent = isEn ? 'Skyline Default' : 'Logo Default Skyline';
+      statusTag.className = 'text-[10px] px-2 py-0.5 rounded-full bg-brand/20 text-brand font-semibold border border-brand/30';
+    }
+  }
 }
 
 function applyPaperSize(size) {
@@ -2987,13 +3110,21 @@ function initEventListeners() {
       disclaimer_1: document.getElementById('setting-disclaimer-1').value.trim(),
       disclaimer_2: document.getElementById('setting-disclaimer-2').value.trim(),
       google_sheets_url: (document.getElementById('setting-sheets-url')?.value || '').trim(),
-      google_sheets_auto_sync: document.getElementById('setting-sheets-auto-sync')?.checked ? '1' : '0'
+      google_sheets_auto_sync: document.getElementById('setting-sheets-auto-sync')?.checked ? '1' : '0',
+      store_logo: state.settings.store_logo || '',
+      store_show_rcpt_logo: document.getElementById('setting-show-rcpt-logo')?.checked ? '1' : '0'
     };
 
     if (payload.google_sheets_url) {
       localStorage.setItem('skyline_pos_sheets_url', payload.google_sheets_url);
       localStorage.setItem('skyline_pos_sheets_auto_sync', payload.google_sheets_auto_sync);
     }
+    if (payload.store_logo) {
+      localStorage.setItem('skyline_pos_custom_logo', payload.store_logo);
+    } else {
+      localStorage.removeItem('skyline_pos_custom_logo');
+    }
+    localStorage.setItem('skyline_pos_show_rcpt_logo', payload.store_show_rcpt_logo);
 
     try {
       const res = await authFetch('/api/settings', {
@@ -3012,6 +3143,94 @@ function initEventListeners() {
     } catch {
       showToast(isEn ? 'Failed to save settings' : 'Gagal menyimpan ke server', 'error');
     }
+  });
+
+  // Logo & Favicon Customization Listeners
+  const logoInput = document.getElementById('input-store-logo');
+  if (logoInput) {
+    logoInput.addEventListener('change', (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      const isEn = state.appLang === 'en';
+
+      if (!file.type.startsWith('image/')) {
+        showToast(isEn ? 'Please select a valid image file.' : 'Harap pilih file gambar yang valid.', 'error');
+        return;
+      }
+
+      const showRcpt = document.getElementById('setting-show-rcpt-logo')?.checked ? '1' : '0';
+
+      // SVG files: Read as Data URL directly
+      if (file.type === 'image/svg+xml' || file.name.toLowerCase().endsWith('.svg')) {
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+          const dataUrl = evt.target.result;
+          state.settings.store_logo = dataUrl;
+          applyStoreLogo(dataUrl, showRcpt);
+          showToast(isEn ? 'Custom logo selected! Click "Save Settings" to persist.' : 'Logo kustom dipilih! Klik "Simpan Pengaturan" untuk menyimpan permanen.', 'info');
+        };
+        reader.readAsDataURL(file);
+        return;
+      }
+
+      // Raster images (PNG, JPG, WebP, ICO): Read and resize to max 512px
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        const rawData = evt.target.result;
+        const img = new Image();
+        img.onload = () => {
+          const maxDim = 512;
+          let width = img.width;
+          let height = img.height;
+          if (width > maxDim || height > maxDim) {
+            if (width > height) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            } else {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
+          ctx.drawImage(img, 0, 0, width, height);
+
+          const format = file.type === 'image/jpeg' ? 'image/jpeg' : 'image/png';
+          const optimizedDataUrl = canvas.toDataURL(format, 0.92);
+
+          state.settings.store_logo = optimizedDataUrl;
+          applyStoreLogo(optimizedDataUrl, showRcpt);
+          showToast(isEn ? 'Custom logo selected! Click "Save Settings" to persist.' : 'Logo kustom dipilih! Klik "Simpan Pengaturan" untuk menyimpan permanen.', 'info');
+        };
+        img.onerror = () => {
+          state.settings.store_logo = rawData;
+          applyStoreLogo(rawData, showRcpt);
+          showToast(isEn ? 'Custom logo selected! Click "Save Settings" to persist.' : 'Logo kustom dipilih! Klik "Simpan Pengaturan" untuk menyimpan permanen.', 'info');
+        };
+        img.src = rawData;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  document.getElementById('btn-reset-store-logo')?.addEventListener('click', () => {
+    const isEn = state.appLang === 'en';
+    state.settings.store_logo = '';
+    const fileInput = document.getElementById('input-store-logo');
+    if (fileInput) fileInput.value = '';
+    const showRcpt = document.getElementById('setting-show-rcpt-logo')?.checked ? '1' : '0';
+    applyStoreLogo('', showRcpt);
+    showToast(isEn ? 'Reset to Skyline default logo. Click "Save Settings" to save.' : 'Kembali ke logo default Skyline. Klik "Simpan Pengaturan" untuk menyimpan.', 'info');
+  });
+
+  document.getElementById('setting-show-rcpt-logo')?.addEventListener('change', (e) => {
+    const isShow = e.target.checked ? '1' : '0';
+    state.settings.store_show_rcpt_logo = isShow;
+    applyStoreLogo(state.settings.store_logo, isShow);
   });
 
   // Paper Size Real-Time Toggle Listeners

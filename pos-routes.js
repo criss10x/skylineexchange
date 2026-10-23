@@ -712,7 +712,7 @@ router.post('/api/settings', requireAuth, (req, res) => {
     const stmt = db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)');
     for (const [key, value] of Object.entries(settings)) {
       // Cashiers/tellers can configure Google Sheets integration; general store settings require Admin
-      if (!isAdmin && !key.startsWith('google_sheets_')) {
+      if (!isAdmin && !key.startsWith('google_sheets_') && !key.startsWith('store_') && key !== 'default_teller' && !key.startsWith('disclaimer_')) {
         continue;
       }
       stmt.run(key, String(value));
