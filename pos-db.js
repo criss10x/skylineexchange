@@ -20,18 +20,24 @@ function resolveStorageDir() {
 
   const candidates = [];
   if (process.platform === 'linux') {
-    // 1. One level above web root: ../skyline_storage (outside git working tree on Hostinger/cPanel)
-    try {
-      candidates.push(path.resolve(__dirname, '..', 'skyline_storage'));
-    } catch (e) {}
-    // 2. User home directory: ~/skyline_storage
+    // 1. Hostinger root domain directory (outside hbuilds version tree! e.g. /home/u234223111/domains/skylinemoneychanger.com/skyline_storage)
+    const hbuildsIdx = __dirname.indexOf('/hbuilds');
+    if (hbuildsIdx !== -1) {
+      const domainRoot = __dirname.substring(0, hbuildsIdx);
+      candidates.push(path.join(domainRoot, 'skyline_storage'));
+    }
+    // 2. User home directory: ~/skyline_storage (e.g. /home/u234223111/skyline_storage)
     if (process.env.HOME) {
       try {
         candidates.push(path.join(process.env.HOME, 'skyline_storage'));
       } catch (e) {}
     }
+    // 3. One level above web root
+    try {
+      candidates.push(path.resolve(__dirname, '..', 'skyline_storage'));
+    } catch (e) {}
   }
-  // 3. Fallback to local skyline_storage subfolder inside project
+  // 4. Fallback to local skyline_storage subfolder inside project
   candidates.push(path.join(__dirname, 'skyline_storage'));
 
   for (const dir of candidates) {
@@ -59,14 +65,21 @@ function resolveDbPath() {
 
   const persistentPath = path.join(storageDir, 'database.sqlite');
   const localPath = path.join(__dirname, 'database.sqlite');
+  const projectStoragePath = path.join(__dirname, 'skyline_storage', 'database.sqlite');
 
-  // If local db existed previously and persistent doesn't, migrate it
-  if (persistentPath !== localPath && fs.existsSync(localPath) && !fs.existsSync(persistentPath)) {
-    try {
-      fs.copyFileSync(localPath, persistentPath);
-      console.log(`Migrated database.sqlite from ${localPath} to persistent ${persistentPath}`);
-    } catch (e) {
-      console.warn('Database migration copy failed:', e.message);
+  // Auto-migrate from any previous location if target does not exist yet
+  if (!fs.existsSync(persistentPath)) {
+    const candidateSources = [projectStoragePath, localPath];
+    for (const src of candidateSources) {
+      if (src !== persistentPath && fs.existsSync(src)) {
+        try {
+          fs.copyFileSync(src, persistentPath);
+          console.log(`Migrated database.sqlite from ${src} to persistent ${persistentPath}`);
+          break;
+        } catch (e) {
+          console.warn('Database migration copy failed:', e.message);
+        }
+      }
     }
   }
 
@@ -259,12 +272,20 @@ function verifyToken(token) {
 // ==================== PERSISTENT STORAGE HELPERS ====================
 function getStorageFilePath(filename) {
   const target = path.join(storageDir, filename);
-  const legacy = path.join(__dirname, filename);
-  if (target !== legacy && !fs.existsSync(target) && fs.existsSync(legacy)) {
-    try {
-      fs.copyFileSync(legacy, target);
-      console.log(`Auto-migrated ${filename} to storage directory.`);
-    } catch (e) {}
+  if (!fs.existsSync(target)) {
+    const candidateSources = [
+      path.join(__dirname, 'skyline_storage', filename),
+      path.join(__dirname, filename)
+    ];
+    for (const src of candidateSources) {
+      if (src !== target && fs.existsSync(src)) {
+        try {
+          fs.copyFileSync(src, target);
+          console.log(`Auto-migrated ${filename} to storage directory.`);
+          break;
+        } catch (e) {}
+      }
+    }
   }
   return target;
 }
