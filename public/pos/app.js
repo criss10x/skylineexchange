@@ -2541,35 +2541,171 @@ async function loadReportsSummary() {
 }
 
 // ==================== SUBTAB & TAB SWITCHER ====================
+
+// ==================== DATABASE & BACKUP SYSTEM ====================
+async function loadDatabaseInfo() {
+  try {
+    const res = await apiFetch('/api/system/db-info');
+    if (res && res.success && res.data) {
+      const d = res.data;
+      const elPath = document.getElementById('db-info-path');
+      const elStorage = document.getElementById('db-info-storage');
+      const elProtection = document.getElementById('db-info-protection');
+      const elTx = document.getElementById('db-stat-tx');
+      const elUsers = document.getElementById('db-stat-users');
+      const elRates = document.getElementById('db-stat-rates');
+      const elSettings = document.getElementById('db-stat-settings');
+
+      if (elPath) elPath.textContent = d.db_path || '-';
+      if (elStorage) elStorage.textContent = d.storage_dir || '-';
+      if (elProtection) {
+        if (d.is_external_storage) {
+          elProtection.innerHTML = '<span class="text-emerald-400 font-bold flex items-center gap-1"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Terproteksi di Luar Git (Aman dari Deploy)</span>';
+        } else {
+          elProtection.innerHTML = '<span class="text-emerald-400 font-bold flex items-center gap-1"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Terproteksi (.gitignore & JSON Mirroring)</span>';
+        }
+      }
+
+      if (elTx) elTx.textContent = d.counts ? d.counts.transactions : '0';
+      if (elUsers) elUsers.textContent = d.counts ? d.counts.users : '0';
+      if (elRates) elRates.textContent = d.counts ? d.counts.rates : '0';
+      if (elSettings) elSettings.textContent = d.counts ? d.counts.settings : '0';
+
+      const restoreCard = document.getElementById('card-restore-backup');
+      if (restoreCard) {
+        if (state.user && state.user.role === 'ADMIN') {
+          restoreCard.classList.remove('opacity-50', 'pointer-events-none');
+        } else {
+          restoreCard.classList.add('opacity-50', 'pointer-events-none');
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('Gagal memuat status database:', err.message);
+  }
+}
+
+async function downloadDatabaseBackup() {
+  const token = state.token || localStorage.getItem('skyline_pos_token');
+  if (!token) {
+    showToast('Harap login terlebih dahulu.', 'error');
+    return;
+  }
+  showToast('Menyiapkan file cadangan...', 'info');
+  try {
+    const res = await fetch('/api/system/backup/download', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || 'Gagal mengunduh backup');
+    }
+    const blob = await res.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const dateStr = new Date().toISOString().split('T')[0];
+    a.download = `Skyline_POS_FullBackup_${dateStr}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+    showToast('File backup database berhasil diunduh!', 'success');
+  } catch (err) {
+    showToast('Gagal download backup: ' + err.message, 'error');
+  }
+}
+
+async function restoreDatabaseFromFile(file) {
+  if (!file) return;
+  const token = state.token || localStorage.getItem('skyline_pos_token');
+  if (!token) {
+    showToast('Harap login sebagai Admin untuk memulihkan data.', 'error');
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    try {
+      const json = JSON.parse(e.target.result);
+      if (!confirm(`Apakah Anda yakin ingin memulihkan database dari file backup "${file.name}"?\nData yang ada akan dilengkapi tanpa menghapus riwayat yang sudah ada.`)) {
+        return;
+      }
+
+      showToast('Memulihkan database...', 'info');
+      const res = await fetch('/api/system/backup/restore', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(json)
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.message || 'Restore gagal');
+
+      const info = data.restored || {};
+      const statusBox = document.getElementById('restore-status-box');
+      if (statusBox) {
+        statusBox.classList.remove('hidden');
+        statusBox.innerHTML = `
+          <div class="text-emerald-400 font-bold mb-1">Berhasil memulihkan database:</div>
+          <ul class="list-disc pl-4 space-y-0.5 text-slate-300">
+            <li>${info.users || 0} akun kasir baru dipulihkan</li>
+            <li>${info.rates || 0} kurs valas diperbarui/dipulihkan</li>
+            <li>${info.transactions || 0} transaksi dipulihkan</li>
+            <li>${info.settings || 0} pengaturan toko dipulihkan</li>
+          </ul>
+        `;
+      }
+      showToast('Database berhasil dipulihkan dari file backup!', 'success');
+      loadDatabaseInfo();
+      loadRates();
+      if (state.user && state.user.role === 'ADMIN') loadUsersList();
+    } catch (err) {
+      showToast('Gagal memulihkan backup: ' + err.message, 'error');
+    }
+  };
+  reader.readAsText(file);
+}
+
 function switchSubtab(subtabName) {
   const panelSheets = document.getElementById('subtab-panel-sheets');
   const panelStore = document.getElementById('subtab-panel-store');
   const panelUsers = document.getElementById('subtab-panel-users');
+  const panelDatabase = document.getElementById('subtab-panel-database');
   const btnSheets = document.getElementById('subtab-btn-sheets');
   const btnStore = document.getElementById('subtab-btn-store');
   const btnUsers = document.getElementById('subtab-btn-users');
+  const btnDatabase = document.getElementById('subtab-btn-database');
 
   if (panelSheets) panelSheets.classList.add('hidden');
   if (panelStore) panelStore.classList.add('hidden');
   if (panelUsers) panelUsers.classList.add('hidden');
+  if (panelDatabase) panelDatabase.classList.add('hidden');
 
-  const inactiveBtnClass = 'flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all text-center flex items-center justify-center gap-1.5 text-slate-400 hover:text-white';
+  const inactiveBtnClass = 'flex-1 py-2 px-2 rounded-lg text-xs font-bold transition-all text-center flex items-center justify-center gap-1 text-slate-400 hover:text-white';
   if (btnSheets) btnSheets.className = inactiveBtnClass;
   if (btnStore) btnStore.className = inactiveBtnClass;
   if (btnUsers) btnUsers.className = inactiveBtnClass;
+  if (btnDatabase) btnDatabase.className = inactiveBtnClass;
 
   if (subtabName === 'sheets') {
     if (panelSheets) panelSheets.classList.remove('hidden');
-    if (btnSheets) btnSheets.className = 'flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all text-center flex items-center justify-center gap-1.5 bg-emerald-600 text-white shadow';
+    if (btnSheets) btnSheets.className = 'flex-1 py-2 px-2 rounded-lg text-xs font-bold transition-all text-center flex items-center justify-center gap-1 bg-emerald-600 text-white shadow';
   } else if (subtabName === 'users') {
     if (panelUsers) panelUsers.classList.remove('hidden');
-    if (btnUsers) btnUsers.className = 'flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all text-center flex items-center justify-center gap-1.5 bg-brand text-navy-950 font-bold shadow';
+    if (btnUsers) btnUsers.className = 'flex-1 py-2 px-2 rounded-lg text-xs font-bold transition-all text-center flex items-center justify-center gap-1 bg-brand text-navy-950 font-bold shadow';
     if (state.user && state.user.role === 'ADMIN') {
       loadUsersList();
     }
+  } else if (subtabName === 'database') {
+    if (panelDatabase) panelDatabase.classList.remove('hidden');
+    if (btnDatabase) btnDatabase.className = 'flex-1 py-2 px-2 rounded-lg text-xs font-bold transition-all text-center flex items-center justify-center gap-1 bg-cyan-600 text-white shadow';
+    loadDatabaseInfo();
   } else {
     if (panelStore) panelStore.classList.remove('hidden');
-    if (btnStore) btnStore.className = 'flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all text-center flex items-center justify-center gap-1.5 bg-brand text-navy-950 font-bold shadow';
+    if (btnStore) btnStore.className = 'flex-1 py-2 px-2 rounded-lg text-xs font-bold transition-all text-center flex items-center justify-center gap-1 bg-brand text-navy-950 font-bold shadow';
   }
 }
 
@@ -3241,6 +3377,19 @@ function initEventListeners() {
   document.getElementById('subtab-btn-sheets')?.addEventListener('click', () => switchSubtab('sheets'));
   document.getElementById('subtab-btn-store')?.addEventListener('click', () => switchSubtab('store'));
   document.getElementById('subtab-btn-users')?.addEventListener('click', () => switchSubtab('users'));
+  document.getElementById('subtab-btn-database')?.addEventListener('click', () => switchSubtab('database'));
+  document.getElementById('btn-refresh-db-info')?.addEventListener('click', loadDatabaseInfo);
+  document.getElementById('btn-download-db-backup')?.addEventListener('click', downloadDatabaseBackup);
+  document.getElementById('btn-trigger-restore-db')?.addEventListener('click', () => {
+    document.getElementById('input-restore-file')?.click();
+  });
+  document.getElementById('input-restore-file')?.addEventListener('change', function() {
+    if (this.files && this.files[0]) {
+      restoreDatabaseFromFile(this.files[0]);
+      this.value = '';
+    }
+  });
+  document.getElementById('btn-goto-sheets-tab')?.addEventListener('click', () => switchSubtab('sheets'));
 
   // Auth & User Management Listeners
   document.getElementById('form-login')?.addEventListener('submit', handleLogin);

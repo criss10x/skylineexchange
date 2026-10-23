@@ -2,41 +2,85 @@ const { DatabaseSync } = require('node:sqlite');
 const path = require('node:path');
 const fs = require('node:fs');
 
-// Resolve persistent database path (stored outside git working tree on Linux/Hostinger to survive auto-deploys)
-function resolveDbPath() {
-  if (process.env.DB_PATH) return process.env.DB_PATH;
-
-  if (process.platform === 'linux') {
+// Resolve persistent storage directory (outside git working tree on Linux/Hostinger to survive auto-deploys)
+function resolveStorageDir() {
+  if (process.env.STORAGE_DIR) {
     try {
-      const parentDir = path.resolve(__dirname, '..');
-      const storageDir = path.join(parentDir, 'skyline_storage');
-      if (!fs.existsSync(storageDir)) {
-        fs.mkdirSync(storageDir, { recursive: true });
+      if (!fs.existsSync(process.env.STORAGE_DIR)) {
+        fs.mkdirSync(process.env.STORAGE_DIR, { recursive: true });
       }
-      const persistentPath = path.join(storageDir, 'database.sqlite');
-      const localPath = path.join(__dirname, 'database.sqlite');
-      // If local db existed previously and persistent doesn't, migrate it
-      if (fs.existsSync(localPath) && !fs.existsSync(persistentPath)) {
-        try {
-          fs.copyFileSync(localPath, persistentPath);
-        } catch (e) {
-          console.warn('Migration copy failed:', e.message);
-        }
-      }
-      return persistentPath;
-    } catch (err) {
-      console.warn('Could not initialize external storage directory:', err.message);
+      const probe = path.join(process.env.STORAGE_DIR, '.probe_' + Date.now());
+      fs.writeFileSync(probe, '1', 'utf8');
+      fs.unlinkSync(probe);
+      return process.env.STORAGE_DIR;
+    } catch (e) {
+      console.warn('Configured STORAGE_DIR unusable:', e.message);
     }
   }
 
-  return path.join(__dirname, 'database.sqlite');
+  const candidates = [];
+  if (process.platform === 'linux') {
+    // 1. One level above web root: ../skyline_storage (outside git working tree on Hostinger/cPanel)
+    try {
+      candidates.push(path.resolve(__dirname, '..', 'skyline_storage'));
+    } catch (e) {}
+    // 2. User home directory: ~/skyline_storage
+    if (process.env.HOME) {
+      try {
+        candidates.push(path.join(process.env.HOME, 'skyline_storage'));
+      } catch (e) {}
+    }
+  }
+  // 3. Fallback to local skyline_storage subfolder inside project
+  candidates.push(path.join(__dirname, 'skyline_storage'));
+
+  for (const dir of candidates) {
+    try {
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+      const probe = path.join(dir, '.probe_' + Date.now());
+      fs.writeFileSync(probe, '1', 'utf8');
+      fs.unlinkSync(probe);
+      return dir;
+    } catch (err) {
+      // Continue testing next candidate
+    }
+  }
+
+  return __dirname;
+}
+
+const storageDir = resolveStorageDir();
+
+// Resolve persistent database path
+function resolveDbPath() {
+  if (process.env.DB_PATH) return process.env.DB_PATH;
+
+  const persistentPath = path.join(storageDir, 'database.sqlite');
+  const localPath = path.join(__dirname, 'database.sqlite');
+
+  // If local db existed previously and persistent doesn't, migrate it
+  if (persistentPath !== localPath && fs.existsSync(localPath) && !fs.existsSync(persistentPath)) {
+    try {
+      fs.copyFileSync(localPath, persistentPath);
+      console.log(`Migrated database.sqlite from ${localPath} to persistent ${persistentPath}`);
+    } catch (e) {
+      console.warn('Database migration copy failed:', e.message);
+    }
+  }
+
+  return persistentPath;
 }
 
 const dbPath = resolveDbPath();
 const db = new DatabaseSync(dbPath);
 
-// Enable WAL mode and foreign keys for high reliability
+// Enable WAL mode and foreign keys for high reliability and concurrency
 db.exec('PRAGMA foreign_keys = ON;');
+try {
+  db.exec('PRAGMA journal_mode = WAL;');
+} catch (e) {}
 
 // Initialize Tables
 db.exec(`
@@ -212,22 +256,28 @@ function verifyToken(token) {
   }
 }
 
-// Auto Backup & Restore for users to guarantee persistence across deployments
-function getBackupFilePath() {
-  try {
-    const parentDir = path.resolve(__dirname, '..');
-    const storageDir = path.join(parentDir, 'skyline_storage');
-    if (fs.existsSync(storageDir)) {
-      return path.join(storageDir, 'skyline_users_backup.json');
-    }
-  } catch (e) {}
-  return path.join(__dirname, 'skyline_users_backup.json');
+// ==================== PERSISTENT STORAGE HELPERS ====================
+function getStorageFilePath(filename) {
+  const target = path.join(storageDir, filename);
+  const legacy = path.join(__dirname, filename);
+  if (target !== legacy && !fs.existsSync(target) && fs.existsSync(legacy)) {
+    try {
+      fs.copyFileSync(legacy, target);
+      console.log(`Auto-migrated ${filename} to storage directory.`);
+    } catch (e) {}
+  }
+  return target;
+}
+
+// Auto Backup & Restore for users
+function getUsersBackupFilePath() {
+  return getStorageFilePath('skyline_users_backup.json');
 }
 
 function backupUsersToFile() {
   try {
     const users = db.prepare('SELECT id, username, password_hash, salt, display_name, role, created_at FROM users').all();
-    const backupFile = getBackupFilePath();
+    const backupFile = getUsersBackupFilePath();
     fs.writeFileSync(backupFile, JSON.stringify(users, null, 2), 'utf8');
   } catch (err) {
     console.warn('User backup write failed:', err.message);
@@ -236,9 +286,17 @@ function backupUsersToFile() {
 
 function restoreUsersFromFile() {
   try {
-    const backupFile = getBackupFilePath();
-    if (!fs.existsSync(backupFile)) return;
-    const raw = fs.readFileSync(backupFile, 'utf8');
+    const backupFile = getUsersBackupFilePath();
+    let sourceFile = null;
+    if (fs.existsSync(backupFile)) {
+      sourceFile = backupFile;
+    } else {
+      const legacy = path.join(__dirname, 'skyline_users_backup.json');
+      if (fs.existsSync(legacy)) sourceFile = legacy;
+    }
+    if (!sourceFile) return;
+
+    const raw = fs.readFileSync(sourceFile, 'utf8');
     const users = JSON.parse(raw);
     if (!Array.isArray(users)) return;
 
@@ -259,16 +317,9 @@ function restoreUsersFromFile() {
   }
 }
 
-// Auto Backup & Restore for settings to guarantee persistence (including Google Sheets Web App URL)
+// Auto Backup & Restore for settings
 function getSettingsBackupFilePath() {
-  try {
-    const parentDir = path.resolve(__dirname, '..');
-    const storageDir = path.join(parentDir, 'skyline_storage');
-    if (fs.existsSync(storageDir)) {
-      return path.join(storageDir, 'skyline_settings_backup.json');
-    }
-  } catch (e) {}
-  return path.join(__dirname, 'skyline_settings_backup.json');
+  return getStorageFilePath('skyline_settings_backup.json');
 }
 
 function backupSettingsToFile() {
@@ -284,8 +335,16 @@ function backupSettingsToFile() {
 function restoreSettingsFromFile() {
   try {
     const backupFile = getSettingsBackupFilePath();
-    if (!fs.existsSync(backupFile)) return;
-    const raw = fs.readFileSync(backupFile, 'utf8');
+    let sourceFile = null;
+    if (fs.existsSync(backupFile)) {
+      sourceFile = backupFile;
+    } else {
+      const legacy = path.join(__dirname, 'skyline_settings_backup.json');
+      if (fs.existsSync(legacy)) sourceFile = legacy;
+    }
+    if (!sourceFile) return;
+
+    const raw = fs.readFileSync(sourceFile, 'utf8');
     const rows = JSON.parse(raw);
     if (!Array.isArray(rows)) return;
 
@@ -301,16 +360,9 @@ function restoreSettingsFromFile() {
   }
 }
 
-// Auto Backup & Restore for rates to guarantee persistence across deployments
+// Auto Backup & Restore for rates
 function getRatesBackupFilePath() {
-  try {
-    const parentDir = path.resolve(__dirname, '..');
-    const storageDir = path.join(parentDir, 'skyline_storage');
-    if (fs.existsSync(storageDir)) {
-      return path.join(storageDir, 'skyline_rates_backup.json');
-    }
-  } catch (e) {}
-  return path.join(__dirname, 'skyline_rates_backup.json');
+  return getStorageFilePath('skyline_rates_backup.json');
 }
 
 function backupRatesToFile() {
@@ -326,8 +378,16 @@ function backupRatesToFile() {
 function restoreRatesFromFile() {
   try {
     const backupFile = getRatesBackupFilePath();
-    if (!fs.existsSync(backupFile)) return;
-    const raw = fs.readFileSync(backupFile, 'utf8');
+    let sourceFile = null;
+    if (fs.existsSync(backupFile)) {
+      sourceFile = backupFile;
+    } else {
+      const legacy = path.join(__dirname, 'skyline_rates_backup.json');
+      if (fs.existsSync(legacy)) sourceFile = legacy;
+    }
+    if (!sourceFile) return;
+
+    const raw = fs.readFileSync(sourceFile, 'utf8');
     const rates = JSON.parse(raw);
     if (!Array.isArray(rates)) return;
 
@@ -352,6 +412,268 @@ function restoreRatesFromFile() {
   }
 }
 
+// Auto Backup & Restore for transactions
+function getTransactionsBackupFilePath() {
+  return getStorageFilePath('skyline_transactions_backup.json');
+}
+
+function backupTransactionsToFile() {
+  try {
+    const txs = db.prepare('SELECT * FROM transactions ORDER BY id ASC').all();
+    const items = db.prepare('SELECT * FROM transaction_items ORDER BY id ASC').all();
+    const backupFile = getTransactionsBackupFilePath();
+    const payload = {
+      version: 1,
+      saved_at: new Date().toISOString(),
+      transactions_count: txs.length,
+      items_count: items.length,
+      transactions: txs,
+      transaction_items: items
+    };
+    fs.writeFileSync(backupFile, JSON.stringify(payload, null, 2), 'utf8');
+  } catch (err) {
+    console.warn('Transactions backup write failed:', err.message);
+  }
+}
+
+function restoreTransactionsFromFile() {
+  try {
+    const backupFile = getTransactionsBackupFilePath();
+    let sourceFile = null;
+    if (fs.existsSync(backupFile)) {
+      sourceFile = backupFile;
+    } else {
+      const legacyFile = path.join(__dirname, 'skyline_transactions_backup.json');
+      if (fs.existsSync(legacyFile)) sourceFile = legacyFile;
+    }
+    if (!sourceFile) return;
+
+    const raw = fs.readFileSync(sourceFile, 'utf8');
+    const parsed = JSON.parse(raw);
+    const txList = Array.isArray(parsed) ? parsed : (parsed.transactions || []);
+    const itemsList = parsed.transaction_items || [];
+    if (!Array.isArray(txList) || txList.length === 0) return;
+
+    const checkStmt = db.prepare('SELECT id FROM transactions WHERE receipt_no = ?');
+    const insertTx = db.prepare(`
+      INSERT INTO transactions (
+        receipt_no, type, customer_name, customer_phone, customer_id_no,
+        teller_name, total_idr, paid_amount, change_amount, is_delivery,
+        delivery_address, delivery_time, delivery_status, courier_name, notes, created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    const insertItem = db.prepare(`
+      INSERT INTO transaction_items (transaction_id, currency_code, amount, rate, subtotal_idr)
+      VALUES (?, ?, ?, ?, ?)
+    `);
+
+    let restoredTxCount = 0;
+    const oldToNewTxId = new Map();
+
+    for (const tx of txList) {
+      if (!tx.receipt_no) continue;
+      const existing = checkStmt.get(tx.receipt_no);
+      if (!existing) {
+        const info = insertTx.run(
+          tx.receipt_no,
+          tx.type || 'BELI',
+          tx.customer_name || 'Pelanggan',
+          tx.customer_phone || '',
+          tx.customer_id_no || '',
+          tx.teller_name || 'TELLER',
+          Number(tx.total_idr) || 0,
+          Number(tx.paid_amount) || 0,
+          Number(tx.change_amount) || 0,
+          tx.is_delivery ? 1 : 0,
+          tx.delivery_address || '',
+          tx.delivery_time || '',
+          tx.delivery_status || 'COMPLETED',
+          tx.courier_name || '',
+          tx.notes || '',
+          tx.created_at || new Date().toISOString()
+        );
+        restoredTxCount++;
+        if (tx.id && info.lastInsertRowid) {
+          oldToNewTxId.set(tx.id, info.lastInsertRowid);
+        }
+      } else {
+        oldToNewTxId.set(tx.id, existing.id);
+      }
+    }
+
+    if (itemsList.length > 0) {
+      const checkItem = db.prepare('SELECT id FROM transaction_items WHERE transaction_id = ? AND currency_code = ? AND amount = ?');
+      for (const item of itemsList) {
+        const newTxId = oldToNewTxId.get(item.transaction_id);
+        if (newTxId) {
+          const itemExists = checkItem.get(newTxId, item.currency_code, item.amount);
+          if (!itemExists) {
+            insertItem.run(
+              newTxId,
+              item.currency_code,
+              Number(item.amount) || 0,
+              Number(item.rate) || 0,
+              Number(item.subtotal_idr) || 0
+            );
+          }
+        }
+      }
+    }
+
+    if (restoredTxCount > 0) {
+      console.log(`Restored ${restoredTxCount} persistent transactions from backup.`);
+    }
+  } catch (err) {
+    console.warn('Transactions restore failed:', err.message);
+  }
+}
+
+// Full Snapshot for 1-click Download / Restore
+function getAllDataSnapshot() {
+  const users = db.prepare('SELECT id, username, password_hash, salt, display_name, role, created_at FROM users ORDER BY id ASC').all();
+  const rates = db.prepare('SELECT id, code, name, buy_rate, sell_rate, denomination, updated_at FROM rates ORDER BY id ASC').all();
+  const settings = db.prepare('SELECT key, value FROM settings ORDER BY key ASC').all();
+  const transactions = db.prepare('SELECT * FROM transactions ORDER BY id ASC').all();
+  const items = db.prepare('SELECT * FROM transaction_items ORDER BY id ASC').all();
+
+  return {
+    meta: {
+      appName: 'Skyline Exchange POS',
+      version: '2.5.0',
+      exported_at: new Date().toISOString(),
+      storage_dir: storageDir,
+      db_path: dbPath
+    },
+    counts: {
+      users: users.length,
+      rates: rates.length,
+      settings: settings.length,
+      transactions: transactions.length,
+      transaction_items: items.length
+    },
+    users,
+    rates,
+    settings,
+    transactions,
+    transaction_items: items
+  };
+}
+
+function restoreAllDataSnapshot(data) {
+  if (!data || typeof data !== 'object') {
+    throw new Error('Format data backup tidak valid.');
+  }
+
+  let restoredUsers = 0;
+  let restoredRates = 0;
+  let restoredSettings = 0;
+  let restoredTxs = 0;
+
+  // 1. Users
+  if (Array.isArray(data.users)) {
+    const checkUser = db.prepare('SELECT id FROM users WHERE username = ?');
+    const insertUser = db.prepare('INSERT INTO users (username, password_hash, salt, display_name, role, created_at) VALUES (?, ?, ?, ?, ?, ?)');
+    for (const u of data.users) {
+      if (!checkUser.get(u.username)) {
+        insertUser.run(u.username, u.password_hash, u.salt, u.display_name, u.role, u.created_at || new Date().toISOString());
+        restoredUsers++;
+      }
+    }
+    backupUsersToFile();
+  }
+
+  // 2. Settings
+  if (Array.isArray(data.settings)) {
+    const upsertSetting = db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)');
+    for (const s of data.settings) {
+      if (s.key && s.value !== undefined) {
+        upsertSetting.run(s.key, String(s.value));
+        restoredSettings++;
+      }
+    }
+    backupSettingsToFile();
+  }
+
+  // 3. Rates
+  if (Array.isArray(data.rates)) {
+    const upsertRate = db.prepare(`
+      INSERT INTO rates (code, name, buy_rate, sell_rate, denomination, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?)
+      ON CONFLICT(code) DO UPDATE SET
+        name = excluded.name,
+        buy_rate = excluded.buy_rate,
+        sell_rate = excluded.sell_rate,
+        denomination = excluded.denomination,
+        updated_at = excluded.updated_at
+    `);
+    for (const r of data.rates) {
+      if (r.code && r.name && r.buy_rate != null && r.sell_rate != null) {
+        upsertRate.run(r.code, r.name, Number(r.buy_rate), Number(r.sell_rate), r.denomination || 'All', r.updated_at || new Date().toISOString());
+        restoredRates++;
+      }
+    }
+    backupRatesToFile();
+  }
+
+  // 4. Transactions
+  if (Array.isArray(data.transactions)) {
+    const checkTx = db.prepare('SELECT id FROM transactions WHERE receipt_no = ?');
+    const insertTx = db.prepare(`
+      INSERT INTO transactions (
+        receipt_no, type, customer_name, customer_phone, customer_id_no,
+        teller_name, total_idr, paid_amount, change_amount, is_delivery,
+        delivery_address, delivery_time, delivery_status, courier_name, notes, created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+    const insertItem = db.prepare(`
+      INSERT INTO transaction_items (transaction_id, currency_code, amount, rate, subtotal_idr)
+      VALUES (?, ?, ?, ?, ?)
+    `);
+
+    const oldToNew = new Map();
+    for (const t of data.transactions) {
+      if (!t.receipt_no) continue;
+      const existing = checkTx.get(t.receipt_no);
+      if (!existing) {
+        const info = insertTx.run(
+          t.receipt_no, t.type || 'BELI', t.customer_name || 'Pelanggan',
+          t.customer_phone || '', t.customer_id_no || '', t.teller_name || 'TELLER',
+          Number(t.total_idr) || 0, Number(t.paid_amount) || 0, Number(t.change_amount) || 0,
+          t.is_delivery ? 1 : 0, t.delivery_address || '', t.delivery_time || '',
+          t.delivery_status || 'COMPLETED', t.courier_name || '', t.notes || '',
+          t.created_at || new Date().toISOString()
+        );
+        restoredTxs++;
+        if (t.id && info.lastInsertRowid) oldToNew.set(t.id, info.lastInsertRowid);
+      } else {
+        oldToNew.set(t.id, existing.id);
+      }
+    }
+
+    if (Array.isArray(data.transaction_items)) {
+      const checkItem = db.prepare('SELECT id FROM transaction_items WHERE transaction_id = ? AND currency_code = ? AND amount = ?');
+      for (const item of data.transaction_items) {
+        const newTxId = oldToNew.get(item.transaction_id);
+        if (newTxId && !checkItem.get(newTxId, item.currency_code, item.amount)) {
+          insertItem.run(newTxId, item.currency_code, Number(item.amount) || 0, Number(item.rate) || 0, Number(item.subtotal_idr) || 0);
+        }
+      }
+    }
+    backupTransactionsToFile();
+  }
+
+  return {
+    success: true,
+    restored: {
+      users: restoredUsers,
+      rates: restoredRates,
+      settings: restoredSettings,
+      transactions: restoredTxs
+    }
+  };
+}
+
 // Seed Super Admin Krisna if not exists
 const checkAdmin = db.prepare('SELECT id FROM users WHERE username = ?').get('Krisna');
 if (!checkAdmin) {
@@ -374,26 +696,33 @@ if (!checkFanny) {
   console.log('Registered Teller user "Fanny" initialized.');
 }
 
-// Restore any additional cashiers, persistent settings, and rates from backup files
+// Restore any additional cashiers, persistent settings, rates, and transactions from backup files
 restoreUsersFromFile();
 restoreSettingsFromFile();
 restoreRatesFromFile();
+restoreTransactionsFromFile();
 
 // Save updated backup files
 backupUsersToFile();
 backupSettingsToFile();
 backupRatesToFile();
+backupTransactionsToFile();
 
+db.storageDir = storageDir;
+db.dbPath = dbPath;
 db.hashPassword = hashPassword;
 db.verifyPassword = verifyPassword;
 db.createToken = createToken;
 db.verifyToken = verifyToken;
 db.backupUsersToFile = backupUsersToFile;
+db.restoreUsersFromFile = restoreUsersFromFile;
 db.backupSettingsToFile = backupSettingsToFile;
 db.restoreSettingsFromFile = restoreSettingsFromFile;
 db.backupRatesToFile = backupRatesToFile;
 db.restoreRatesFromFile = restoreRatesFromFile;
+db.backupTransactionsToFile = backupTransactionsToFile;
+db.restoreTransactionsFromFile = restoreTransactionsFromFile;
+db.getAllDataSnapshot = getAllDataSnapshot;
+db.restoreAllDataSnapshot = restoreAllDataSnapshot;
 
 module.exports = db;
-
-

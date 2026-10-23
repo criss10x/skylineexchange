@@ -555,6 +555,10 @@ router.post('/api/transactions', requireAuth, (req, res) => {
       );
     }
 
+    if (db.backupTransactionsToFile) {
+      try { db.backupTransactionsToFile(); } catch (e) {}
+    }
+
     // Auto-sync to Google Sheets in background if enabled
     const autoSync = getSetting('google_sheets_auto_sync');
     const sheetsUrl = getSetting('google_sheets_url');
@@ -609,6 +613,9 @@ router.patch('/api/transactions/:id/delivery', requireAuth, (req, res) => {
       WHERE id = ?
     `);
     stmt.run(delivery_status, courier_name, id);
+    if (db.backupTransactionsToFile) {
+      try { db.backupTransactionsToFile(); } catch (e) {}
+    }
     res.json({ success: true });
   } catch (err) {
     res.status(400).json({ success: false, message: err.message });
@@ -667,6 +674,10 @@ router.post('/api/sync', requireAuth, (req, res) => {
         }
         syncedCount++;
       }
+
+    if (syncedCount > 0 && db.backupTransactionsToFile) {
+      try { db.backupTransactionsToFile(); } catch (e) {}
+    }
     }
 
     // Auto-sync to Google Sheets in background if enabled
@@ -924,6 +935,103 @@ router.get('/api/sheets/export-csv', requireAuth, (req, res) => {
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', `attachment; filename="Skyline_POS_${targetDate}.csv"`);
     res.send(csv);
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+
+// ==================== SYSTEM & DATABASE DIAGNOSTICS / BACKUP API ====================
+
+// Get database storage info and stats
+router.get('/api/system/db-info', requireAuth, (req, res) => {
+  try {
+    const usersCount = db.prepare('SELECT COUNT(*) as c FROM users').get().c;
+    const ratesCount = db.prepare('SELECT COUNT(*) as c FROM rates').get().c;
+    const settingsCount = db.prepare('SELECT COUNT(*) as c FROM settings').get().c;
+    const txCount = db.prepare('SELECT COUNT(*) as c FROM transactions').get().c;
+    const itemsCount = db.prepare('SELECT COUNT(*) as c FROM transaction_items').get().c;
+
+    const storageDir = db.storageDir || path.resolve(__dirname, '..', 'skyline_storage');
+    const dbPath = db.dbPath || path.join(storageDir, 'database.sqlite');
+
+    let dbFileSize = 0;
+    try {
+      if (fs.existsSync(dbPath)) {
+        dbFileSize = fs.statSync(dbPath).size;
+      }
+    } catch (e) {}
+
+    const backupFiles = [
+      'skyline_users_backup.json',
+      'skyline_rates_backup.json',
+      'skyline_settings_backup.json',
+      'skyline_transactions_backup.json'
+    ].map(name => {
+      const p = path.join(storageDir, name);
+      const exists = fs.existsSync(p);
+      let size = 0;
+      let mtime = null;
+      if (exists) {
+        const stat = fs.statSync(p);
+        size = stat.size;
+        mtime = stat.mtime.toISOString();
+      }
+      return { name, exists, size, mtime };
+    });
+
+    res.json({
+      success: true,
+      data: {
+        platform: process.platform,
+        storage_dir: storageDir,
+        db_path: dbPath,
+        db_file_size: dbFileSize,
+        is_external_storage: !storageDir.startsWith(__dirname),
+        counts: {
+          users: usersCount,
+          rates: ratesCount,
+          settings: settingsCount,
+          transactions: txCount,
+          transaction_items: itemsCount
+        },
+        backups: backupFiles,
+        server_time: new Date().toISOString()
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// Download complete JSON backup of all tables (Users, Rates, Settings, Transactions)
+router.get('/api/system/backup/download', requireAuth, requireAdmin, (req, res) => {
+  try {
+    if (!db.getAllDataSnapshot) {
+      return res.status(500).json({ success: false, message: 'Fungsi snapshot tidak tersedia.' });
+    }
+    const snapshot = db.getAllDataSnapshot();
+    const dateStr = new Date().toISOString().split('T')[0];
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', `attachment; filename="Skyline_POS_FullBackup_${dateStr}.json"`);
+    res.send(JSON.stringify(snapshot, null, 2));
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// Restore database from complete JSON backup
+router.post('/api/system/backup/restore', requireAuth, requireAdmin, (req, res) => {
+  try {
+    const data = req.body;
+    if (!data || typeof data !== 'object') {
+      return res.status(400).json({ success: false, message: 'Data backup tidak valid atau kosong.' });
+    }
+    if (!db.restoreAllDataSnapshot) {
+      return res.status(500).json({ success: false, message: 'Fungsi restore tidak tersedia.' });
+    }
+    const result = db.restoreAllDataSnapshot(data);
+    res.json(result);
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }

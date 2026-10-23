@@ -4,4 +4,7 @@ npm-debug.log*
 Thumbs.db
 *.sqlite*
 database.sqlite*
+skyline_storage/
+skyline_*_backup.json
+*.backup.json
 .env
