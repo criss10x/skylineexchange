@@ -980,6 +980,40 @@ router.get('/api/system/db-info', requireAuth, (req, res) => {
       return { name, exists, size, mtime };
     });
 
+    // Diagnostics for Hostinger storage
+    let versionsList = [];
+    try {
+      const parent = path.resolve(__dirname, '..');
+      versionsList = fs.readdirSync(parent).map(v => {
+        const vPath = path.join(parent, v);
+        const hasDb = fs.existsSync(path.join(vPath, 'skyline_storage', 'database.sqlite')) || fs.existsSync(path.join(vPath, 'database.sqlite'));
+        return { name: v, hasDb, isCurrent: vPath === __dirname };
+      });
+    } catch (e) {}
+
+    const candidateTests = [];
+    const testDirs = [
+      path.resolve(__dirname, '..', '..', 'skyline_storage'),
+      path.resolve(__dirname, '..', 'skyline_storage'),
+      process.env.HOME ? path.join(process.env.HOME, 'skyline_storage') : null,
+      path.join(__dirname, 'skyline_storage')
+    ].filter(Boolean);
+
+    for (const td of testDirs) {
+      let writable = false;
+      let errStr = null;
+      try {
+        if (!fs.existsSync(td)) fs.mkdirSync(td, { recursive: true });
+        const pt = path.join(td, '.test_' + Date.now());
+        fs.writeFileSync(pt, '1');
+        fs.unlinkSync(pt);
+        writable = true;
+      } catch (err) {
+        errStr = err.message;
+      }
+      candidateTests.push({ dir: td, writable, error: errStr });
+    }
+
     res.json({
       success: true,
       data: {
@@ -996,7 +1030,14 @@ router.get('/api/system/db-info', requireAuth, (req, res) => {
           transaction_items: itemsCount
         },
         backups: backupFiles,
-        server_time: new Date().toISOString()
+        server_time: new Date().toISOString(),
+        hostinger_diagnostics: {
+          dirname: __dirname,
+          cwd: process.cwd(),
+          home: process.env.HOME,
+          versions: versionsList,
+          candidate_tests: candidateTests
+        }
       }
     });
   } catch (err) {
