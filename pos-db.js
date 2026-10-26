@@ -167,13 +167,21 @@ const defaultSettings = [
   { key: 'disclaimer_2', value: 'Uang yang sudah ditukar tidak dapat dikembalikan.' },
   { key: 'google_sheets_url', value: '' },
   { key: 'google_sheets_auto_sync', value: '1' },
-  { key: 'google_sheets_id', value: '15lmFybUAOq4M8qpza8fPKWS-OfwWwck5L_b45eZ3oBo' }
+  { key: 'google_sheets_id', value: '15lmFybUAOq4M8qpza8fPKWS-OfwWwck5L_b45eZ3oBo' },
+  { key: 'store_logo', value: '' },
+  { key: 'store_show_rcpt_logo', value: '1' },
+  { key: 'store_rcpt_logo_size', value: 'medium' }
 ];
 
 const insertSettingStmt = db.prepare('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)');
 for (const s of defaultSettings) {
   insertSettingStmt.run(s.key, s.value);
 }
+
+// Ensure receipt logo defaults are present in settings table
+insertSettingStmt.run('store_show_rcpt_logo', '1');
+insertSettingStmt.run('store_rcpt_logo_size', 'medium');
+insertSettingStmt.run('store_logo', '');
 
 // Seed Default Rates & Currencies (both normal and small "s" denominations)
 const defaultRates = [

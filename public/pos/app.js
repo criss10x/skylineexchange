@@ -1111,6 +1111,7 @@ async function loadSettings() {
   const cachedAutoSync = localStorage.getItem('skyline_pos_sheets_auto_sync');
   const cachedLogo = localStorage.getItem('skyline_pos_custom_logo') || '';
   const cachedShowRcptLogo = localStorage.getItem('skyline_pos_show_rcpt_logo');
+  const cachedRcptLogoSize = localStorage.getItem('skyline_pos_rcpt_logo_size');
 
   try {
     const res = await authFetch('/api/settings');
@@ -1128,6 +1129,11 @@ async function loadSettings() {
         state.settings.store_show_rcpt_logo = cachedShowRcptLogo;
       } else if (state.settings.store_show_rcpt_logo !== undefined) {
         localStorage.setItem('skyline_pos_show_rcpt_logo', state.settings.store_show_rcpt_logo);
+      }
+      if (state.settings.store_rcpt_logo_size === undefined && cachedRcptLogoSize !== null) {
+        state.settings.store_rcpt_logo_size = cachedRcptLogoSize;
+      } else if (state.settings.store_rcpt_logo_size !== undefined) {
+        localStorage.setItem('skyline_pos_rcpt_logo_size', state.settings.store_rcpt_logo_size);
       }
 
       // Fallback: If server has no sheets URL, but localStorage has cached it, restore it
@@ -1163,6 +1169,9 @@ async function loadSettings() {
     if (cachedShowRcptLogo !== null && state.settings.store_show_rcpt_logo === undefined) {
       state.settings.store_show_rcpt_logo = cachedShowRcptLogo;
     }
+    if (cachedRcptLogoSize !== null && state.settings.store_rcpt_logo_size === undefined) {
+      state.settings.store_rcpt_logo_size = cachedRcptLogoSize;
+    }
     applySettingsToUI();
   }
 }
@@ -1177,9 +1186,12 @@ function applySettingsToUI() {
   if (storePhoneEl) storePhoneEl.textContent = `WA: ${s.store_phone || '+6285-122-777-970'}`;
 
   // Logo & Favicon
-  applyStoreLogo(s.store_logo, s.store_show_rcpt_logo);
+  applyStoreLogo(s.store_logo, s.store_show_rcpt_logo, s.store_rcpt_logo_size);
   const showRcptLogoEl = document.getElementById('setting-show-rcpt-logo');
-  if (showRcptLogoEl) showRcptLogoEl.checked = s.store_show_rcpt_logo === '1';
+  if (showRcptLogoEl) showRcptLogoEl.checked = s.store_show_rcpt_logo !== '0';
+  const activeLogoSize = s.store_rcpt_logo_size || 'medium';
+  const sizeRadio = document.querySelector(`input[name="setting-rcpt-logo-size"][value="${activeLogoSize}"]`);
+  if (sizeRadio) sizeRadio.checked = true;
 
   const activeTeller = getActiveTellerName();
   const rcptTellerEl = document.getElementById('rcpt-teller');
@@ -1231,12 +1243,17 @@ function applySettingsToUI() {
   applyPaperSize(paperSize);
 }
 
-function applyStoreLogo(logoUrl, showOnReceipt) {
+function applyStoreLogo(logoUrl, showOnReceipt, logoSize) {
   const isEn = state.appLang === 'en';
   const defaultLogo = '/assets/logo.svg';
   const defaultFavicon = '/assets/favicon.svg';
   const activeLogo = (logoUrl && String(logoUrl).trim() !== '') ? String(logoUrl).trim() : defaultLogo;
   const isCustom = activeLogo !== defaultLogo;
+  const activeSize = logoSize || state.settings.store_rcpt_logo_size || 'medium';
+
+  // Body modifier for @media print CSS
+  document.body.classList.remove('rcpt-logo-size-small', 'rcpt-logo-size-medium', 'rcpt-logo-size-large');
+  document.body.classList.add(`rcpt-logo-size-${activeSize}`);
 
   // Header Logo
   const headerLogo = document.getElementById('app-header-logo');
@@ -1264,11 +1281,25 @@ function applyStoreLogo(logoUrl, showOnReceipt) {
     appleEl.href = isCustom ? activeLogo : '/assets/apple-touch-icon.png';
   }
 
-  // Receipt Logo Preview
+  // Receipt Logo Preview & Sizing
   const rcptLogoImg = document.getElementById('rcpt-logo-img');
-  if (rcptLogoImg) rcptLogoImg.src = activeLogo;
+  if (rcptLogoImg) {
+    rcptLogoImg.src = activeLogo;
+    rcptLogoImg.classList.remove('max-h-8', 'max-h-10', 'max-h-12', 'max-h-16', 'max-w-[100px]', 'max-w-[120px]', 'max-w-[140px]', 'max-w-[180px]');
+    if (activeSize === 'small') {
+      rcptLogoImg.classList.add('max-h-8', 'max-w-[100px]');
+    } else if (activeSize === 'large') {
+      rcptLogoImg.classList.add('max-h-16', 'max-w-[180px]');
+    } else {
+      rcptLogoImg.classList.add('max-h-12', 'max-w-[140px]');
+    }
+  }
+
+  const isShowRcpt = showOnReceipt === undefined 
+    ? (state.settings.store_show_rcpt_logo !== '0')
+    : (showOnReceipt === '1' || showOnReceipt === true || showOnReceipt === 1);
+
   const rcptLogoWrap = document.getElementById('rcpt-logo-wrapper');
-  const isShowRcpt = showOnReceipt === '1' || showOnReceipt === true || showOnReceipt === 1;
   if (rcptLogoWrap) {
     if (isShowRcpt) {
       rcptLogoWrap.classList.remove('hidden');
@@ -1278,6 +1309,47 @@ function applyStoreLogo(logoUrl, showOnReceipt) {
       rcptLogoWrap.classList.remove('flex');
     }
   }
+
+  // Mini Receipt Mockup in Settings
+  const miniWrap = document.getElementById('setting-mini-rcpt-wrap');
+  if (miniWrap) {
+    if (isShowRcpt) {
+      miniWrap.classList.remove('hidden');
+      miniWrap.classList.add('flex');
+    } else {
+      miniWrap.classList.add('hidden');
+      miniWrap.classList.remove('flex');
+    }
+  }
+
+  const miniLogo = document.getElementById('setting-mini-rcpt-logo');
+  if (miniLogo) {
+    miniLogo.src = activeLogo;
+    miniLogo.classList.remove('max-h-7', 'max-h-10', 'max-h-14', 'max-w-[80px]', 'max-w-[120px]', 'max-w-[150px]');
+    if (activeSize === 'small') {
+      miniLogo.classList.add('max-h-7', 'max-w-[80px]');
+    } else if (activeSize === 'large') {
+      miniLogo.classList.add('max-h-14', 'max-w-[150px]');
+    } else {
+      miniLogo.classList.add('max-h-10', 'max-w-[120px]');
+    }
+  }
+
+  // Status Badge in Settings
+  const rcptStatus = document.getElementById('setting-rcpt-logo-status');
+  if (rcptStatus) {
+    if (isShowRcpt) {
+      rcptStatus.textContent = isEn ? 'Printed on Thermal Receipt (Active)' : 'Tampil di Kertas Struk (Aktif)';
+      rcptStatus.className = 'text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-semibold border border-emerald-500/30';
+    } else {
+      rcptStatus.textContent = isEn ? 'Hidden from Receipt' : 'Disembunyikan dari Struk';
+      rcptStatus.className = 'text-[10px] px-2 py-0.5 rounded-full bg-slate-500/20 text-slate-400 font-semibold border border-slate-500/30';
+    }
+  }
+
+  // Radio button sync
+  const radio = document.querySelector(`input[name="setting-rcpt-logo-size"][value="${activeSize}"]`);
+  if (radio) radio.checked = true;
 
   // Status Tag in Settings
   const statusTag = document.getElementById('logo-status-tag');
@@ -1891,7 +1963,7 @@ async function processTransaction() {
   // Attempt Thermal Print (Serial / COM, USB, or Bluetooth) with chosen receipt language
   if (serialPrinter && serialPrinter.isConnected) {
     try {
-      const escPosBytes = printer.buildEscPos(payload, state.settings, state.receiptLang);
+      const escPosBytes = await printer.buildEscPos(payload, state.settings, state.receiptLang);
       await serialPrinter.print(escPosBytes);
       showToast(isEn ? 'Receipt printed to Serial / COM printer!' : 'Struk berhasil dicetak ke printer Serial / COM!', 'success');
     } catch (err) {
@@ -1899,7 +1971,7 @@ async function processTransaction() {
     }
   } else if (usbPrinter && usbPrinter.isConnected) {
     try {
-      const escPosBytes = printer.buildEscPos(payload, state.settings, state.receiptLang);
+      const escPosBytes = await printer.buildEscPos(payload, state.settings, state.receiptLang);
       await usbPrinter.print(escPosBytes);
       showToast(isEn ? 'Receipt printed to USB printer!' : 'Struk berhasil dicetak ke printer USB!', 'success');
     } catch (err) {
@@ -1907,7 +1979,7 @@ async function processTransaction() {
     }
   } else if (printer.isConnected) {
     try {
-      const escPosBytes = printer.buildEscPos(payload, state.settings, state.receiptLang);
+      const escPosBytes = await printer.buildEscPos(payload, state.settings, state.receiptLang);
       await printer.print(escPosBytes);
       showToast(isEn ? 'Receipt printed to Bluetooth printer!' : 'Struk berhasil dicetak ke printer Bluetooth!', 'success');
     } catch (err) {
@@ -2052,7 +2124,7 @@ async function handleDirectBtPrint() {
   }
 
   try {
-    const escPosBytes = printer.buildEscPos(currentData, state.settings, state.receiptLang);
+    const escPosBytes = await printer.buildEscPos(currentData, state.settings, state.receiptLang);
     await printer.print(escPosBytes);
     showToast(isEn ? 'Receipt printed successfully!' : 'Struk berhasil dicetak!', 'success');
   } catch (err) {
@@ -2083,7 +2155,7 @@ async function handleTestBtPrint() {
 
   try {
     showToast(isEn ? 'Printing Bluetooth test receipt...' : 'Mencetak struk tes Bluetooth...', 'info');
-    const escPosBytes = printer.buildTestEscPos(state.settings, state.receiptLang);
+    const escPosBytes = await printer.buildTestEscPos(state.settings, state.receiptLang);
     await printer.print(escPosBytes);
     showToast(isEn ? 'Bluetooth test receipt printed successfully!' : 'Struk tes Bluetooth berhasil dicetak!', 'success');
   } catch (err) {
@@ -2116,7 +2188,7 @@ async function handleTestBrowserPrint() {
   if (serialPrinter && serialPrinter.isConnected) {
     try {
       showToast(isEn ? 'Printing Serial / COM test receipt...' : 'Mencetak struk tes Serial / COM...', 'info');
-      const escPosBytes = printer.buildTestEscPos(state.settings, state.receiptLang);
+      const escPosBytes = await printer.buildTestEscPos(state.settings, state.receiptLang);
       await serialPrinter.print(escPosBytes);
       showToast(isEn ? 'Serial / COM test receipt printed successfully!' : 'Struk tes Serial / COM berhasil dicetak!', 'success');
       return;
@@ -2128,7 +2200,7 @@ async function handleTestBrowserPrint() {
   if (usbPrinter && usbPrinter.isConnected) {
     try {
       showToast(isEn ? 'Printing USB test receipt...' : 'Mencetak struk tes USB...', 'info');
-      const escPosBytes = printer.buildTestEscPos(state.settings, state.receiptLang);
+      const escPosBytes = await printer.buildTestEscPos(state.settings, state.receiptLang);
       await usbPrinter.print(escPosBytes);
       showToast(isEn ? 'USB test receipt printed successfully!' : 'Struk tes USB berhasil dicetak!', 'success');
       return;
@@ -2198,7 +2270,7 @@ async function handleBrowserPrint() {
   if (serialPrinter && serialPrinter.isConnected) {
     try {
       showToast(isEn ? 'Printing via Serial / COM...' : 'Mencetak lewat Serial / COM...', 'info');
-      const escPosBytes = printer.buildEscPos(currentData, state.settings, state.receiptLang);
+      const escPosBytes = await printer.buildEscPos(currentData, state.settings, state.receiptLang);
       await serialPrinter.print(escPosBytes);
       showToast(isEn ? 'Receipt printed via Serial / COM!' : 'Struk berhasil dicetak lewat Serial / COM!', 'success');
       return;
@@ -2210,7 +2282,7 @@ async function handleBrowserPrint() {
   if (usbPrinter && usbPrinter.isConnected) {
     try {
       showToast(isEn ? 'Printing via USB thermal printer...' : 'Mencetak lewat printer thermal USB...', 'info');
-      const escPosBytes = printer.buildEscPos(currentData, state.settings, state.receiptLang);
+      const escPosBytes = await printer.buildEscPos(currentData, state.settings, state.receiptLang);
       await usbPrinter.print(escPosBytes);
       showToast(isEn ? 'Receipt printed via USB successfully!' : 'Struk berhasil dicetak lewat USB!', 'success');
       return;
@@ -3248,7 +3320,8 @@ function initEventListeners() {
       google_sheets_url: (document.getElementById('setting-sheets-url')?.value || '').trim(),
       google_sheets_auto_sync: document.getElementById('setting-sheets-auto-sync')?.checked ? '1' : '0',
       store_logo: state.settings.store_logo || '',
-      store_show_rcpt_logo: document.getElementById('setting-show-rcpt-logo')?.checked ? '1' : '0'
+      store_show_rcpt_logo: document.getElementById('setting-show-rcpt-logo')?.checked ? '1' : '0',
+      store_rcpt_logo_size: document.querySelector('input[name="setting-rcpt-logo-size"]:checked')?.value || 'medium'
     };
 
     if (payload.google_sheets_url) {
@@ -3261,6 +3334,7 @@ function initEventListeners() {
       localStorage.removeItem('skyline_pos_custom_logo');
     }
     localStorage.setItem('skyline_pos_show_rcpt_logo', payload.store_show_rcpt_logo);
+    localStorage.setItem('skyline_pos_rcpt_logo_size', payload.store_rcpt_logo_size);
 
     try {
       const res = await authFetch('/api/settings', {
@@ -3359,14 +3433,22 @@ function initEventListeners() {
     const fileInput = document.getElementById('input-store-logo');
     if (fileInput) fileInput.value = '';
     const showRcpt = document.getElementById('setting-show-rcpt-logo')?.checked ? '1' : '0';
-    applyStoreLogo('', showRcpt);
+    applyStoreLogo('', showRcpt, state.settings.store_rcpt_logo_size);
     showToast(isEn ? 'Reset to Skyline default logo. Click "Save Settings" to save.' : 'Kembali ke logo default Skyline. Klik "Simpan Pengaturan" untuk menyimpan.', 'info');
   });
 
   document.getElementById('setting-show-rcpt-logo')?.addEventListener('change', (e) => {
     const isShow = e.target.checked ? '1' : '0';
     state.settings.store_show_rcpt_logo = isShow;
-    applyStoreLogo(state.settings.store_logo, isShow);
+    applyStoreLogo(state.settings.store_logo, isShow, state.settings.store_rcpt_logo_size);
+  });
+
+  document.querySelectorAll('input[name="setting-rcpt-logo-size"]').forEach(radio => {
+    radio.addEventListener('change', (e) => {
+      const newSize = e.target.value;
+      state.settings.store_rcpt_logo_size = newSize;
+      applyStoreLogo(state.settings.store_logo, state.settings.store_show_rcpt_logo, newSize);
+    });
   });
 
   // Paper Size Real-Time Toggle Listeners

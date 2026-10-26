@@ -124,6 +124,47 @@
       }
 
       /* Position receipt precisely at top-left of thermal paper roll */
+      * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+      }
+      #rcpt-logo-wrapper {
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        text-align: center !important;
+        margin: 0 auto 2mm auto !important;
+        width: 100% !important;
+      }
+      #rcpt-logo-wrapper.hidden {
+        display: none !important;
+      }
+      #rcpt-logo-img {
+        display: block !important;
+        margin: 0 auto !important;
+        object-fit: contain !important;
+        filter: grayscale(100%) contrast(200%) !important;
+      }
+      body.paper-58mm #rcpt-logo-img {
+        max-height: 14mm !important;
+        max-width: 40mm !important;
+      }
+      body.paper-80mm #rcpt-logo-img,
+      body:not(.paper-58mm) #rcpt-logo-img {
+        max-height: 18mm !important;
+        max-width: 52mm !important;
+      }
+      body.rcpt-logo-size-small.paper-58mm #rcpt-logo-img { max-height: 10mm !important; max-width: 30mm !important; }
+      body.rcpt-logo-size-medium.paper-58mm #rcpt-logo-img { max-height: 14mm !important; max-width: 40mm !important; }
+      body.rcpt-logo-size-large.paper-58mm #rcpt-logo-img { max-height: 18mm !important; max-width: 48mm !important; }
+      body.rcpt-logo-size-small.paper-80mm #rcpt-logo-img,
+      body.rcpt-logo-size-small:not(.paper-58mm) #rcpt-logo-img { max-height: 12mm !important; max-width: 38mm !important; }
+      body.rcpt-logo-size-medium.paper-80mm #rcpt-logo-img,
+      body.rcpt-logo-size-medium:not(.paper-58mm) #rcpt-logo-img { max-height: 18mm !important; max-width: 52mm !important; }
+      body.rcpt-logo-size-large.paper-80mm #rcpt-logo-img,
+      body.rcpt-logo-size-large:not(.paper-58mm) #rcpt-logo-img { max-height: 24mm !important; max-width: 65mm !important; }
+
       #printable-receipt,
       #printable-receipt * {
         visibility: visible !important;
@@ -1546,7 +1587,7 @@
             <div id="receipt-container-wrapper" class="flex justify-center bg-navy-950 p-2 sm:p-4 rounded-xl border border-navy-700/80 overflow-y-auto max-h-[calc(100vh-14rem)] lg:max-h-[760px] receipt-scroll-container">
               <div id="printable-receipt" class="receipt-paper w-full max-w-[380px] p-4 pb-8 text-[12px] select-text transition-all">
                 <!-- Header -->
-                <div id="rcpt-logo-wrapper" class="hidden justify-center mb-1.5 text-center">
+                <div id="rcpt-logo-wrapper" class="flex justify-center mb-1.5 text-center">
                   <img id="rcpt-logo-img" src="/assets/logo.svg" alt="Logo Struk" class="max-h-12 max-w-[140px] mx-auto object-contain filter grayscale contrast-200">
                 </div>
                 <div class="text-center font-bold text-sm tracking-tight text-black" id="rcpt-store-name">
@@ -2123,12 +2164,76 @@
               </button>
             </div>
 
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2 border-t border-navy-700/60 text-[11px] text-slate-400">
-              <p id="lbl-logo-file-help">Mendukung file: <strong>PNG, SVG, JPG, WebP, ICO</strong> (Otomatis dijadikan logo header, login, dan favicon browser).</p>
-              <label class="flex items-center gap-1.5 text-slate-300 cursor-pointer select-none shrink-0">
-                <input type="checkbox" id="setting-show-rcpt-logo" class="w-4 h-4 text-brand bg-navy-900 border-navy-600 rounded focus:ring-brand">
-                <span id="lbl-show-rcpt-logo">Tampilkan logo di struk thermal</span>
-              </label>
+            <div class="pt-2 border-t border-navy-700/60 text-[11px] text-slate-400">
+              <p id="lbl-logo-file-help">Mendukung file: <strong>PNG, SVG, JPG, WebP, ICO</strong> (Otomatis diterapkan ke logo header, login, dan favicon browser).</p>
+            </div>
+
+            <!-- DEDICATED CARD: PENGATURAN LOGO DI KERTAS STRUK THERMAL -->
+            <div class="mt-4 pt-4 border-t border-navy-750 bg-navy-950/70 p-3.5 sm:p-4 rounded-xl border border-navy-700/80 space-y-3.5">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-navy-800">
+                <div class="flex items-center gap-2">
+                  <div class="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>
+                  </div>
+                  <div>
+                    <h4 class="font-bold text-white text-xs sm:text-sm flex items-center gap-2">
+                      <span id="lbl-rcpt-logo-heading">Logo di Kertas Struk Thermal (Print Out)</span>
+                      <span id="setting-rcpt-logo-status" class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-semibold border border-emerald-500/30">Tampil di Kertas Struk (Aktif)</span>
+                    </h4>
+                    <p class="text-[11px] text-slate-400" id="lbl-rcpt-logo-desc">Cetak logo di bagian atas nota struk kasir (berlaku untuk cetak via Windows Printer Driver, USB, dan Bluetooth)</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-12 gap-3.5 items-center">
+                <!-- Controls: Toggle & Ukuran -->
+                <div class="sm:col-span-7 space-y-3">
+                  <!-- Toggle Switch -->
+                  <label class="flex items-center gap-3 p-2.5 rounded-lg bg-navy-900 border border-navy-750 cursor-pointer hover:border-brand/40 transition-colors">
+                    <input type="checkbox" id="setting-show-rcpt-logo" checked class="w-5 h-5 text-brand bg-navy-950 border-navy-600 rounded focus:ring-brand focus:ring-offset-0">
+                    <div>
+                      <span class="block text-xs font-bold text-slate-100" id="lbl-show-rcpt-logo">Cetak Logo di Kertas Struk Thermal</span>
+                      <span class="block text-[11px] text-slate-400" id="lbl-show-rcpt-logo-sub">Saat aktif, logo toko otomatis tercetak di setiap lembar struk transaksi</span>
+                    </div>
+                  </label>
+
+                  <!-- Ukuran Logo di Kertas Struk -->
+                  <div class="space-y-1.5">
+                    <label class="block text-[11px] font-semibold text-slate-300" id="lbl-rcpt-logo-size">Ukuran Logo di Kertas Struk:</label>
+                    <div class="grid grid-cols-3 gap-2">
+                      <label class="flex items-center justify-center gap-1.5 p-2 rounded-lg bg-navy-900 border border-navy-750 text-xs font-medium text-slate-300 cursor-pointer hover:border-brand/40 transition-all has-[:checked]:border-brand has-[:checked]:bg-brand/10 has-[:checked]:text-brand">
+                        <input type="radio" name="setting-rcpt-logo-size" value="small" class="hidden">
+                        <span>Kecil (12mm)</span>
+                      </label>
+                      <label class="flex items-center justify-center gap-1.5 p-2 rounded-lg bg-navy-900 border border-navy-750 text-xs font-medium text-slate-300 cursor-pointer hover:border-brand/40 transition-all has-[:checked]:border-brand has-[:checked]:bg-brand/10 has-[:checked]:text-brand">
+                        <input type="radio" name="setting-rcpt-logo-size" value="medium" checked class="hidden">
+                        <span>Standar (16mm)</span>
+                      </label>
+                      <label class="flex items-center justify-center gap-1.5 p-2 rounded-lg bg-navy-900 border border-navy-750 text-xs font-medium text-slate-300 cursor-pointer hover:border-brand/40 transition-all has-[:checked]:border-brand has-[:checked]:bg-brand/10 has-[:checked]:text-brand">
+                        <input type="radio" name="setting-rcpt-logo-size" value="large" class="hidden">
+                        <span>Besar (22mm)</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Mini Receipt Preview Mockup -->
+                <div class="sm:col-span-5 flex flex-col items-center justify-center">
+                  <span class="text-[10px] text-slate-400 mb-1.5 font-medium flex items-center gap-1">
+                    <svg class="w-3.5 h-3.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    <span>Pratinjau di Kertas Struk</span>
+                  </span>
+                  <div class="w-full max-w-[210px] bg-white p-3 rounded-lg shadow-md border border-slate-300 text-center font-mono text-black text-[10px] leading-tight select-none">
+                    <div id="setting-mini-rcpt-wrap" class="flex justify-center mb-1 text-center">
+                      <img id="setting-mini-rcpt-logo" src="/assets/logo.svg" alt="Logo Kertas" class="max-h-10 max-w-[120px] object-contain filter grayscale contrast-200">
+                    </div>
+                    <div class="font-bold text-xs uppercase tracking-tight">SKYLINE EXCHANGE</div>
+                    <div class="text-[9px] text-gray-700">Jl. Bypass Ngurah Rai No. 4X, Bali</div>
+                    <div class="text-[8px] text-gray-500 my-1">------------------------------</div>
+                    <div class="text-[8px] text-gray-500 italic">[ Transaksi Valas ]</div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
           <div>

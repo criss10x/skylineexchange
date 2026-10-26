@@ -201,9 +201,87 @@ class BluetoothPrinter {
   }
 
   /**
+   * Convert image URL, SVG, or data-URL to monochrome 1-bit ESC/POS raster bit-image
+   * Command: GS v 0 0 xL xH yL yH (Standard Epson/POS raster format)
+   */
+  static async convertImageToRaster(imgSrc, maxWidth = 256) {
+    if (typeof window === 'undefined' || typeof document === 'undefined' || !imgSrc) return null;
+    return new Promise((resolve) => {
+      const timer = setTimeout(() => resolve(null), 1500); // 1.5s safeguard timeout
+      try {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+          clearTimeout(timer);
+          try {
+            let w = img.naturalWidth || img.width || maxWidth;
+            let h = img.naturalHeight || img.height || maxWidth;
+            if (w > maxWidth) {
+              h = Math.round((h * maxWidth) / w);
+              w = maxWidth;
+            }
+            // Align width to multiple of 8 (required for byte boundaries)
+            w = Math.floor(w / 8) * 8;
+            if (w <= 0 || h <= 0) return resolve(null);
+
+            const canvas = document.createElement('canvas');
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, w, h);
+            ctx.drawImage(img, 0, 0, w, h);
+
+            const imgData = ctx.getImageData(0, 0, w, h);
+            const pixels = imgData.data;
+            const xBytes = w / 8;
+            const xL = xBytes & 0xff;
+            const xH = (xBytes >> 8) & 0xff;
+            const yL = h & 0xff;
+            const yH = (h >> 8) & 0xff;
+
+            // GS v 0 0 xL xH yL yH
+            const rasterBytes = [0x1D, 0x76, 0x30, 0x00, xL, xH, yL, yH];
+
+            for (let y = 0; y < h; y++) {
+              for (let x = 0; x < xBytes; x++) {
+                let byte = 0;
+                for (let b = 0; b < 8; b++) {
+                  const pxIndex = ((y * w) + (x * 8 + b)) * 4;
+                  const r = pixels[pxIndex];
+                  const g = pixels[pxIndex + 1];
+                  const bVal = pixels[pxIndex + 2];
+                  const a = pixels[pxIndex + 3];
+                  // If alpha transparent, consider white; otherwise calculate luminance
+                  const luminance = (a < 128) ? 255 : (0.299 * r + 0.587 * g + 0.114 * bVal);
+                  if (luminance < 165) {
+                    byte |= (0x80 >> b);
+                  }
+                }
+                rasterBytes.push(byte);
+              }
+            }
+            resolve(rasterBytes);
+          } catch (e) {
+            resolve(null);
+          }
+        };
+        img.onerror = () => {
+          clearTimeout(timer);
+          resolve(null);
+        };
+        img.src = imgSrc;
+      } catch (err) {
+        clearTimeout(timer);
+        resolve(null);
+      }
+    });
+  }
+
+  /**
    * Build Raw ESC/POS bytes for 80mm or 58mm receipt with Dual Language support (ID / EN)
    */
-  buildEscPos(data, settings, lang = 'id') {
+  async buildEscPos(data, settings, lang = 'id') {
     const isEn = lang === 'en';
     const is80 = (settings.paper_size || '80') === '80';
     const width = is80 ? 48 : 32;
@@ -229,6 +307,32 @@ class BluetoothPrinter {
 
     // ESC t 0 - Select Code Page 437 (Standard ASCII / European)
     addBytes(0x1B, 0x74, 0x00);
+
+    // Center alignment
+    addBytes(0x1B, 0x61, 0x01);
+
+    // Thermal Receipt Logo (if enabled)
+    const showLogo = settings.store_show_rcpt_logo === undefined || settings.store_show_rcpt_logo === null
+      ? true
+      : (settings.store_show_rcpt_logo === '1' || settings.store_show_rcpt_logo === true || settings.store_show_rcpt_logo === 1);
+
+    if (showLogo) {
+      const activeLogo = settings.store_logo || '/assets/logo.svg';
+      const logoSize = settings.store_rcpt_logo_size || 'medium';
+      let logoWidth = is80 ? 256 : 200;
+      if (logoSize === 'small') logoWidth = is80 ? 192 : 152;
+      else if (logoSize === 'large') logoWidth = is80 ? 320 : 240;
+
+      try {
+        const rasterBytes = await BluetoothPrinter.convertImageToRaster(activeLogo, logoWidth);
+        if (rasterBytes && rasterBytes.length > 0) {
+          addBytes(...rasterBytes);
+          addLine(''); // spacing
+        }
+      } catch (err) {
+        console.warn('ESC/POS raster conversion skipped:', err);
+      }
+    }
 
     // Header: Store Name (Center, Double Height & Width, Emphasized)
     addBytes(0x1B, 0x61, 0x01); // Center
@@ -334,7 +438,7 @@ class BluetoothPrinter {
   /**
    * Build Test ESC/POS sample receipt to verify printer connectivity and paper width
    */
-  buildTestEscPos(settings, lang = 'id') {
+  async buildTestEscPos(settings, lang = 'id') {
     const isEn = lang === 'en';
     const is80 = (settings.paper_size || '80') === '80';
     const width = is80 ? 48 : 32;
@@ -353,6 +457,32 @@ class BluetoothPrinter {
     // Initialize and Code Page 437
     addBytes(0x1B, 0x40);
     addBytes(0x1B, 0x74, 0x00);
+
+    // Center alignment
+    addBytes(0x1B, 0x61, 0x01);
+
+    // Thermal Receipt Logo (if enabled)
+    const showLogo = settings.store_show_rcpt_logo === undefined || settings.store_show_rcpt_logo === null
+      ? true
+      : (settings.store_show_rcpt_logo === '1' || settings.store_show_rcpt_logo === true || settings.store_show_rcpt_logo === 1);
+
+    if (showLogo) {
+      const activeLogo = settings.store_logo || '/assets/logo.svg';
+      const logoSize = settings.store_rcpt_logo_size || 'medium';
+      let logoWidth = is80 ? 256 : 200;
+      if (logoSize === 'small') logoWidth = is80 ? 192 : 152;
+      else if (logoSize === 'large') logoWidth = is80 ? 320 : 240;
+
+      try {
+        const rasterBytes = await BluetoothPrinter.convertImageToRaster(activeLogo, logoWidth);
+        if (rasterBytes && rasterBytes.length > 0) {
+          addBytes(...rasterBytes);
+          addLine(''); // spacing
+        }
+      } catch (err) {
+        console.warn('ESC/POS raster conversion skipped in test receipt:', err);
+      }
+    }
 
     // Header
     addBytes(0x1B, 0x61, 0x01); // Center
