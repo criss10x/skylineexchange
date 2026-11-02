@@ -495,6 +495,14 @@ router.post('/api/transactions', requireAuth, (req, res) => {
       customer_job,
       customer_gender,
       customer_address,
+      is_pep,
+      pep_institution,
+      source_of_funds,
+      transaction_purpose,
+      is_underlying,
+      underlying_type,
+      underlying_doc_no,
+      dttot_check_status,
       teller_name,
       total_idr,
       paid_amount,
@@ -513,6 +521,30 @@ router.post('/api/transactions', requireAuth, (req, res) => {
       return res.status(400).json({ success: false, message: 'Data transaksi tidak lengkap' });
     }
 
+    // Bank Indonesia Compliance Check: DTTOT Real-Time Enforcement (Freeze Without Delay)
+    const cleanCustName = (customer_name || '').trim().toUpperCase();
+    if (cleanCustName) {
+      const dttotMatch = db.prepare(`
+        SELECT * FROM dttot_list 
+        WHERE UPPER(name) = ? 
+           OR UPPER(aliases) LIKE ? 
+           OR ? LIKE '%' || UPPER(name) || '%'
+        LIMIT 1
+      `).get(cleanCustName, `%${cleanCustName}%`, cleanCustName);
+
+      if (dttotMatch) {
+        return res.status(403).json({
+          success: false,
+          error: 'TRANSAKSI DIBEKUKAN: Nama nasabah terindikasi dalam Daftar Terduga Teroris / Organisasi Teroris (DTTOT/DPPSPM). Sesuai regulasi Bank Indonesia (PBI APU PPT), transaksi wajib DIBEKUKAN serta-merta tanpa penundaan (Freeze Without Delay).',
+          dttot_match: {
+            name: dttotMatch.name,
+            aliases: dttotMatch.aliases,
+            list_type: dttotMatch.list_type
+          }
+        });
+      }
+    }
+
     const finalReceiptNo = receipt_no || generateReceiptNo();
     const now = created_at || new Date().toISOString();
 
@@ -520,10 +552,12 @@ router.post('/api/transactions', requireAuth, (req, res) => {
       INSERT INTO transactions (
         receipt_no, type, customer_name, customer_phone, customer_id_no,
         customer_npwp, customer_nationality, customer_job, customer_gender, customer_address,
+        is_pep, pep_institution, source_of_funds, transaction_purpose,
+        is_underlying, underlying_type, underlying_doc_no, dttot_check_status,
         teller_name, total_idr, paid_amount, change_amount,
         is_delivery, delivery_address, delivery_time, delivery_status,
         courier_name, notes, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     const result = insertTx.run(
@@ -537,6 +571,14 @@ router.post('/api/transactions', requireAuth, (req, res) => {
       customer_job ? customer_job.trim() : '',
       customer_gender ? customer_gender.trim() : '',
       customer_address ? customer_address.trim() : '',
+      is_pep ? 1 : 0,
+      pep_institution ? pep_institution.trim() : '',
+      source_of_funds ? source_of_funds.trim() : '',
+      transaction_purpose ? transaction_purpose.trim() : '',
+      is_underlying ? 1 : 0,
+      underlying_type ? underlying_type.trim() : '',
+      underlying_doc_no ? underlying_doc_no.trim() : '',
+      dttot_check_status || 'CLEARED',
       teller_name || 'TELLER',
       Number(total_idr) || 0,
       Number(paid_amount) || 0,
@@ -585,6 +627,14 @@ router.post('/api/transactions', requireAuth, (req, res) => {
         customer_job: customer_job ? customer_job.trim() : '',
         customer_gender: customer_gender ? customer_gender.trim() : '',
         customer_address: customer_address ? customer_address.trim() : '',
+        is_pep: is_pep ? 1 : 0,
+        pep_institution: pep_institution ? pep_institution.trim() : '',
+        source_of_funds: source_of_funds ? source_of_funds.trim() : '',
+        transaction_purpose: transaction_purpose ? transaction_purpose.trim() : '',
+        is_underlying: is_underlying ? 1 : 0,
+        underlying_type: underlying_type ? underlying_type.trim() : '',
+        underlying_doc_no: underlying_doc_no ? underlying_doc_no.trim() : '',
+        dttot_check_status: dttot_check_status || 'CLEARED',
         teller_name: teller_name || 'TELLER',
         total_idr: Number(total_idr) || 0,
         paid_amount: Number(paid_amount) || 0,
@@ -652,10 +702,12 @@ router.post('/api/sync', requireAuth, (req, res) => {
       INSERT INTO transactions (
         receipt_no, type, customer_name, customer_phone, customer_id_no,
         customer_npwp, customer_nationality, customer_job, customer_gender, customer_address,
+        is_pep, pep_institution, source_of_funds, transaction_purpose,
+        is_underlying, underlying_type, underlying_doc_no, dttot_check_status,
         teller_name, total_idr, paid_amount, change_amount,
         is_delivery, delivery_address, delivery_time, delivery_status,
         courier_name, notes, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
     const insertItem = db.prepare(`
       INSERT INTO transaction_items (transaction_id, currency_code, amount, rate, subtotal_idr)
@@ -676,6 +728,14 @@ router.post('/api/sync', requireAuth, (req, res) => {
           tx.customer_job || '',
           tx.customer_gender || '',
           tx.customer_address || '',
+          tx.is_pep ? 1 : 0,
+          tx.pep_institution || '',
+          tx.source_of_funds || '',
+          tx.transaction_purpose || '',
+          tx.is_underlying ? 1 : 0,
+          tx.underlying_type || '',
+          tx.underlying_doc_no || '',
+          tx.dttot_check_status || 'CLEARED',
           tx.teller_name || 'TELLER',
           Number(tx.total_idr),
           Number(tx.paid_amount),
@@ -785,6 +845,146 @@ router.post('/api/sheets/config', requireAuth, (req, res) => {
 });
 
 // ==================== REPORTS SUMMARY ====================
+
+// ==================== DTTOT & COMPLIANCE API ====================
+
+// Real-time screening against DTTOT & DPPSPM list
+router.post('/api/dttot/check', requireAuth, (req, res) => {
+  try {
+    const { name } = req.body;
+    if (!name || typeof name !== 'string' || !name.trim()) {
+      return res.json({ success: true, match: false });
+    }
+
+    const cleanName = name.trim().toUpperCase();
+    
+    // 1. Direct or partial LIKE match on name or aliases
+    const directMatch = db.prepare(`
+      SELECT * FROM dttot_list 
+      WHERE UPPER(name) = ? 
+         OR UPPER(aliases) LIKE ? 
+         OR ? LIKE '%' || UPPER(name) || '%'
+      LIMIT 1
+    `).get(cleanName, `%${cleanName}%`, cleanName);
+
+    if (directMatch) {
+      return res.json({
+        success: true,
+        match: true,
+        data: {
+          id: directMatch.id,
+          name: directMatch.name,
+          aliases: directMatch.aliases,
+          nationality: directMatch.nationality,
+          list_type: directMatch.list_type,
+          notes: directMatch.notes
+        }
+      });
+    }
+
+    // 2. Token / word matching for multi-word names
+    const tokens = cleanName.split(/\s+/).filter(w => w.length >= 4);
+    if (tokens.length >= 2) {
+      for (const t of tokens) {
+        const tokenMatch = db.prepare(`
+          SELECT * FROM dttot_list 
+          WHERE UPPER(name) = ? OR UPPER(aliases) LIKE ?
+          LIMIT 1
+        `).get(t, `%${t}%`);
+        if (tokenMatch) {
+          return res.json({
+            success: true,
+            match: true,
+            data: {
+              id: tokenMatch.id,
+              name: tokenMatch.name,
+              aliases: tokenMatch.aliases,
+              nationality: tokenMatch.nationality,
+              list_type: tokenMatch.list_type,
+              notes: tokenMatch.notes
+            }
+          });
+        }
+      }
+    }
+
+    res.json({ success: true, match: false });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// List DTTOT entries with optional search & pagination
+router.get('/api/dttot', requireAuth, (req, res) => {
+  try {
+    const { q, list_type, limit = 100, offset = 0 } = req.query;
+    let query = 'SELECT * FROM dttot_list WHERE 1=1';
+    const params = [];
+
+    if (q && q.trim()) {
+      const term = `%${q.trim().toUpperCase()}%`;
+      query += ' AND (UPPER(name) LIKE ? OR UPPER(aliases) LIKE ? OR UPPER(notes) LIKE ?)';
+      params.push(term, term, term);
+    }
+
+    if (list_type && list_type !== 'ALL') {
+      query += ' AND list_type = ?';
+      params.push(list_type);
+    }
+
+    query += ' ORDER BY id DESC LIMIT ? OFFSET ?';
+    params.push(Number(limit), Number(offset));
+
+    const entries = db.prepare(query).all(...params);
+    const totalCount = db.prepare('SELECT COUNT(*) as c FROM dttot_list').get().c;
+
+    res.json({ success: true, data: entries, total: totalCount });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// Add new DTTOT / DPPSPM entry
+router.post('/api/dttot', requireAuth, requireAdmin, (req, res) => {
+  try {
+    const { name, aliases, nationality, date_of_birth, list_type, notes } = req.body;
+    if (!name || !name.trim()) {
+      return res.status(400).json({ success: false, message: 'Nama terduga teroris / entitas wajib diisi.' });
+    }
+
+    const type = list_type || 'DTTOT';
+    const now = new Date().toISOString();
+    const stmt = db.prepare(`
+      INSERT INTO dttot_list (name, aliases, nationality, date_of_birth, list_type, notes, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `);
+    const result = stmt.run(
+      name.trim().toUpperCase(),
+      (aliases || '').trim(),
+      (nationality || 'INDONESIA').trim().toUpperCase(),
+      (date_of_birth || '').trim(),
+      type,
+      (notes || '').trim(),
+      now
+    );
+
+    res.json({ success: true, id: result.lastInsertRowid, message: 'Data kepatuhan DTTOT berhasil ditambahkan.' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// Delete DTTOT entry
+router.delete('/api/dttot/:id', requireAuth, requireAdmin, (req, res) => {
+  try {
+    const { id } = req.params;
+    db.prepare('DELETE FROM dttot_list WHERE id = ?').run(id);
+    res.json({ success: true, message: 'Data kepatuhan DTTOT berhasil dihapus.' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 router.get('/api/reports/summary', requireAuth, (req, res) => {
   try {
     const { date } = req.query;
@@ -973,6 +1173,7 @@ router.get('/api/system/db-info', requireAuth, (req, res) => {
     const settingsCount = db.prepare('SELECT COUNT(*) as c FROM settings').get().c;
     const txCount = db.prepare('SELECT COUNT(*) as c FROM transactions').get().c;
     const itemsCount = db.prepare('SELECT COUNT(*) as c FROM transaction_items').get().c;
+    let dttotCount = 0; try { dttotCount = db.prepare('SELECT COUNT(*) as c FROM dttot_list').get().c; } catch (e) {}
 
     const storageDir = db.storageDir || path.resolve(__dirname, '..', 'skyline_storage');
     const dbPath = db.dbPath || path.join(storageDir, 'database.sqlite');
@@ -1049,7 +1250,8 @@ router.get('/api/system/db-info', requireAuth, (req, res) => {
           rates: ratesCount,
           settings: settingsCount,
           transactions: txCount,
-          transaction_items: itemsCount
+          transaction_items: itemsCount,
+        dttot_records: dttotCount
         },
         backups: backupFiles,
         server_time: new Date().toISOString(),

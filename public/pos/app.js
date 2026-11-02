@@ -28,6 +28,20 @@ const i18n = {
     tabSheets: 'Google Sheets',
     subtabSheets: 'Integrasi Google Sheets',
     subtabStore: 'Profil Toko',
+    subtabCompliance: 'Kepatuhan BI',
+    lblCustPep: 'Nasabah Merupakan PEP (Politically Exposed Person)',
+    badgePepNotice: 'High Risk Customer',
+    txtEddMandate: 'PBI APU PPT: Nasabah PEP wajib menjalani Enhanced Due Diligence (EDD) dan Persetujuan Direksi.',
+    lblPepInstitution: 'Institusi / Jabatan PEP',
+    lblPepSource: 'Sumber Dana (Source of Funds)',
+    lblPepPurpose: 'Tujuan Transaksi (Purpose)',
+    lblPepApproval: 'Saya mengonfirmasi bahwa transaksi nasabah PEP ini telah mendapatkan Persetujuan Direksi / Senior Management sesuai standar kepatuhan Bank Indonesia.',
+    lblUnderlyingTitle: 'Regulasi BI: Kewajiban Dokumen Underlying (≥ USD 10.000)',
+    txtUnderlyingDesc: 'Sesuai Peraturan Bank Indonesia (PBI Transaksi Valas), pembelian valuta asing terhadap Rupiah mencapai atau melebihi USD 10.000 (atau ekuivalennya) wajib melampirkan Dokumen Underlying Transaksi yang sah.',
+    lblUnderlyingType: 'Jenis Dokumen Underlying',
+    lblUnderlyingNo: 'Nomor Dokumen / Keterangan',
+    dttotAlertTitle: 'PERINGATAN DTTOT / DPPSPM: TRANSAKSI DIBEKUKAN',
+    dttotAlertDesc: 'Nama nasabah terindikasi dalam Daftar Terduga Teroris & Organisasi Teroris (DTTOT). Sesuai regulasi Bank Indonesia (PBI APU PPT), transaksi WAJIB DIBEKUKAN serta-merta tanpa penundaan (Freeze Without Delay).',
 
     // POS Cashier Form
     legendTitle: 'Petunjuk Kolom:',
@@ -273,6 +287,20 @@ const i18n = {
     tabSheets: 'Google Sheets',
     subtabSheets: 'Google Sheets Integration',
     subtabStore: 'Store Profile',
+    subtabCompliance: 'BI Compliance',
+    lblCustPep: 'Customer is a PEP (Politically Exposed Person)',
+    badgePepNotice: 'High Risk Customer',
+    txtEddMandate: 'BI APU PPT: PEP customers require Enhanced Due Diligence (EDD) and Senior Management / Director approval.',
+    lblPepInstitution: 'PEP Institution / Position',
+    lblPepSource: 'Source of Funds',
+    lblPepPurpose: 'Purpose of Transaction',
+    lblPepApproval: 'I confirm that this PEP transaction has been formally approved by Senior Management / Board of Directors in compliance with Bank Indonesia regulations.',
+    lblUnderlyingTitle: 'BI Regulation: Mandatory Underlying Document (≥ USD 10,000)',
+    txtUnderlyingDesc: 'Under Bank Indonesia Foreign Exchange Regulations (PBI Transaksi Valas), foreign currency transactions reaching or exceeding USD 10,000 (or equivalent) require valid Underlying Documents.',
+    lblUnderlyingType: 'Underlying Document Type',
+    lblUnderlyingNo: 'Document Number / Reference',
+    dttotAlertTitle: 'DTTOT / DPPSPM ALERT: TRANSACTION FROZEN',
+    dttotAlertDesc: 'Customer name matched official Terrorist / Extremist Watchlist (DTTOT). Under Bank Indonesia regulations (PBI APU PPT), this transaction MUST BE FROZEN WITHOUT DELAY.',
 
     // POS Cashier Form
     legendTitle: 'Field Legend:',
@@ -863,6 +891,20 @@ function setAppLanguage(lang) {
   safeSet('i18n-tab-sheets', t.tabSheets);
   safeSet('i18n-tab-settings', t.tabSettings);
   safeSet('lbl-subtab-sheets', t.subtabSheets);
+  safeSet('lbl-subtab-compliance', t.subtabCompliance);
+  safeSet('lbl-cust-pep', t.lblCustPep);
+  safeSet('badge-pep-notice', t.badgePepNotice);
+  safeSet('txt-edd-mandate', t.txtEddMandate);
+  safeSet('lbl-pep-institution', t.lblPepInstitution);
+  safeSet('lbl-pep-source', t.lblPepSource);
+  safeSet('lbl-pep-purpose', t.lblPepPurpose);
+  safeSet('lbl-pep-approval', t.lblPepApproval);
+  safeSet('lbl-underlying-title', t.lblUnderlyingTitle);
+  safeSet('txt-underlying-desc', t.txtUnderlyingDesc);
+  safeSet('lbl-underlying-type', t.lblUnderlyingType);
+  safeSet('lbl-underlying-no', t.lblUnderlyingNo);
+  safeSet('dttot-alert-title', t.dttotAlertTitle);
+  safeSet('dttot-alert-desc', t.dttotAlertDesc);
   safeSet('lbl-subtab-store', t.subtabStore);
 
   // POS Cashier Form
@@ -1141,6 +1183,8 @@ function setReceiptLanguage(lang, showToastNotification = true) {
   safeSet('lbl-rcpt-address', t.rcptAddressLabel);
   safeSet('lbl-rcpt-delivery', t.rcptServiceLabel);
   safeSet('rcpt-delivery-val', t.rcptDeliveryVal);
+  safeSet('lbl-rcpt-pep', lang === 'en' ? 'PEP Status' : 'Status PEP');
+  safeSet('lbl-rcpt-underlying', lang === 'en' ? 'Underlying Doc' : 'Dokumen Underlying');
 
   // 4 Columns Header
   safeSet('lbl-col-curr', t.rcptColValas);
@@ -1806,6 +1850,19 @@ function removeCartItem(index) {
   renderCart();
 }
 
+
+function calculateUsdEquivalent(totalIdr) {
+  if (!totalIdr || totalIdr <= 0) return 0;
+  let usdRate = 16000;
+  if (Array.isArray(state.rates) && state.rates.length > 0) {
+    const usdObj = state.rates.find(r => r.code === 'USD');
+    if (usdObj) {
+      usdRate = (state.txType === 'JUAL' ? usdObj.sell_rate : usdObj.buy_rate) || 16000;
+    }
+  }
+  return totalIdr / usdRate;
+}
+
 function calculateTotals() {
   const total = state.cart.reduce((sum, item) => sum + item.subtotal_idr, 0);
   const paymentInput = document.getElementById('input-payment');
@@ -1882,6 +1939,20 @@ function renderCart() {
         removeCartItem(idx);
       });
     });
+  }
+
+  // Bank Indonesia USD 10,000 Threshold Check
+  const usdEquiv = calculateUsdEquivalent(total);
+  const underCard = document.getElementById('card-underlying-warning');
+  const usdBadge = document.getElementById('badge-usd-equiv');
+  
+  if (usdEquiv >= 10000) {
+    state.isUnderlyingRequired = true;
+    if (underCard) underCard.classList.remove('hidden');
+    if (usdBadge) usdBadge.textContent = '≈ USD ' + Math.round(usdEquiv).toLocaleString('en-US');
+  } else {
+    state.isUnderlyingRequired = false;
+    if (underCard) underCard.classList.add('hidden');
   }
 
   // Update Calculations
@@ -1996,6 +2067,31 @@ function updateLiveReceiptMetadata() {
     }
   }
 
+  const isPep = document.getElementById('cust-pep-toggle')?.checked || false;
+  const pepRow = document.getElementById('rcpt-pep-row');
+  const pepVal = document.getElementById('rcpt-cust-pep');
+  if (pepRow && pepVal) {
+    if (isPep) {
+      pepVal.textContent = isRcptEn ? 'YES (HIGH RISK - EDD)' : 'YA (HIGH RISK - EDD)';
+      pepRow.classList.remove('hidden');
+    } else {
+      pepRow.classList.add('hidden');
+    }
+  }
+
+  const underRow = document.getElementById('rcpt-underlying-row');
+  const underVal = document.getElementById('rcpt-cust-underlying');
+  const underType = document.getElementById('underlying-doc-type')?.value;
+  const underNo = document.getElementById('underlying-doc-no')?.value;
+  if (underRow && underVal) {
+    if (state.isUnderlyingRequired) {
+      underVal.textContent = `${underType || 'UNDERLYING'}: ${underNo || '-'}`;
+      underRow.classList.remove('hidden');
+    } else {
+      underRow.classList.add('hidden');
+    }
+  }
+
   if (state.isDelivery) {
     deliveryRow.classList.remove('hidden');
     document.getElementById('rcpt-delivery-val').textContent = isRcptEn ? 'DELIVERY SERVICE' : 'DELIVERY (ANTAR)';
@@ -2015,6 +2111,71 @@ function updateLiveReceiptMetadata() {
     rcptType.textContent = isRcptEn ? 'BUY CURRENCY (BUY)' : 'BELI VALAS (BUY)';
   } else {
     rcptType.textContent = isRcptEn ? 'SELL CURRENCY (SELL)' : 'JUAL VALAS (SELL)';
+  }
+}
+
+
+// ==================== DTTOT REAL-TIME SCREENING ====================
+let dttotCheckTimeout = null;
+let currentDttotMatch = null;
+
+function checkDttotRealtime(name) {
+  clearTimeout(dttotCheckTimeout);
+  if (!name || name.trim().length < 3) {
+    clearDttotAlert();
+    return;
+  }
+  
+  dttotCheckTimeout = setTimeout(async () => {
+    try {
+      const res = await authFetch('/api/dttot/check', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: name.trim() })
+      });
+      const data = await res.json();
+      if (data.success && data.match) {
+        showDttotAlert(data.data);
+      } else {
+        clearDttotAlert();
+      }
+    } catch (e) {
+      console.warn('DTTOT screening check failed:', e);
+    }
+  }, 300);
+}
+
+function showDttotAlert(matchData) {
+  currentDttotMatch = matchData;
+  const alertBox = document.getElementById('dttot-alert-box');
+  const alertDetail = document.getElementById('dttot-alert-detail');
+  const btnSubmit = document.getElementById('btn-submit-tx');
+  
+  if (alertDetail) {
+    alertDetail.textContent = `[MATCH]: ${matchData.name} | Alias: ${matchData.aliases || '-'} | Daftar: ${matchData.list_type} | Info: ${matchData.notes || '-'}`;
+  }
+  if (alertBox) {
+    alertBox.classList.remove('hidden');
+  }
+  if (btnSubmit) {
+    btnSubmit.disabled = true;
+    btnSubmit.classList.add('opacity-50', 'cursor-not-allowed', 'bg-red-800');
+    btnSubmit.classList.remove('bg-brand', 'hover:bg-brand-hover');
+  }
+}
+
+function clearDttotAlert() {
+  currentDttotMatch = null;
+  const alertBox = document.getElementById('dttot-alert-box');
+  const btnSubmit = document.getElementById('btn-submit-tx');
+  
+  if (alertBox) {
+    alertBox.classList.add('hidden');
+  }
+  if (btnSubmit) {
+    btnSubmit.disabled = false;
+    btnSubmit.classList.remove('opacity-50', 'cursor-not-allowed', 'bg-red-800');
+    btnSubmit.classList.add('bg-brand', 'hover:bg-brand-hover');
   }
 }
 
@@ -2039,6 +2200,60 @@ async function processTransaction() {
     showToast(isEn ? 'Customer name is required for currency transaction record' : 'Nama customer wajib diisi untuk bukti transaksi valas', 'error');
     document.getElementById('cust-name').focus();
     return;
+  }
+
+  // Compliance Check 1: DTTOT Real-Time Match
+  if (currentDttotMatch) {
+    showToast(isEn ? 'TRANSACTION FROZEN: Customer name matches DTTOT list (PBI APU PPT)' : 'TRANSAKSI DIBEKUKAN: Nama nasabah terindikasi dalam Daftar DTTOT Bank Indonesia', 'error');
+    return;
+  }
+
+  // Compliance Check 2: USD 10,000 Threshold Detection (Underlying)
+  const isUnderlying = state.isUnderlyingRequired || false;
+  const underlyingType = document.getElementById('underlying-doc-type')?.value || '';
+  const underlyingDocNo = document.getElementById('underlying-doc-no')?.value.trim() || '';
+
+  if (isUnderlying) {
+    if (!underlyingType) {
+      showToast(isEn ? 'Underlying document type is required for transactions >= USD 10,000' : 'Jenis dokumen underlying wajib dipilih untuk transaksi >= USD 10.000', 'error');
+      document.getElementById('underlying-doc-type')?.focus();
+      return;
+    }
+    if (!underlyingDocNo) {
+      showToast(isEn ? 'Underlying document number / details is required' : 'Nomor / keterangan dokumen underlying wajib diisi', 'error');
+      document.getElementById('underlying-doc-no')?.focus();
+      return;
+    }
+  }
+
+  // Compliance Check 3: PEP & Enhanced Due Diligence (EDD)
+  const isPep = document.getElementById('cust-pep-toggle')?.checked || false;
+  const pepInstitution = document.getElementById('pep-institution')?.value.trim() || '';
+  const sourceOfFunds = document.getElementById('pep-source-funds')?.value || '';
+  const transactionPurpose = document.getElementById('pep-purpose')?.value || '';
+  const isPepApproved = document.getElementById('check-pep-approval')?.checked || false;
+
+  if (isPep) {
+    if (!pepInstitution) {
+      showToast(isEn ? 'PEP Institution / Position is required for PEP customer' : 'Institusi / Jabatan PEP wajib diisi untuk nasabah PEP', 'error');
+      document.getElementById('pep-institution')?.focus();
+      return;
+    }
+    if (!sourceOfFunds) {
+      showToast(isEn ? 'Source of funds is required for PEP customer (EDD)' : 'Sumber dana wajib dipilih untuk nasabah PEP (EDD)', 'error');
+      document.getElementById('pep-source-funds')?.focus();
+      return;
+    }
+    if (!transactionPurpose) {
+      showToast(isEn ? 'Transaction purpose is required for PEP customer (EDD)' : 'Tujuan transaksi wajib dipilih untuk nasabah PEP (EDD)', 'error');
+      document.getElementById('pep-purpose')?.focus();
+      return;
+    }
+    if (!isPepApproved) {
+      showToast(isEn ? 'Senior management / Director approval confirmation is required for PEP' : 'Konfirmasi persetujuan Direksi / Senior Management wajib dicentang untuk nasabah PEP', 'error');
+      document.getElementById('check-pep-approval')?.focus();
+      return;
+    }
   }
 
   const { total, payment, change } = calculateTotals();
@@ -2067,6 +2282,14 @@ async function processTransaction() {
     customer_job: custJob.toUpperCase(),
     customer_gender: custGender,
     customer_address: custAddress.toUpperCase(),
+    is_pep: isPep ? 1 : 0,
+    pep_institution: pepInstitution,
+    source_of_funds: sourceOfFunds,
+    transaction_purpose: transactionPurpose,
+    is_underlying: isUnderlying ? 1 : 0,
+    underlying_type: underlyingType,
+    underlying_doc_no: underlyingDocNo,
+    dttot_check_status: 'CLEARED',
     customer_signature_name: signatureName.toUpperCase() || custName.toUpperCase(),
     teller_name: getActiveTellerName(),
     total_idr: total,
@@ -2093,6 +2316,11 @@ async function processTransaction() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
+      if (res.status === 403) {
+        const errData = await res.json();
+        showToast(errData.error || (isEn ? 'Transaction frozen by DTTOT watchlist' : 'Transaksi dibekukan oleh sistem kepatuhan DTTOT'), 'error');
+        return;
+      }
       const data = await res.json();
       if (data.success) {
         payload.receipt_no = data.data.receipt_no;
@@ -2157,6 +2385,17 @@ function resetForm() {
   const jobInp = document.getElementById('cust-job'); if (jobInp) jobInp.value = '';
   const genInp = document.getElementById('cust-gender'); if (genInp) genInp.value = '';
   const addrInp = document.getElementById('cust-address'); if (addrInp) addrInp.value = '';
+  const pepToggle = document.getElementById('cust-pep-toggle'); if (pepToggle) pepToggle.checked = false;
+  const pepFields = document.getElementById('pep-edd-fields'); if (pepFields) pepFields.classList.add('hidden');
+  const pepInst = document.getElementById('pep-institution'); if (pepInst) pepInst.value = '';
+  const pepSrc = document.getElementById('pep-source-funds'); if (pepSrc) pepSrc.value = '';
+  const pepPur = document.getElementById('pep-purpose'); if (pepPur) pepPur.value = '';
+  const pepApp = document.getElementById('check-pep-approval'); if (pepApp) pepApp.checked = false;
+  const underType = document.getElementById('underlying-doc-type'); if (underType) underType.value = '';
+  const underNo = document.getElementById('underlying-doc-no'); if (underNo) underNo.value = '';
+  state.isUnderlyingRequired = false;
+  const underCard = document.getElementById('card-underlying-warning'); if (underCard) underCard.classList.add('hidden');
+  clearDttotAlert();
   document.getElementById('input-payment').value = '';
   document.getElementById('check-delivery').checked = false;
   document.getElementById('delivery-fields').classList.add('hidden');
@@ -2281,6 +2520,28 @@ function renderReceiptData(tx) {
       addrRow.classList.remove('hidden');
     } else {
       addrRow.classList.add('hidden');
+    }
+  }
+
+  const pepRow = document.getElementById('rcpt-pep-row');
+  const pepVal = document.getElementById('rcpt-cust-pep');
+  if (pepRow && pepVal) {
+    if (tx.is_pep) {
+      pepVal.textContent = isEn ? 'YES (HIGH RISK - EDD)' : 'YA (HIGH RISK - EDD)';
+      pepRow.classList.remove('hidden');
+    } else {
+      pepRow.classList.add('hidden');
+    }
+  }
+
+  const underRow = document.getElementById('rcpt-underlying-row');
+  const underVal = document.getElementById('rcpt-cust-underlying');
+  if (underRow && underVal) {
+    if (tx.is_underlying) {
+      underVal.textContent = `${tx.underlying_type || 'UNDERLYING'}: ${tx.underlying_doc_no || '-'}`;
+      underRow.classList.remove('hidden');
+    } else {
+      underRow.classList.add('hidden');
     }
   }
 
@@ -2466,6 +2727,13 @@ function buildCurrentFormReceiptData() {
     customer_job: custJob.toUpperCase(),
     customer_gender: custGender,
     customer_address: custAddress.toUpperCase(),
+    is_pep: isPep ? 1 : 0,
+    pep_institution: pepInstitution,
+    source_of_funds: sourceOfFunds,
+    transaction_purpose: transactionPurpose,
+    is_underlying: isUnderlying ? 1 : 0,
+    underlying_type: underlyingType,
+    underlying_doc_no: underlyingDocNo,
     customer_signature_name: signatureName.toUpperCase() || custName.toUpperCase(),
     teller_name: getActiveTellerName(),
     total_idr: total,
@@ -2553,6 +2821,13 @@ function handleShareWhatsApp() {
   if (currentData.customer_job) text += `${isEn ? 'Occupation' : 'Pekerjaan'} : ${currentData.customer_job}\n`;
   if (currentData.customer_gender) text += `${isEn ? 'Gender' : 'Jenis Kelamin'}: ${formatCustomerGender(currentData.customer_gender, isEn ? 'en' : 'id')}\n`;
   if (currentData.customer_address) text += `${isEn ? 'Address' : 'Alamat'}    : ${currentData.customer_address}\n`;
+  if (currentData.is_pep) {
+    text += `${isEn ? 'PEP / EDD' : 'Status PEP'}   : ${isEn ? 'YES (HIGH RISK - APPROVED)' : 'YA (HIGH RISK - DIREKSI ACC)'}\n`;
+    if (currentData.pep_institution) text += `${isEn ? 'Institution' : 'Instansi PEP'} : ${currentData.pep_institution}\n`;
+  }
+  if (currentData.is_underlying) {
+    text += `${isEn ? 'Underlying Doc' : 'Dokumen Underlying'}: ${currentData.underlying_type} (${currentData.underlying_doc_no || '-' })\n`;
+  }
   text += `--------------------------------\n`;
   text += `*${isEn ? 'EXCHANGE DETAILS:' : 'RINCIAN TRANSAKSI VALAS:'}*\n`;
 
@@ -2772,7 +3047,11 @@ function renderHistoryTable(transactions) {
       <td class="py-2.5 px-3 font-bold text-brand">${t.receipt_no}</td>
       <td class="py-2.5 px-3 text-slate-400">${dateStr}</td>
       <td class="py-2.5 px-3">${typeBadge}</td>
-      <td class="py-2.5 px-3 font-sans font-semibold text-white uppercase">${t.customer_name}</td>
+      <td class="py-2.5 px-3 font-sans font-semibold text-white uppercase">
+        ${t.customer_name}
+        ${t.is_pep ? '<span class="ml-1 px-1.5 py-0.5 rounded text-[9px] bg-amber-500/20 text-amber-300 font-bold border border-amber-500/40">PEP</span>' : ''}
+        ${t.is_underlying ? '<span class="ml-1 px-1.5 py-0.5 rounded text-[9px] bg-blue-500/20 text-blue-300 font-bold border border-blue-500/40">≥10K</span>' : ''}
+      </td>
       <td class="py-2.5 px-3 text-slate-300 font-mono">${itemsSummary}</td>
       <td class="py-2.5 px-3 text-right font-bold text-white font-mono">Rp ${t.total_idr.toLocaleString('id-ID')}</td>
       <td class="py-2.5 px-3 text-center">
@@ -2980,21 +3259,25 @@ function switchSubtab(subtabName) {
   const panelStore = document.getElementById('subtab-panel-store');
   const panelUsers = document.getElementById('subtab-panel-users');
   const panelDatabase = document.getElementById('subtab-panel-database');
+  const panelCompliance = document.getElementById('subtab-panel-compliance');
   const btnSheets = document.getElementById('subtab-btn-sheets');
   const btnStore = document.getElementById('subtab-btn-store');
   const btnUsers = document.getElementById('subtab-btn-users');
   const btnDatabase = document.getElementById('subtab-btn-database');
+  const btnCompliance = document.getElementById('subtab-btn-compliance');
 
   if (panelSheets) panelSheets.classList.add('hidden');
   if (panelStore) panelStore.classList.add('hidden');
   if (panelUsers) panelUsers.classList.add('hidden');
   if (panelDatabase) panelDatabase.classList.add('hidden');
+  if (panelCompliance) panelCompliance.classList.add('hidden');
 
   const inactiveBtnClass = 'flex-1 py-2 px-2 rounded-lg text-xs font-bold transition-all text-center flex items-center justify-center gap-1 text-slate-400 hover:text-white';
   if (btnSheets) btnSheets.className = inactiveBtnClass;
   if (btnStore) btnStore.className = inactiveBtnClass;
   if (btnUsers) btnUsers.className = inactiveBtnClass;
   if (btnDatabase) btnDatabase.className = inactiveBtnClass;
+  if (btnCompliance) btnCompliance.className = inactiveBtnClass;
 
   if (subtabName === 'sheets') {
     if (panelSheets) panelSheets.classList.remove('hidden');
@@ -3009,9 +3292,178 @@ function switchSubtab(subtabName) {
     if (panelDatabase) panelDatabase.classList.remove('hidden');
     if (btnDatabase) btnDatabase.className = 'flex-1 py-2 px-2 rounded-lg text-xs font-bold transition-all text-center flex items-center justify-center gap-1 bg-cyan-600 text-white shadow';
     loadDatabaseInfo();
+  } else if (subtabName === 'compliance') {
+    if (panelCompliance) panelCompliance.classList.remove('hidden');
+    if (btnCompliance) btnCompliance.className = 'flex-1 py-2 px-2 rounded-lg text-xs font-bold transition-all text-center flex items-center justify-center gap-1 bg-amber-600 text-white shadow';
+    loadDttotList();
   } else {
     if (panelStore) panelStore.classList.remove('hidden');
     if (btnStore) btnStore.className = 'flex-1 py-2 px-2 rounded-lg text-xs font-bold transition-all text-center flex items-center justify-center gap-1 bg-brand text-navy-950 font-bold shadow';
+  }
+}
+
+
+// ==================== DTTOT COMPLIANCE MANAGEMENT ====================
+
+async function loadDttotList() {
+  const tbody = document.getElementById('dttot-table-body');
+  const countBadge = document.getElementById('badge-dttot-count');
+  if (!tbody) return;
+
+  const q = document.getElementById('dttot-filter-search')?.value.trim() || '';
+  const listType = document.getElementById('dttot-filter-type')?.value || 'ALL';
+
+  try {
+    const res = await authFetch(`/api/dttot?q=${encodeURIComponent(q)}&list_type=${encodeURIComponent(listType)}&limit=100`);
+    const data = await res.json();
+    if (!data.success) throw new Error(data.message);
+
+    const entries = data.data || [];
+    if (countBadge) countBadge.textContent = `${entries.length} Data`;
+
+    if (entries.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" class="py-6 text-center text-slate-500 font-sans">Tidak ada data DTTOT yang cocok.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = '';
+    const isAdmin = state.user && state.user.role === 'ADMIN';
+
+    entries.forEach(row => {
+      const tr = document.createElement('tr');
+      tr.className = 'hover:bg-navy-700/40 transition-colors';
+
+      let typeBadge = '<span class="px-1.5 py-0.5 rounded text-[10px] bg-rose-500/20 text-rose-300 font-bold border border-rose-500/30">DTTOT</span>';
+      if (row.list_type === 'DPPSPM') {
+        typeBadge = '<span class="px-1.5 py-0.5 rounded text-[10px] bg-purple-500/20 text-purple-300 font-bold border border-purple-500/30">DPPSPM</span>';
+      } else if (row.list_type === 'INTERNAL') {
+        typeBadge = '<span class="px-1.5 py-0.5 rounded text-[10px] bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">INTERNAL</span>';
+      }
+
+      const actionBtn = isAdmin
+        ? `<button type="button" class="btn-delete-dttot px-2 py-0.5 rounded bg-rose-500/20 hover:bg-rose-500/40 text-rose-300 text-[10px] font-bold transition-all" data-id="${row.id}" data-name="${row.name}">Hapus</button>`
+        : '<span class="text-slate-600 text-[10px]">-</span>';
+
+      tr.innerHTML = `
+        <td class="py-2.5 px-3 font-semibold text-white uppercase">${row.name}</td>
+        <td class="py-2.5 px-3 text-slate-300">${row.aliases || '-'}</td>
+        <td class="py-2.5 px-2 text-slate-400 uppercase text-[11px]">${row.nationality || 'INDONESIA'}</td>
+        <td class="py-2.5 px-2">${typeBadge}</td>
+        <td class="py-2.5 px-3 text-slate-400 text-[11px] max-w-xs truncate" title="${row.notes || ''}">${row.notes || '-'}</td>
+        <td class="py-2.5 px-2 text-center">${actionBtn}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    tbody.querySelectorAll('.btn-delete-dttot').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-id');
+        const name = btn.getAttribute('data-name');
+        deleteDttotEntry(id, name);
+      });
+    });
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-rose-400">Gagal memuat daftar DTTOT: ${err.message}</td></tr>`;
+  }
+}
+
+async function testDttotScreening() {
+  const input = document.getElementById('test-dttot-input');
+  const resultBox = document.getElementById('test-dttot-result');
+  if (!input || !resultBox) return;
+
+  const query = input.value.trim();
+  if (!query) {
+    showToast('Ketik nama untuk diuji skrining', 'warning');
+    return;
+  }
+
+  resultBox.className = 'p-2.5 rounded-lg text-xs font-medium bg-navy-950 text-slate-300 border border-navy-700 block';
+  resultBox.textContent = 'Memeriksa database DTTOT / DPPSPM...';
+
+  try {
+    const res = await authFetch('/api/dttot/check', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: query })
+    });
+    const data = await res.json();
+
+    if (data.success && data.match) {
+      const match = data.data;
+      resultBox.className = 'p-3 rounded-lg text-xs font-medium bg-rose-950/80 border border-rose-500 text-rose-200 block space-y-1';
+      resultBox.innerHTML = `
+        <div class="font-bold text-rose-300 text-sm flex items-center gap-1.5">
+          <svg class="w-4 h-4 text-rose-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+          HASIL: TERINDIKASI MATCH (${match.list_type})
+        </div>
+        <div>Nama Cocok: <b>${match.name}</b> (Alias: ${match.aliases || '-'})</div>
+        <div class="text-[11px] text-rose-300/80">Keterangan: ${match.notes || '-'} | Kewarganegaraan: ${match.nationality || '-'}</div>
+        <div class="text-[10px] text-rose-400 font-semibold mt-1">Status Sistem: Transaksi Kasir Wajib Ditolak / Dibekukan Serta-merta.</div>
+      `;
+    } else {
+      resultBox.className = 'p-3 rounded-lg text-xs font-medium bg-emerald-950/60 border border-emerald-500/60 text-emerald-200 block';
+      resultBox.innerHTML = `
+        <div class="font-bold text-emerald-300 text-sm flex items-center gap-1.5">
+          <svg class="w-4 h-4 text-emerald-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+          HASIL: BERSIH / CLEAR (Tidak Ditemukan Indikasi Terorisme)
+        </div>
+        <div class="text-[11px] text-emerald-300/80 mt-0.5">Nama "${query}" lolos skrining daftar DTTOT & DPPSPM Bank Indonesia.</div>
+      `;
+    }
+  } catch (err) {
+    resultBox.className = 'p-2.5 rounded-lg text-xs font-medium bg-rose-950/60 text-rose-300 border border-rose-700 block';
+    resultBox.textContent = 'Error koneksi server saat skrining: ' + err.message;
+  }
+}
+
+async function saveDttotEntry(e) {
+  if (e) e.preventDefault();
+  const name = document.getElementById('add-dttot-name').value.trim();
+  const aliases = document.getElementById('add-dttot-aliases').value.trim();
+  const nationality = document.getElementById('add-dttot-nationality').value.trim();
+  const listType = document.getElementById('add-dttot-type').value;
+  const notes = document.getElementById('add-dttot-notes').value.trim();
+
+  if (!name) {
+    showToast('Nama terduga teroris / entitas wajib diisi', 'error');
+    return;
+  }
+
+  try {
+    const res = await authFetch('/api/dttot', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, aliases, nationality, list_type: listType, notes })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast('Entitas DTTOT berhasil disimpan!', 'success');
+      document.getElementById('modal-add-dttot').classList.add('hidden');
+      document.getElementById('form-add-dttot').reset();
+      loadDttotList();
+    } else {
+      showToast(data.message || 'Gagal menyimpan data DTTOT', 'error');
+    }
+  } catch (err) {
+    showToast('Error: ' + err.message, 'error');
+  }
+}
+
+async function deleteDttotEntry(id, name) {
+  if (!confirm(`Apakah Anda yakin ingin menghapus data kepatuhan "${name}"?`)) return;
+
+  try {
+    const res = await authFetch(`/api/dttot/${id}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (data.success) {
+      showToast(`Data "${name}" berhasil dihapus.`, 'info');
+      loadDttotList();
+    } else {
+      showToast(data.message || 'Gagal menghapus data', 'error');
+    }
+  } catch (err) {
+    showToast('Error: ' + err.message, 'error');
   }
 }
 
@@ -3700,6 +4152,50 @@ function initEventListeners() {
   document.getElementById('subtab-btn-store')?.addEventListener('click', () => switchSubtab('store'));
   document.getElementById('subtab-btn-users')?.addEventListener('click', () => switchSubtab('users'));
   document.getElementById('subtab-btn-database')?.addEventListener('click', () => switchSubtab('database'));
+  document.getElementById('subtab-btn-compliance')?.addEventListener('click', () => switchSubtab('compliance'));
+
+  // DTTOT Screening input in Kasir
+  document.getElementById('cust-name')?.addEventListener('input', (e) => {
+    checkDttotRealtime(e.target.value);
+  });
+
+  // PEP Toggle in Kasir
+  document.getElementById('cust-pep-toggle')?.addEventListener('change', (e) => {
+    const fields = document.getElementById('pep-edd-fields');
+    if (fields) {
+      if (e.target.checked) {
+        fields.classList.remove('hidden');
+      } else {
+        fields.classList.add('hidden');
+      }
+    }
+    updateLiveReceiptMetadata();
+  });
+
+  // Underlying Inputs in Kasir
+  document.getElementById('underlying-doc-type')?.addEventListener('change', updateLiveReceiptMetadata);
+  document.getElementById('underlying-doc-no')?.addEventListener('input', updateLiveReceiptMetadata);
+
+  // Compliance subtab DTTOT controls
+  document.getElementById('btn-open-add-dttot')?.addEventListener('click', () => {
+    document.getElementById('modal-add-dttot')?.classList.remove('hidden');
+    document.getElementById('add-dttot-name')?.focus();
+  });
+  document.getElementById('btn-close-modal-add-dttot')?.addEventListener('click', () => {
+    document.getElementById('modal-add-dttot')?.classList.add('hidden');
+  });
+  document.getElementById('btn-cancel-modal-add-dttot')?.addEventListener('click', () => {
+    document.getElementById('modal-add-dttot')?.classList.add('hidden');
+  });
+  document.getElementById('form-add-dttot')?.addEventListener('submit', saveDttotEntry);
+
+  document.getElementById('btn-test-dttot')?.addEventListener('click', testDttotScreening);
+  document.getElementById('test-dttot-input')?.addEventListener('keyup', (e) => {
+    if (e.key === 'Enter') testDttotScreening();
+  });
+
+  document.getElementById('dttot-filter-search')?.addEventListener('input', loadDttotList);
+  document.getElementById('dttot-filter-type')?.addEventListener('change', loadDttotList);
   document.getElementById('btn-refresh-db-info')?.addEventListener('click', loadDatabaseInfo);
   document.getElementById('btn-download-db-backup')?.addEventListener('click', downloadDatabaseBackup);
   document.getElementById('btn-trigger-restore-db')?.addEventListener('click', () => {

@@ -119,6 +119,14 @@ CREATE TABLE IF NOT EXISTS transactions (
   customer_job TEXT DEFAULT '',
   customer_gender TEXT DEFAULT '',
   customer_address TEXT DEFAULT '',
+  is_pep INTEGER DEFAULT 0,
+  pep_institution TEXT DEFAULT '',
+  source_of_funds TEXT DEFAULT '',
+  transaction_purpose TEXT DEFAULT '',
+  is_underlying INTEGER DEFAULT 0,
+  underlying_type TEXT DEFAULT '',
+  underlying_doc_no TEXT DEFAULT '',
+  dttot_check_status TEXT DEFAULT 'CLEARED',
   teller_name TEXT NOT NULL,
   total_idr REAL NOT NULL,
   paid_amount REAL NOT NULL,
@@ -164,6 +172,59 @@ try { db.prepare("ALTER TABLE transactions ADD COLUMN customer_nationality TEXT 
 try { db.prepare("ALTER TABLE transactions ADD COLUMN customer_job TEXT DEFAULT ''").run(); } catch (e) {}
 try { db.prepare("ALTER TABLE transactions ADD COLUMN customer_gender TEXT DEFAULT ''").run(); } catch (e) {}
 try { db.prepare("ALTER TABLE transactions ADD COLUMN customer_address TEXT DEFAULT ''").run(); } catch (e) {}
+try { db.prepare("ALTER TABLE transactions ADD COLUMN is_pep INTEGER DEFAULT 0").run(); } catch (e) {}
+try { db.prepare("ALTER TABLE transactions ADD COLUMN pep_institution TEXT DEFAULT ''").run(); } catch (e) {}
+try { db.prepare("ALTER TABLE transactions ADD COLUMN source_of_funds TEXT DEFAULT ''").run(); } catch (e) {}
+try { db.prepare("ALTER TABLE transactions ADD COLUMN transaction_purpose TEXT DEFAULT ''").run(); } catch (e) {}
+try { db.prepare("ALTER TABLE transactions ADD COLUMN is_underlying INTEGER DEFAULT 0").run(); } catch (e) {}
+try { db.prepare("ALTER TABLE transactions ADD COLUMN underlying_type TEXT DEFAULT ''").run(); } catch (e) {}
+try { db.prepare("ALTER TABLE transactions ADD COLUMN underlying_doc_no TEXT DEFAULT ''").run(); } catch (e) {}
+try { db.prepare("ALTER TABLE transactions ADD COLUMN dttot_check_status TEXT DEFAULT 'CLEARED'").run(); } catch (e) {}
+
+// Table for DTTOT & DPPSPM Compliance Screening
+db.exec(`
+CREATE TABLE IF NOT EXISTS dttot_list (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL COLLATE NOCASE,
+  aliases TEXT DEFAULT '',
+  nationality TEXT DEFAULT 'INDONESIA',
+  date_of_birth TEXT DEFAULT '',
+  list_type TEXT DEFAULT 'DTTOT' CHECK(list_type IN ('DTTOT', 'DPPSPM', 'INTERNAL')),
+  notes TEXT DEFAULT '',
+  created_at TEXT NOT NULL
+);
+`);
+
+// Seed default official DTTOT list if empty
+try {
+  const dttotCount = db.prepare('SELECT COUNT(*) as c FROM dttot_list').get().c;
+  if (dttotCount === 0) {
+    const defaultDttot = [
+      { name: 'SANTOSO', aliases: 'Abu Wardah', nationality: 'INDONESIA', list_type: 'DTTOT', notes: 'Pimpinan MIT Poso' },
+      { name: 'ALI KALORA', aliases: 'Ali Ahmad', nationality: 'INDONESIA', list_type: 'DTTOT', notes: 'MIT Poso' },
+      { name: 'BAHRUN NAIM', aliases: 'Muhammad Bahrun Naim Anggih Tamtomo', nationality: 'INDONESIA', list_type: 'DTTOT', notes: 'Fasilitator ISIS Indonesia' },
+      { name: 'AMAN ABDURRAHMAN', aliases: 'Oman Rochman', nationality: 'INDONESIA', list_type: 'DTTOT', notes: 'Pimpinan JAD' },
+      { name: 'DULMATIN', aliases: 'Joko Pitono, Yahya', nationality: 'INDONESIA', list_type: 'DTTOT', notes: 'Jemaah Islamiyah' },
+      { name: 'HAMBALI', aliases: 'Encep Nurjaman, Riduan Isamuddin', nationality: 'INDONESIA', list_type: 'DTTOT', notes: 'Pimpinan Operasi JI' },
+      { name: 'ABU BAKAR BAASYIR', aliases: 'Abdus Samad', nationality: 'INDONESIA', list_type: 'DTTOT', notes: 'Jemaah Anshorusy Syariah / JI' },
+      { name: 'UMAR PATEK', aliases: 'Hisyam bin Alizein', nationality: 'INDONESIA', list_type: 'DTTOT', notes: 'Jemaah Islamiyah' },
+      { name: 'NOORDIN MOHAMMAD TOP', aliases: 'Noordin M Top', nationality: 'MALAYSIA', list_type: 'DTTOT', notes: 'Pimpinan Tandzim Qoidatul Jihad' },
+      { name: 'AZAHARI HUSIN', aliases: 'Dr. Azahari', nationality: 'MALAYSIA', list_type: 'DTTOT', notes: 'Ahli Bahan Peledak JI' },
+      { name: 'ZULKARNAEN', aliases: 'Aris Sumarsono, Arif Sunarso', nationality: 'INDONESIA', list_type: 'DTTOT', notes: 'Panglima Askar JI' },
+      { name: 'UPIK LAWANGA', aliases: 'Taufik Bulaga', nationality: 'INDONESIA', list_type: 'DTTOT', notes: 'Ahli Senjata & Peledak JI' },
+      { name: 'JAMAAH ISLAMIYAH', aliases: 'JI', nationality: 'INDONESIA', list_type: 'DTTOT', notes: 'Organisasi Teroris Terlarang' },
+      { name: 'JAMAAH ANSHARUT DAULAH', aliases: 'JAD', nationality: 'INDONESIA', list_type: 'DTTOT', notes: 'Organisasi Teroris Terlarang' },
+      { name: 'MUJAHIDIN INDONESIA TIMUR', aliases: 'MIT', nationality: 'INDONESIA', list_type: 'DTTOT', notes: 'Organisasi Teroris Terlarang' },
+      { name: 'AL QAEDA', aliases: 'Al-Qaida', nationality: 'GLOBAL', list_type: 'DTTOT', notes: 'Organisasi Teroris Internasional' },
+      { name: 'ISIS', aliases: 'ISIL, Daesh, Islamic State', nationality: 'GLOBAL', list_type: 'DTTOT', notes: 'Organisasi Teroris Internasional' }
+    ];
+    const insDttot = db.prepare('INSERT INTO dttot_list (name, aliases, nationality, list_type, notes, created_at) VALUES (?, ?, ?, ?, ?, ?)');
+    const nowIso = new Date().toISOString();
+    for (const d of defaultDttot) {
+      insDttot.run(d.name, d.aliases, d.nationality, d.list_type, d.notes, nowIso);
+    }
+  }
+} catch (e) {}
 
 // Seed Default Settings
 const defaultSettings = [
@@ -500,9 +561,11 @@ function restoreTransactionsFromFile() {
       INSERT INTO transactions (
         receipt_no, type, customer_name, customer_phone, customer_id_no,
         customer_npwp, customer_nationality, customer_job, customer_gender, customer_address,
+        is_pep, pep_institution, source_of_funds, transaction_purpose,
+        is_underlying, underlying_type, underlying_doc_no, dttot_check_status,
         teller_name, total_idr, paid_amount, change_amount, is_delivery,
         delivery_address, delivery_time, delivery_status, courier_name, notes, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     const insertItem = db.prepare(`
@@ -528,6 +591,14 @@ function restoreTransactionsFromFile() {
           tx.customer_job || '',
           tx.customer_gender || '',
           tx.customer_address || '',
+          tx.is_pep ? 1 : 0,
+          tx.pep_institution || '',
+          tx.source_of_funds || '',
+          tx.transaction_purpose || '',
+          tx.is_underlying ? 1 : 0,
+          tx.underlying_type || '',
+          tx.underlying_doc_no || '',
+          tx.dttot_check_status || 'CLEARED',
           tx.teller_name || 'TELLER',
           Number(tx.total_idr) || 0,
           Number(tx.paid_amount) || 0,
@@ -670,9 +741,11 @@ function restoreAllDataSnapshot(data) {
       INSERT INTO transactions (
         receipt_no, type, customer_name, customer_phone, customer_id_no,
         customer_npwp, customer_nationality, customer_job, customer_gender, customer_address,
+        is_pep, pep_institution, source_of_funds, transaction_purpose,
+        is_underlying, underlying_type, underlying_doc_no, dttot_check_status,
         teller_name, total_idr, paid_amount, change_amount, is_delivery,
         delivery_address, delivery_time, delivery_status, courier_name, notes, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
     const insertItem = db.prepare(`
       INSERT INTO transaction_items (transaction_id, currency_code, amount, rate, subtotal_idr)
@@ -689,6 +762,8 @@ function restoreAllDataSnapshot(data) {
           t.customer_phone || '', t.customer_id_no || '',
           t.customer_npwp || '', t.customer_nationality || '', t.customer_job || '',
           t.customer_gender || '', t.customer_address || '',
+          t.is_pep ? 1 : 0, t.pep_institution || '', t.source_of_funds || '', t.transaction_purpose || '',
+          t.is_underlying ? 1 : 0, t.underlying_type || '', t.underlying_doc_no || '', t.dttot_check_status || 'CLEARED',
           t.teller_name || 'TELLER',
           Number(t.total_idr) || 0, Number(t.paid_amount) || 0, Number(t.change_amount) || 0,
           t.is_delivery ? 1 : 0, t.delivery_address || '', t.delivery_time || '',

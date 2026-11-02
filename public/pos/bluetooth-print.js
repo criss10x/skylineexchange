@@ -388,6 +388,23 @@ class BluetoothPrinter {
     if (data.customer_address) {
       addLine(BluetoothPrinter.padLine(isEn ? 'Address' : 'Alamat', String(data.customer_address).toUpperCase(), width));
     }
+    if (data.is_pep) {
+      addLine(BluetoothPrinter.padLine('PEP / EDD', isEn ? 'HIGH RISK (APPROVED)' : 'YA (DIREKSI ACC)', width));
+      if (data.pep_institution) {
+        addLine(BluetoothPrinter.padLine(isEn ? 'Institution' : 'Instansi PEP', String(data.pep_institution).toUpperCase(), width));
+      }
+      if (data.source_of_funds || data.transaction_purpose) {
+        const src = data.source_of_funds || '-';
+        const pur = data.transaction_purpose || '-';
+        addLine(`${isEn ? 'Source' : 'Sumber'}: ${src} | ${isEn ? 'Purpose' : 'Tujuan'}: ${pur}`);
+      }
+    }
+    if (data.is_underlying) {
+      addLine(BluetoothPrinter.padLine(isEn ? 'Underlying Doc' : 'Dokumen Underlying', (data.underlying_type || 'UNDERLYING').toUpperCase(), width));
+      if (data.underlying_doc_no) {
+        addLine(BluetoothPrinter.padLine(isEn ? 'Doc No' : 'No. Dokumen', String(data.underlying_doc_no).toUpperCase(), width));
+      }
+    }
     if (data.is_delivery) {
       addLine(BluetoothPrinter.padLine(isEn ? 'Service' : 'Layanan', isEn ? 'DELIVERY SERVICE' : 'DELIVERY (ANTAR)', width));
       if (data.delivery_address) {

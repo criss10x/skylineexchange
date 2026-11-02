@@ -870,12 +870,39 @@
     /* Tab 5 Settings Panels in Light Mode */
     html.light #subtab-btn-sheets:not(.bg-emerald-600),
     html.light #subtab-btn-store:not(.bg-emerald-600),
-    html.light #subtab-btn-users:not(.bg-emerald-600) {
+    html.light #subtab-btn-users:not(.bg-emerald-600),
+    html.light #subtab-btn-database:not(.bg-cyan-600),
+    html.light #subtab-btn-compliance:not(.bg-amber-600) {
       color: #475569 !important;
     }
     html.light #subtab-btn-sheets:hover,
     html.light #subtab-btn-store:hover,
-    html.light #subtab-btn-users:hover {
+    html.light #subtab-btn-users:hover,
+    html.light #subtab-btn-database:hover,
+    html.light #subtab-btn-compliance:hover {
+      color: #0f172a !important;
+    }
+    html.light #card-underlying-warning {
+      background-color: #eff6ff !important;
+      border-color: #93c5fd !important;
+      color: #1e3a8a !important;
+    }
+    html.light #card-underlying-warning p {
+      color: #1e293b !important;
+    }
+    html.light #pep-edd-fields {
+      background-color: #fffbeb !important;
+      border-color: #fcd34d !important;
+    }
+    html.light #subtab-panel-compliance {
+      background-color: #ffffff !important;
+      border-color: #e2e8f0 !important;
+    }
+    html.light #subtab-panel-compliance .bg-navy-900,
+    html.light #subtab-panel-compliance .bg-navy-900\/90,
+    html.light #subtab-panel-compliance .bg-navy-950 {
+      background-color: #f8fafc !important;
+      border-color: #e2e8f0 !important;
       color: #0f172a !important;
     }
     html.light #subtab-panel-sheets {
@@ -917,7 +944,8 @@
     html.light #modal-sheets-guide > div,
     html.light #modal-add-user > div,
     html.light #modal-reset-user-pwd > div,
-    html.light #modal-printer-guide > div {
+    html.light #modal-printer-guide > div,
+    html.light #modal-add-dttot > div {
       background-color: #ffffff !important;
       border-color: #e2e8f0 !important;
       color: #0f172a !important;
@@ -931,7 +959,8 @@
     html.light #btn-cancel-modal-rate,
     html.light #btn-close-guide-footer,
     html.light #btn-cancel-modal-add-user,
-    html.light #btn-cancel-modal-reset-pwd {
+    html.light #btn-cancel-modal-reset-pwd,
+    html.light #btn-cancel-modal-add-dttot {
       background-color: #f1f5f9 !important;
       border: 1px solid #cbd5e1 !important;
       color: #334155 !important;
@@ -1372,6 +1401,18 @@
                   <span id="badge-req-cust-name" class="badge-mandatory flex-shrink-0">[Wajib Diisi]</span>
                 </div>
                 <input type="text" id="cust-name" placeholder="Nama Lengkap Customer" required class="w-full h-9 uppercase bg-navy-900 border-2 border-navy-600 rounded-lg px-3 py-1.5 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand font-semibold input-mandatory">
+                <div id="dttot-alert-box" class="hidden mt-2 p-3 bg-red-950/80 border border-red-500 rounded-lg flex items-start gap-2.5 text-xs text-red-200 animate-pulse">
+                  <svg class="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                  <div class="flex-1">
+                    <div class="font-bold text-red-300 text-sm flex items-center gap-1.5" id="dttot-alert-title">
+                      PERINGATAN DTTOT / DPPSPM: TRANSAKSI DIBEKUKAN
+                    </div>
+                    <div class="mt-1 leading-relaxed text-[11px]" id="dttot-alert-desc">
+                      Nama nasabah terindikasi dalam Daftar Terduga Teroris & Organisasi Teroris (DTTOT). Sesuai regulasi Bank Indonesia (PBI APU PPT), transaksi <b>WAJIB DIBEKUKAN serta-merta tanpa penundaan (Freeze Without Delay)</b>.
+                    </div>
+                    <div class="mt-1.5 p-1.5 bg-red-900/50 rounded border border-red-700/60 font-mono text-[11px] text-red-100" id="dttot-alert-detail"></div>
+                  </div>
+                </div>
               </div>
               <div>
                 <div class="flex items-center justify-between mb-1 h-5">
@@ -1433,6 +1474,67 @@
                   <span id="badge-opt-cust-address" class="badge-optional flex-shrink-0">[Opsional]</span>
                 </div>
                 <input type="text" id="cust-address" placeholder="Alamat lengkap domisili / tempat tinggal / hotel customer" class="w-full h-9 uppercase bg-navy-900 border border-navy-600 rounded-lg px-3 py-1.5 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand input-optional">
+              </div>
+            </div>
+
+            <!-- PEP (Politically Exposed Person) & Enhanced Due Diligence (EDD) -->
+            <div class="mt-3 pt-3 border-t border-navy-700/80">
+              <div class="flex items-center justify-between">
+                <label class="flex items-center gap-2 cursor-pointer select-none">
+                  <input type="checkbox" id="cust-pep-toggle" class="w-4 h-4 rounded text-brand bg-navy-900 border-navy-600 focus:ring-brand/40">
+                  <span class="text-xs font-semibold text-slate-300 flex items-center gap-1.5" id="lbl-cust-pep">
+                    <svg class="w-4 h-4 text-amber-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    Nasabah Merupakan PEP (Politically Exposed Person)
+                  </span>
+                </label>
+                <span class="badge-optional text-[10px] bg-amber-500/10 text-amber-300 border border-amber-500/30 px-1.5 py-0.5 rounded font-medium" id="badge-pep-notice">High Risk Customer</span>
+              </div>
+
+              <!-- Collapsible EDD Fields -->
+              <div id="pep-edd-fields" class="hidden mt-3 p-3 bg-amber-950/20 border border-amber-500/40 rounded-lg space-y-3">
+                <div class="text-[11px] text-amber-300/90 leading-tight flex items-center gap-1.5">
+                  <svg class="w-4 h-4 text-amber-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                  <span id="txt-edd-mandate">PBI APU PPT: Nasabah PEP wajib menjalani Enhanced Due Diligence (EDD) dan Persetujuan Direksi.</span>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-2.5">
+                  <div>
+                    <label class="block text-slate-400 text-xs font-medium mb-1 truncate" id="lbl-pep-institution">Institusi / Jabatan PEP <span class="text-rose-400">*</span></label>
+                    <input type="text" id="pep-institution" placeholder="Contoh: Anggota DPR / Kementerian" class="w-full h-9 bg-navy-900 border border-navy-600 rounded-lg px-2.5 py-1.5 text-slate-100 text-xs focus:outline-none focus:border-amber-400">
+                  </div>
+                  <div>
+                    <label class="block text-slate-400 text-xs font-medium mb-1 truncate" id="lbl-pep-source">Sumber Dana (Source of Funds) <span class="text-rose-400">*</span></label>
+                    <select id="pep-source-funds" class="w-full h-9 bg-navy-900 border border-navy-600 rounded-lg px-2 py-1.5 text-slate-100 text-xs focus:outline-none focus:border-amber-400">
+                      <option value="" id="opt-source-none">- Pilih Sumber Dana -</option>
+                      <option value="GAJI" id="opt-source-salary">Gaji / Penghasilan Resmi</option>
+                      <option value="USAHA" id="opt-source-business">Hasil Usaha / Bisnis</option>
+                      <option value="TABUNGAN" id="opt-source-savings">Tabungan Pribadi</option>
+                      <option value="WARISAN" id="opt-source-inheritance">Warisan / Hibah</option>
+                      <option value="INVESTASI" id="opt-source-investment">Hasil Investasi / Aset</option>
+                      <option value="LAINNYA" id="opt-source-other">Lainnya</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-slate-400 text-xs font-medium mb-1 truncate" id="lbl-pep-purpose">Tujuan Transaksi (Purpose) <span class="text-rose-400">*</span></label>
+                    <select id="pep-purpose" class="w-full h-9 bg-navy-900 border border-navy-600 rounded-lg px-2 py-1.5 text-slate-100 text-xs focus:outline-none focus:border-amber-400">
+                      <option value="" id="opt-purpose-none">- Pilih Tujuan Transaksi -</option>
+                      <option value="LIBURAN" id="opt-purpose-holiday">Wisata / Liburan LN</option>
+                      <option value="BISNIS" id="opt-purpose-business">Perjalanan Bisnis</option>
+                      <option value="PENDIDIKAN" id="opt-purpose-education">Biaya Pendidikan LN</option>
+                      <option value="BEROBAT" id="opt-purpose-medical">Biaya Pengobatan LN</option>
+                      <option value="TABUNGAN" id="opt-purpose-saving">Penyimpanan / Tabungan Valas</option>
+                      <option value="PEMBAYARAN" id="opt-purpose-payment">Pembayaran Kewajiban LN</option>
+                      <option value="LAINNYA" id="opt-purpose-other">Lainnya</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="pt-1">
+                  <label class="flex items-start gap-2 cursor-pointer select-none">
+                    <input type="checkbox" id="check-pep-approval" class="w-4 h-4 rounded text-amber-500 bg-navy-900 border-navy-600 focus:ring-amber-400 mt-0.5">
+                    <span class="text-xs text-slate-300 leading-snug" id="lbl-pep-approval">
+                      Saya mengonfirmasi bahwa transaksi nasabah PEP ini telah mendapatkan <b>Persetujuan Direksi / Senior Management</b> sesuai standar kepatuhan Bank Indonesia.
+                    </span>
+                  </label>
+                </div>
               </div>
             </div>
           </div>
@@ -1566,6 +1668,38 @@
 
             <!-- Bottom Financial Totals & Payments -->
             <div class="p-4 bg-navy-850/80 border-t border-navy-700 space-y-3">
+              <!-- Underlying Transaction Warning (Threshold >= USD 10,000) -->
+              <div id="card-underlying-warning" class="hidden p-3 bg-blue-950/40 border border-blue-500/50 rounded-lg space-y-2.5">
+                <div class="flex items-center justify-between">
+                  <span class="font-semibold text-xs text-blue-300 flex items-center gap-1.5" id="lbl-underlying-title">
+                    <svg class="w-4 h-4 text-blue-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                    Regulasi BI: Kewajiban Dokumen Underlying (≥ USD 10.000)
+                  </span>
+                  <span class="text-[10px] bg-blue-500/20 text-blue-300 border border-blue-500/40 px-2 py-0.5 rounded font-mono font-bold" id="badge-usd-equiv">≈ USD 0.00</span>
+                </div>
+                <p class="text-[11px] text-slate-300 leading-relaxed" id="txt-underlying-desc">
+                  Sesuai Peraturan Bank Indonesia (PBI Transaksi Valas), pembelian valuta asing terhadap Rupiah mencapai atau melebihi <b>USD 10.000 (atau ekuivalennya)</b> wajib melampirkan Dokumen Underlying Transaksi yang sah.
+                </p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5 pt-1">
+                  <div>
+                    <label class="block text-slate-400 text-xs font-medium mb-1 truncate" id="lbl-underlying-type">Jenis Dokumen Underlying <span class="text-rose-400">*</span></label>
+                    <select id="underlying-doc-type" class="w-full h-9 bg-navy-900 border border-navy-600 rounded-lg px-2 py-1.5 text-slate-100 text-xs focus:outline-none focus:border-blue-400">
+                      <option value="" id="opt-underlying-none">- Pilih Jenis Dokumen -</option>
+                      <option value="TIKET" id="opt-underlying-ticket">Tiket Perjalanan / Paspor & Visa</option>
+                      <option value="INVOICE" id="opt-underlying-invoice">Invoice / Dokumen Dagang Luar Negeri</option>
+                      <option value="PENDIDIKAN" id="opt-underlying-edu">Invoice / Surat Biaya Pendidikan LN</option>
+                      <option value="MEDIS" id="opt-underlying-med">Surat Rujukan / Tagihan Medis LN</option>
+                      <option value="KONTRAK" id="opt-underlying-contract">Perjanjian Kontrak / Tagihan Jasa</option>
+                      <option value="LAINNYA" id="opt-underlying-other">Dokumen Underlying Lainnya</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-slate-400 text-xs font-medium mb-1 truncate" id="lbl-underlying-no">Nomor Dokumen / Keterangan <span class="text-rose-400">*</span></label>
+                    <input type="text" id="underlying-doc-no" placeholder="Contoh: No. Tiket, No. Invoice / Surat" class="w-full h-9 bg-navy-900 border border-navy-600 rounded-lg px-2.5 py-1.5 text-slate-100 text-xs focus:outline-none focus:border-blue-400">
+                  </div>
+                </div>
+              </div>
+
               <!-- Subtotal / Total -->
               <div id="box-total-display" class="flex items-center justify-between text-sm p-3 rounded-xl bg-navy-900 border border-navy-700">
                 <span class="font-bold text-slate-300 tracking-wide text-xs sm:text-sm" id="lbl-total-idr">TOTAL (IDR)</span>
@@ -1714,6 +1848,14 @@
                   <div id="rcpt-address-row" class="hidden flex justify-between">
                     <span class="text-gray-600" id="lbl-rcpt-address">Alamat</span>
                     <span class="text-black text-right max-w-[180px] break-words uppercase" id="rcpt-cust-address">-</span>
+                  </div>
+                  <div id="rcpt-pep-row" class="hidden flex justify-between text-amber-800 font-semibold">
+                    <span id="lbl-rcpt-pep">Status PEP</span>
+                    <span id="rcpt-cust-pep">YA (HIGH RISK)</span>
+                  </div>
+                  <div id="rcpt-underlying-row" class="hidden flex justify-between text-blue-900 font-semibold">
+                    <span id="lbl-rcpt-underlying">Underlying</span>
+                    <span class="text-right max-w-[170px] break-words uppercase text-[9px]" id="rcpt-cust-underlying">-</span>
                   </div>
                   <div id="rcpt-delivery-row" class="hidden flex justify-between text-indigo-700">
                     <span id="lbl-rcpt-delivery">Layanan</span>
@@ -2089,6 +2231,10 @@
         <button type="button" id="subtab-btn-database" class="flex-1 py-2 px-2 rounded-lg text-xs font-bold transition-all text-center flex items-center justify-center gap-1 text-slate-400 hover:text-white">
           <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
           <span id="lbl-subtab-database">Database & Backup</span>
+        </button>
+        <button type="button" id="subtab-btn-compliance" class="flex-1 py-2 px-2 rounded-lg text-xs font-bold transition-all text-center flex items-center justify-center gap-1 text-slate-400 hover:text-white">
+          <svg class="w-4 h-4 shrink-0 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          <span id="lbl-subtab-compliance">Kepatuhan BI</span>
         </button>
       </div>
 
@@ -2560,6 +2706,144 @@
           </div>
         </div>
       </div>
+
+      <!-- PANEL 5: Standar Kepatuhan Bank Indonesia (KUPVA BB) -->
+      <div id="subtab-panel-compliance" class="hidden bg-navy-800 border border-navy-700 rounded-xl p-4 sm:p-6 max-w-4xl mx-auto shadow-sm space-y-6">
+        <!-- Header -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-navy-700 gap-2">
+          <div class="flex items-center gap-2.5">
+            <div class="w-10 h-10 rounded-lg bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400">
+              <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            </div>
+            <div>
+              <h3 class="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+                <span id="lbl-compliance-header">Standar Kepatuhan Bank Indonesia (KUPVA BB)</span>
+                <span class="px-2 py-0.5 rounded-full text-[10px] bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">PBI APU PPT</span>
+              </h3>
+              <p class="text-xs text-slate-400" id="lbl-compliance-sub">Pengawasan transaksi valuta asing: Ambang Batas USD 10.000, PEP & EDD, serta Skrining DTTOT/DPPSPM</p>
+            </div>
+          </div>
+          <button type="button" id="btn-open-add-dttot" class="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-navy-950 text-xs font-bold transition-all flex items-center gap-1.5 shadow">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            <span id="lbl-btn-add-dttot">Tambah Data DTTOT</span>
+          </button>
+        </div>
+
+        <!-- 3 Feature Overview Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+          <!-- Card 1: Underlying USD 10K -->
+          <div class="bg-navy-900 border border-navy-700/80 rounded-xl p-3.5 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-blue-400 flex items-center gap-1.5 text-xs">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                Threshold Valas
+              </span>
+              <span class="px-1.5 py-0.5 rounded text-[10px] bg-blue-500/20 text-blue-300 font-bold">≥ USD 10.000</span>
+            </div>
+            <p class="text-slate-300 text-[11px] leading-relaxed">
+              Mendeteksi otomatis total transaksi ekuivalen USD 10.000 ke atas dan mewajibkan lampiran nomor dokumen underlying (tiket, invoice, medis, pendidikan).
+            </p>
+            <div class="text-[10px] text-slate-400 flex items-center gap-1">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Validasi Kasir Aktif
+            </div>
+          </div>
+
+          <!-- Card 2: PEP & EDD -->
+          <div class="bg-navy-900 border border-navy-700/80 rounded-xl p-3.5 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-amber-400 flex items-center gap-1.5 text-xs">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                PEP & EDD
+              </span>
+              <span class="px-1.5 py-0.5 rounded text-[10px] bg-amber-500/20 text-amber-300 font-bold">High Risk</span>
+            </div>
+            <p class="text-slate-300 text-[11px] leading-relaxed">
+              Penetapan status PEP (Politically Exposed Persons), penelusuran sumber dana, tujuan transaksi, dan konfirmasi persetujuan Direksi.
+            </p>
+            <div class="text-[10px] text-slate-400 flex items-center gap-1">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Prosedur EDD Siap
+            </div>
+          </div>
+
+          <!-- Card 3: DTTOT Screening -->
+          <div class="bg-navy-900 border border-navy-700/80 rounded-xl p-3.5 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-rose-400 flex items-center gap-1.5 text-xs">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+                DTTOT / DPPSPM
+              </span>
+              <span class="px-1.5 py-0.5 rounded text-[10px] bg-rose-500/20 text-rose-300 font-bold">Freeze List</span>
+            </div>
+            <p class="text-slate-300 text-[11px] leading-relaxed">
+              Skrining nama nasabah secara real-time saat pengetikan kasir. Pemblokiran transaksi seketika tanpa penundaan (Freeze Without Delay).
+            </p>
+            <div class="text-[10px] text-slate-400 flex items-center gap-1">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Real-Time Match Aktif
+            </div>
+          </div>
+        </div>
+
+        <!-- Screening Test Tool Box -->
+        <div class="bg-navy-900/90 border border-navy-700 rounded-xl p-3.5 space-y-2.5">
+          <div class="flex items-center justify-between">
+            <h4 class="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+              <svg class="w-4 h-4 text-brand shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              Uji Coba Skrining Nama (Simulasi DTTOT / DPPSPM)
+            </h4>
+            <span class="text-[10px] text-slate-400">Pengecekan nama instan ke database</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <input type="text" id="test-dttot-input" placeholder="Ketik nama untuk diuji (Contoh: Santoso, Hambali, Abu Wardah)..." class="flex-1 bg-navy-950 border border-navy-600 rounded-lg px-3 py-1.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand">
+            <button type="button" id="btn-test-dttot" class="px-3 py-1.5 rounded-lg bg-navy-700 hover:bg-navy-600 text-slate-200 text-xs font-bold transition-all flex items-center gap-1">
+              <span>Periksa</span>
+            </button>
+          </div>
+          <div id="test-dttot-result" class="hidden p-2.5 rounded-lg text-xs font-medium"></div>
+        </div>
+
+        <!-- DTTOT Database Table -->
+        <div class="space-y-3">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+              <h4 class="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+                <svg class="w-4 h-4 text-amber-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                Daftar Terduga Teroris & Organisasi Teroris (DTTOT / DPPSPM)
+              </h4>
+              <span id="badge-dttot-count" class="px-2 py-0.5 rounded-full text-[10px] bg-navy-700 text-slate-300 font-mono">17 Data</span>
+            </div>
+            <div class="flex items-center gap-2 text-xs">
+              <input type="text" id="dttot-filter-search" placeholder="Cari nama / alias..." class="bg-navy-900 border border-navy-600 rounded-lg px-2.5 py-1 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand">
+              <select id="dttot-filter-type" class="bg-navy-900 border border-navy-600 rounded-lg px-2 py-1 text-xs text-slate-200 focus:outline-none focus:border-brand">
+                <option value="ALL">Semua Tipe</option>
+                <option value="DTTOT">DTTOT</option>
+                <option value="DPPSPM">DPPSPM</option>
+                <option value="INTERNAL">INTERNAL</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="border border-navy-700 rounded-xl overflow-hidden">
+            <div class="overflow-x-auto max-h-72">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-navy-900/90 text-slate-400 uppercase text-[11px] font-semibold sticky top-0 border-b border-navy-700">
+                  <tr>
+                    <th class="py-2.5 px-3">Nama Lengkap</th>
+                    <th class="py-2.5 px-3">Alias / Nama Lain</th>
+                    <th class="py-2.5 px-2">Kewarganegaraan</th>
+                    <th class="py-2.5 px-2">Daftar</th>
+                    <th class="py-2.5 px-3">Keterangan / Afiliasi</th>
+                    <th class="py-2.5 px-2 text-center w-16">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody id="dttot-table-body" class="divide-y divide-navy-700/60 font-sans">
+                  <!-- Populated by JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </section>
 
   </main>
@@ -2816,5 +3100,53 @@
   <script src="/pos/usb-print.js?v=3.0"></script>
   <script src="/pos/serial-print.js?v=3.0"></script>
   <script src="/pos/app.js?v=3.0"></script>
+
+  <!-- Modal Tambah Data DTTOT -->
+  <div id="modal-add-dttot" class="fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-3 hidden">
+    <div class="bg-navy-800 border border-navy-700 rounded-xl p-5 max-w-md w-full shadow-2xl space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-navy-700">
+        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+          <svg class="w-4 h-4 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+          <span>Tambah Entitas DTTOT / DPPSPM</span>
+        </h3>
+        <button type="button" id="btn-close-modal-add-dttot" class="text-slate-400 hover:text-white text-xl font-bold">&times;</button>
+      </div>
+
+      <form id="form-add-dttot" class="space-y-3 text-xs">
+        <div>
+          <label class="block text-slate-300 font-medium mb-1">Nama Lengkap Terduga / Organisasi <span class="text-rose-400">*</span></label>
+          <input type="text" id="add-dttot-name" required placeholder="Contoh: NAMA LENGKAP" class="w-full uppercase bg-navy-900 border border-navy-600 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-brand font-medium">
+        </div>
+        <div>
+          <label class="block text-slate-300 font-medium mb-1">Alias / Nama Samaran</label>
+          <input type="text" id="add-dttot-aliases" placeholder="Contoh: Abu X, John Doe" class="w-full bg-navy-900 border border-navy-600 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-brand">
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-slate-300 font-medium mb-1">Kewarganegaraan</label>
+            <input type="text" id="add-dttot-nationality" value="INDONESIA" class="w-full uppercase bg-navy-900 border border-navy-600 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-brand">
+          </div>
+          <div>
+            <label class="block text-slate-300 font-medium mb-1">Tipe Daftar</label>
+            <select id="add-dttot-type" class="w-full bg-navy-900 border border-navy-600 rounded-lg px-2.5 py-2 text-slate-100 focus:outline-none focus:border-brand">
+              <option value="DTTOT">DTTOT</option>
+              <option value="DPPSPM">DPPSPM</option>
+              <option value="INTERNAL">INTERNAL</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="block text-slate-300 font-medium mb-1">Keterangan / Afiliasi / No. SK</label>
+          <input type="text" id="add-dttot-notes" placeholder="Contoh: Penetapan Pengadilan Negeri / Jaringan X" class="w-full bg-navy-900 border border-navy-600 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-brand">
+        </div>
+
+        <div class="pt-2 flex items-center justify-end gap-2">
+          <button type="button" id="btn-cancel-modal-add-dttot" class="py-2 px-4 rounded-lg bg-navy-700 text-slate-300 font-medium hover:bg-navy-600 transition-colors">Batal</button>
+          <button type="submit" class="py-2 px-4 rounded-lg bg-amber-500 hover:bg-amber-400 text-navy-950 font-bold transition-colors">Simpan Data</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
 </body>
 </html>
