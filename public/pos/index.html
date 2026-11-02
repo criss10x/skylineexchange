@@ -1364,74 +1364,76 @@
               <span class="text-[10px] text-slate-400 font-normal" id="lbl-cust-subtitle">KYC & Identitas Transaksi Valas</span>
             </h2>
 
-            <!-- Baris 1: Nama, No Telepon, No ID KTP / Paspor -->
+            <!-- Baris 1: Nama, No Telepon, No ID KTP / Paspor (3 Kolom Seimbang) -->
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
               <div>
-                <div class="flex items-center justify-between mb-1">
-                  <label class="block text-slate-300 font-semibold" id="lbl-cust-name">Nama Customer <span class="text-rose-400 font-bold">*</span></label>
-                  <span id="badge-req-cust-name" class="badge-mandatory">[Wajib Diisi]</span>
+                <div class="flex items-center justify-between mb-1 h-5">
+                  <label class="block text-slate-300 font-semibold truncate" id="lbl-cust-name">Nama Customer <span class="text-rose-400 font-bold">*</span></label>
+                  <span id="badge-req-cust-name" class="badge-mandatory flex-shrink-0">[Wajib Diisi]</span>
                 </div>
-                <input type="text" id="cust-name" placeholder="Nama Lengkap Customer" required class="w-full uppercase bg-navy-900 border-2 border-navy-600 rounded-lg px-3 py-2 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand font-semibold input-mandatory">
+                <input type="text" id="cust-name" placeholder="Nama Lengkap Customer" required class="w-full h-9 uppercase bg-navy-900 border-2 border-navy-600 rounded-lg px-3 py-1.5 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand font-semibold input-mandatory">
               </div>
               <div>
-                <div class="flex items-center justify-between mb-1">
-                  <label class="block text-slate-400 font-medium" id="lbl-cust-phone">No. Telepon / WhatsApp</label>
-                  <span id="badge-opt-cust-phone" class="badge-optional">[Opsional]</span>
+                <div class="flex items-center justify-between mb-1 h-5">
+                  <label class="block text-slate-400 font-medium truncate" id="lbl-cust-phone">No. Telepon / WhatsApp</label>
+                  <span id="badge-opt-cust-phone" class="badge-optional flex-shrink-0">[Opsional]</span>
                 </div>
-                <input type="tel" id="cust-phone" placeholder="+628... / Nomor Kontak" class="w-full bg-navy-900 border border-navy-600 rounded-lg px-3 py-2 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand input-optional">
+                <input type="tel" id="cust-phone" placeholder="+628... / Nomor Kontak" class="w-full h-9 bg-navy-900 border border-navy-600 rounded-lg px-3 py-1.5 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand input-optional">
               </div>
               <div>
-                <div class="flex items-center justify-between mb-1">
-                  <label class="block text-slate-400 font-medium" id="lbl-cust-id">No. ID KTP / Paspor</label>
-                  <span id="badge-opt-cust-id" class="badge-optional">[Opsional]</span>
+                <div class="flex items-center justify-between mb-1 h-5">
+                  <label class="block text-slate-400 font-medium truncate" id="lbl-cust-id">No. ID KTP / Paspor</label>
+                  <span id="badge-opt-cust-id" class="badge-optional flex-shrink-0">[Opsional]</span>
                 </div>
-                <input type="text" id="cust-id" placeholder="Nomor KTP atau Paspor" class="w-full uppercase bg-navy-900 border border-navy-600 rounded-lg px-3 py-2 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand font-mono input-optional">
+                <input type="text" id="cust-id" placeholder="Nomor KTP atau Paspor" class="w-full h-9 uppercase bg-navy-900 border border-navy-600 rounded-lg px-3 py-1.5 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand font-mono input-optional">
               </div>
             </div>
 
-            <!-- Baris 2: NPWP, Nationality, Job, Gender (Opsional) -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 text-xs mt-2.5">
+            <!-- Baris 2: NPWP, Kewarganegaraan, Pekerjaan (3 Kolom Seragam) -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs mt-2.5">
               <div>
-                <div class="flex items-center justify-between mb-1">
-                  <label class="block text-slate-400 font-medium" id="lbl-cust-npwp">NPWP</label>
-                  <span id="badge-opt-cust-npwp" class="badge-optional">[Opsional]</span>
+                <div class="flex items-center justify-between mb-1 h-5">
+                  <label class="block text-slate-400 font-medium truncate" id="lbl-cust-npwp">NPWP</label>
+                  <span id="badge-opt-cust-npwp" class="badge-optional flex-shrink-0">[Opsional]</span>
                 </div>
-                <input type="text" id="cust-npwp" placeholder="Nomor Pokok Wajib Pajak" class="w-full uppercase bg-navy-900 border border-navy-600 rounded-lg px-3 py-2 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand font-mono input-optional">
+                <input type="text" id="cust-npwp" placeholder="Nomor Pokok Wajib Pajak" class="w-full h-9 uppercase bg-navy-900 border border-navy-600 rounded-lg px-3 py-1.5 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand font-mono input-optional">
               </div>
               <div>
-                <div class="flex items-center justify-between mb-1">
-                  <label class="block text-slate-400 font-medium" id="lbl-cust-nationality">Kewarganegaraan (Nationality)</label>
-                  <span id="badge-opt-cust-nationality" class="badge-optional">[Opsional]</span>
+                <div class="flex items-center justify-between mb-1 h-5">
+                  <label class="block text-slate-400 font-medium truncate" id="lbl-cust-nationality">Kewarganegaraan</label>
+                  <span id="badge-opt-cust-nationality" class="badge-optional flex-shrink-0">[Opsional]</span>
                 </div>
-                <input type="text" id="cust-nationality" placeholder="Contoh: INDONESIA, AUSTRALIA" class="w-full uppercase bg-navy-900 border border-navy-600 rounded-lg px-3 py-2 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand input-optional">
+                <input type="text" id="cust-nationality" placeholder="Contoh: INDONESIA, AUSTRALIA" class="w-full h-9 uppercase bg-navy-900 border border-navy-600 rounded-lg px-3 py-1.5 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand input-optional">
               </div>
               <div>
-                <div class="flex items-center justify-between mb-1">
-                  <label class="block text-slate-400 font-medium" id="lbl-cust-job">Pekerjaan (Job)</label>
-                  <span id="badge-opt-cust-job" class="badge-optional">[Opsional]</span>
+                <div class="flex items-center justify-between mb-1 h-5">
+                  <label class="block text-slate-400 font-medium truncate" id="lbl-cust-job">Pekerjaan</label>
+                  <span id="badge-opt-cust-job" class="badge-optional flex-shrink-0">[Opsional]</span>
                 </div>
-                <input type="text" id="cust-job" placeholder="Profesi / Pekerjaan Customer" class="w-full uppercase bg-navy-900 border border-navy-600 rounded-lg px-3 py-2 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand input-optional">
+                <input type="text" id="cust-job" placeholder="Profesi / Pekerjaan Customer" class="w-full h-9 uppercase bg-navy-900 border border-navy-600 rounded-lg px-3 py-1.5 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand input-optional">
               </div>
+            </div>
+
+            <!-- Baris 3: Jenis Kelamin & Alamat Tempat Tinggal (Grid 3 Kolom Rapi) -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs mt-2.5">
               <div>
-                <div class="flex items-center justify-between mb-1">
-                  <label class="block text-slate-400 font-medium" id="lbl-cust-gender">Jenis Kelamin (Gender)</label>
-                  <span id="badge-opt-cust-gender" class="badge-optional">[Opsional]</span>
+                <div class="flex items-center justify-between mb-1 h-5">
+                  <label class="block text-slate-400 font-medium truncate" id="lbl-cust-gender">Jenis Kelamin</label>
+                  <span id="badge-opt-cust-gender" class="badge-optional flex-shrink-0">[Opsional]</span>
                 </div>
-                <select id="cust-gender" class="w-full bg-navy-900 border border-navy-600 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-brand input-optional">
-                  <option value="" id="opt-gender-none">- Pilih Gender (Opsional) -</option>
-                  <option value="LAKI-LAKI" id="opt-gender-male">Laki-Laki (Male)</option>
-                  <option value="PEREMPUAN" id="opt-gender-female">Perempuan (Female)</option>
+                <select id="cust-gender" class="w-full h-9 bg-navy-900 border border-navy-600 rounded-lg px-2.5 py-1.5 text-slate-100 focus:outline-none focus:border-brand input-optional text-xs">
+                  <option value="" id="opt-gender-none">- Pilih Gender -</option>
+                  <option value="LAKI-LAKI" id="opt-gender-male">Laki-Laki</option>
+                  <option value="PEREMPUAN" id="opt-gender-female">Perempuan</option>
                 </select>
               </div>
-            </div>
-
-            <!-- Baris 3: Address (Opsional) -->
-            <div class="mt-2.5 text-xs">
-              <div class="flex items-center justify-between mb-1">
-                <label class="block text-slate-400 font-medium" id="lbl-cust-address">Alamat Tempat Tinggal (Address)</label>
-                <span id="badge-opt-cust-address" class="badge-optional">[Opsional]</span>
+              <div class="sm:col-span-2">
+                <div class="flex items-center justify-between mb-1 h-5">
+                  <label class="block text-slate-400 font-medium truncate" id="lbl-cust-address">Alamat Tempat Tinggal</label>
+                  <span id="badge-opt-cust-address" class="badge-optional flex-shrink-0">[Opsional]</span>
+                </div>
+                <input type="text" id="cust-address" placeholder="Alamat lengkap domisili / tempat tinggal / hotel customer" class="w-full h-9 uppercase bg-navy-900 border border-navy-600 rounded-lg px-3 py-1.5 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand input-optional">
               </div>
-              <input type="text" id="cust-address" placeholder="Alamat lengkap domisili / tempat tinggal / hotel customer" class="w-full uppercase bg-navy-900 border border-navy-600 rounded-lg px-3 py-2 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand input-optional">
             </div>
           </div>
 
