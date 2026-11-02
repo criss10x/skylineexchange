@@ -170,6 +170,9 @@
         visibility: visible !important;
         color: #000 !important;
       }
+      #printable-receipt .hidden {
+        display: none !important;
+      }
       #printable-receipt {
         position: absolute !important;
         left: 0 !important;
@@ -1353,10 +1356,15 @@
 
           <!-- 2. Customer KYC Information Card -->
           <div class="bg-navy-800 border border-navy-700 rounded-xl p-3.5 sm:p-4 shadow-sm">
-            <h2 class="text-xs font-bold text-brand uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
-              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-              <span id="lbl-cust-title">Data Pelanggan (Customer)</span>
+            <h2 class="text-xs font-bold text-brand uppercase tracking-wider mb-2.5 flex items-center justify-between">
+              <span class="flex items-center gap-1.5">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <span id="lbl-cust-title">Data Pelanggan (Customer)</span>
+              </span>
+              <span class="text-[10px] text-slate-400 font-normal" id="lbl-cust-subtitle">KYC & Identitas Transaksi Valas</span>
             </h2>
+
+            <!-- Baris 1: Nama, No Telepon, No ID KTP / Paspor -->
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
               <div>
                 <div class="flex items-center justify-between mb-1">
@@ -1379,6 +1387,51 @@
                 </div>
                 <input type="text" id="cust-id" placeholder="Nomor KTP atau Paspor" class="w-full uppercase bg-navy-900 border border-navy-600 rounded-lg px-3 py-2 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand font-mono input-optional">
               </div>
+            </div>
+
+            <!-- Baris 2: NPWP, Nationality, Job, Gender (Opsional) -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 text-xs mt-2.5">
+              <div>
+                <div class="flex items-center justify-between mb-1">
+                  <label class="block text-slate-400 font-medium" id="lbl-cust-npwp">NPWP</label>
+                  <span id="badge-opt-cust-npwp" class="badge-optional">[Opsional]</span>
+                </div>
+                <input type="text" id="cust-npwp" placeholder="Nomor Pokok Wajib Pajak" class="w-full uppercase bg-navy-900 border border-navy-600 rounded-lg px-3 py-2 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand font-mono input-optional">
+              </div>
+              <div>
+                <div class="flex items-center justify-between mb-1">
+                  <label class="block text-slate-400 font-medium" id="lbl-cust-nationality">Kewarganegaraan (Nationality)</label>
+                  <span id="badge-opt-cust-nationality" class="badge-optional">[Opsional]</span>
+                </div>
+                <input type="text" id="cust-nationality" placeholder="Contoh: INDONESIA, AUSTRALIA" class="w-full uppercase bg-navy-900 border border-navy-600 rounded-lg px-3 py-2 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand input-optional">
+              </div>
+              <div>
+                <div class="flex items-center justify-between mb-1">
+                  <label class="block text-slate-400 font-medium" id="lbl-cust-job">Pekerjaan (Job)</label>
+                  <span id="badge-opt-cust-job" class="badge-optional">[Opsional]</span>
+                </div>
+                <input type="text" id="cust-job" placeholder="Profesi / Pekerjaan Customer" class="w-full uppercase bg-navy-900 border border-navy-600 rounded-lg px-3 py-2 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand input-optional">
+              </div>
+              <div>
+                <div class="flex items-center justify-between mb-1">
+                  <label class="block text-slate-400 font-medium" id="lbl-cust-gender">Jenis Kelamin (Gender)</label>
+                  <span id="badge-opt-cust-gender" class="badge-optional">[Opsional]</span>
+                </div>
+                <select id="cust-gender" class="w-full bg-navy-900 border border-navy-600 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-brand input-optional">
+                  <option value="" id="opt-gender-none">- Pilih Gender (Opsional) -</option>
+                  <option value="LAKI-LAKI" id="opt-gender-male">Laki-Laki (Male)</option>
+                  <option value="PEREMPUAN" id="opt-gender-female">Perempuan (Female)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Baris 3: Address (Opsional) -->
+            <div class="mt-2.5 text-xs">
+              <div class="flex items-center justify-between mb-1">
+                <label class="block text-slate-400 font-medium" id="lbl-cust-address">Alamat Tempat Tinggal (Address)</label>
+                <span id="badge-opt-cust-address" class="badge-optional">[Opsional]</span>
+              </div>
+              <input type="text" id="cust-address" placeholder="Alamat lengkap domisili / tempat tinggal / hotel customer" class="w-full uppercase bg-navy-900 border border-navy-600 rounded-lg px-3 py-2 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand input-optional">
             </div>
           </div>
 
@@ -1639,6 +1692,26 @@
                   <div id="rcpt-id-row" class="hidden flex justify-between">
                     <span class="text-gray-600" id="lbl-rcpt-id">No. ID</span>
                     <span class="text-black font-mono uppercase" id="rcpt-cust-id">-</span>
+                  </div>
+                  <div id="rcpt-nationality-row" class="hidden flex justify-between">
+                    <span class="text-gray-600" id="lbl-rcpt-nationality">Kewarganegaraan</span>
+                    <span class="text-black uppercase" id="rcpt-cust-nationality">-</span>
+                  </div>
+                  <div id="rcpt-npwp-row" class="hidden flex justify-between">
+                    <span class="text-gray-600" id="lbl-rcpt-npwp">NPWP</span>
+                    <span class="text-black font-mono uppercase" id="rcpt-cust-npwp">-</span>
+                  </div>
+                  <div id="rcpt-job-row" class="hidden flex justify-between">
+                    <span class="text-gray-600" id="lbl-rcpt-job">Pekerjaan</span>
+                    <span class="text-black uppercase" id="rcpt-cust-job">-</span>
+                  </div>
+                  <div id="rcpt-gender-row" class="hidden flex justify-between">
+                    <span class="text-gray-600" id="lbl-rcpt-gender">Jenis Kelamin</span>
+                    <span class="text-black uppercase" id="rcpt-cust-gender">-</span>
+                  </div>
+                  <div id="rcpt-address-row" class="hidden flex justify-between">
+                    <span class="text-gray-600" id="lbl-rcpt-address">Alamat</span>
+                    <span class="text-black text-right max-w-[180px] break-words uppercase" id="rcpt-cust-address">-</span>
                   </div>
                   <div id="rcpt-delivery-row" class="hidden flex justify-between text-indigo-700">
                     <span id="lbl-rcpt-delivery">Layanan</span>

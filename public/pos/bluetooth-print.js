@@ -370,6 +370,21 @@ class BluetoothPrinter {
     if (data.customer_id_no) {
       addLine(BluetoothPrinter.padLine(isEn ? 'Passport / ID' : 'No. ID/KTP/Paspor', data.customer_id_no, width));
     }
+    if (data.customer_nationality) {
+      addLine(BluetoothPrinter.padLine(isEn ? 'Nationality' : 'Kewarganegaraan', String(data.customer_nationality).toUpperCase(), width));
+    }
+    if (data.customer_npwp) {
+      addLine(BluetoothPrinter.padLine('NPWP', String(data.customer_npwp).toUpperCase(), width));
+    }
+    if (data.customer_job) {
+      addLine(BluetoothPrinter.padLine(isEn ? 'Occupation' : 'Pekerjaan', String(data.customer_job).toUpperCase(), width));
+    }
+    if (data.customer_gender) {
+      addLine(BluetoothPrinter.padLine(isEn ? 'Gender' : 'Jenis Kelamin', String(data.customer_gender).toUpperCase(), width));
+    }
+    if (data.customer_address) {
+      addLine(BluetoothPrinter.padLine(isEn ? 'Address' : 'Alamat', String(data.customer_address).toUpperCase(), width));
+    }
     if (data.is_delivery) {
       addLine(BluetoothPrinter.padLine(isEn ? 'Service' : 'Layanan', isEn ? 'DELIVERY SERVICE' : 'DELIVERY (ANTAR)', width));
       if (data.delivery_address) {

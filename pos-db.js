@@ -114,6 +114,11 @@ CREATE TABLE IF NOT EXISTS transactions (
   customer_name TEXT NOT NULL,
   customer_phone TEXT DEFAULT '',
   customer_id_no TEXT DEFAULT '',
+  customer_npwp TEXT DEFAULT '',
+  customer_nationality TEXT DEFAULT '',
+  customer_job TEXT DEFAULT '',
+  customer_gender TEXT DEFAULT '',
+  customer_address TEXT DEFAULT '',
   teller_name TEXT NOT NULL,
   total_idr REAL NOT NULL,
   paid_amount REAL NOT NULL,
@@ -152,6 +157,13 @@ CREATE TABLE IF NOT EXISTS users (
   created_at TEXT NOT NULL
 );
 `);
+
+// Safe migrations for customer fields in transactions
+try { db.prepare("ALTER TABLE transactions ADD COLUMN customer_npwp TEXT DEFAULT ''").run(); } catch (e) {}
+try { db.prepare("ALTER TABLE transactions ADD COLUMN customer_nationality TEXT DEFAULT ''").run(); } catch (e) {}
+try { db.prepare("ALTER TABLE transactions ADD COLUMN customer_job TEXT DEFAULT ''").run(); } catch (e) {}
+try { db.prepare("ALTER TABLE transactions ADD COLUMN customer_gender TEXT DEFAULT ''").run(); } catch (e) {}
+try { db.prepare("ALTER TABLE transactions ADD COLUMN customer_address TEXT DEFAULT ''").run(); } catch (e) {}
 
 // Seed Default Settings
 const defaultSettings = [
@@ -487,9 +499,10 @@ function restoreTransactionsFromFile() {
     const insertTx = db.prepare(`
       INSERT INTO transactions (
         receipt_no, type, customer_name, customer_phone, customer_id_no,
+        customer_npwp, customer_nationality, customer_job, customer_gender, customer_address,
         teller_name, total_idr, paid_amount, change_amount, is_delivery,
         delivery_address, delivery_time, delivery_status, courier_name, notes, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     const insertItem = db.prepare(`
@@ -510,6 +523,11 @@ function restoreTransactionsFromFile() {
           tx.customer_name || 'Pelanggan',
           tx.customer_phone || '',
           tx.customer_id_no || '',
+          tx.customer_npwp || '',
+          tx.customer_nationality || '',
+          tx.customer_job || '',
+          tx.customer_gender || '',
+          tx.customer_address || '',
           tx.teller_name || 'TELLER',
           Number(tx.total_idr) || 0,
           Number(tx.paid_amount) || 0,
@@ -651,9 +669,10 @@ function restoreAllDataSnapshot(data) {
     const insertTx = db.prepare(`
       INSERT INTO transactions (
         receipt_no, type, customer_name, customer_phone, customer_id_no,
+        customer_npwp, customer_nationality, customer_job, customer_gender, customer_address,
         teller_name, total_idr, paid_amount, change_amount, is_delivery,
         delivery_address, delivery_time, delivery_status, courier_name, notes, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
     const insertItem = db.prepare(`
       INSERT INTO transaction_items (transaction_id, currency_code, amount, rate, subtotal_idr)
@@ -667,7 +686,10 @@ function restoreAllDataSnapshot(data) {
       if (!existing) {
         const info = insertTx.run(
           t.receipt_no, t.type || 'BELI', t.customer_name || 'Pelanggan',
-          t.customer_phone || '', t.customer_id_no || '', t.teller_name || 'TELLER',
+          t.customer_phone || '', t.customer_id_no || '',
+          t.customer_npwp || '', t.customer_nationality || '', t.customer_job || '',
+          t.customer_gender || '', t.customer_address || '',
+          t.teller_name || 'TELLER',
           Number(t.total_idr) || 0, Number(t.paid_amount) || 0, Number(t.change_amount) || 0,
           t.is_delivery ? 1 : 0, t.delivery_address || '', t.delivery_time || '',
           t.delivery_status || 'COMPLETED', t.courier_name || '', t.notes || '',

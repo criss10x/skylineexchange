@@ -51,6 +51,23 @@ const i18n = {
     custPhoneLabel: 'No. Telepon / WhatsApp',
     custIdLabel: 'No. ID KTP / Paspor',
     custIdPlaceholder: 'Nomor KTP atau Paspor',
+    custNpwpLabel: 'NPWP',
+    custNpwpPlaceholder: 'Nomor Pokok Wajib Pajak',
+    custNationalityLabel: 'Kewarganegaraan (Nationality)',
+    custNationalityPlaceholder: 'Contoh: INDONESIA, AUSTRALIA',
+    custJobLabel: 'Pekerjaan (Job)',
+    custJobPlaceholder: 'Profesi / Pekerjaan Customer',
+    custGenderLabel: 'Jenis Kelamin (Gender)',
+    optGenderNone: '- Pilih Gender (Opsional) -',
+    optGenderMale: 'Laki-Laki (Male)',
+    optGenderFemale: 'Perempuan (Female)',
+    custAddressLabel: 'Alamat Tempat Tinggal (Address)',
+    custAddressPlaceholder: 'Alamat lengkap domisili / tempat tinggal / hotel customer',
+    rcptNationalityLabel: 'Kewarganegaraan',
+    rcptNpwpLabel: 'NPWP',
+    rcptJobLabel: 'Pekerjaan',
+    rcptGenderLabel: 'Jenis Kelamin',
+    rcptAddressLabel: 'Alamat',
     addValasTitle: 'Tambah Rincian Valas',
     addValasSub: 'Pilih mata uang & isi nominal',
     currLabel: 'Mata Uang (Valas)',
@@ -279,6 +296,23 @@ const i18n = {
     custPhoneLabel: 'Phone / WhatsApp',
     custIdLabel: 'Passport / ID No.',
     custIdPlaceholder: 'Passport or National ID',
+    custNpwpLabel: 'Tax ID (NPWP)',
+    custNpwpPlaceholder: 'Tax Identification Number',
+    custNationalityLabel: 'Nationality',
+    custNationalityPlaceholder: 'e.g. INDONESIA, AUSTRALIA, USA',
+    custJobLabel: 'Occupation (Job)',
+    custJobPlaceholder: 'Customer Occupation / Profession',
+    custGenderLabel: 'Gender',
+    optGenderNone: '- Select Gender (Optional) -',
+    optGenderMale: 'Male',
+    optGenderFemale: 'Female',
+    custAddressLabel: 'Customer Address',
+    custAddressPlaceholder: 'Customer residence or hotel address',
+    rcptNationalityLabel: 'Nationality',
+    rcptNpwpLabel: 'Tax ID (NPWP)',
+    rcptJobLabel: 'Occupation',
+    rcptGenderLabel: 'Gender',
+    rcptAddressLabel: 'Address',
     addValasTitle: 'Add Currency Item',
     addValasSub: 'Select currency & enter amount',
     currLabel: 'Currency (Forex)',
@@ -847,6 +881,28 @@ function setAppLanguage(lang) {
   safeSet('badge-opt-cust-id', t.badgeOptional);
   safePlaceholder('cust-id', t.custIdPlaceholder);
 
+  safeSet('lbl-cust-npwp', t.custNpwpLabel);
+  safeSet('badge-opt-cust-npwp', t.badgeOptional);
+  safePlaceholder('cust-npwp', t.custNpwpPlaceholder);
+
+  safeSet('lbl-cust-nationality', t.custNationalityLabel);
+  safeSet('badge-opt-cust-nationality', t.badgeOptional);
+  safePlaceholder('cust-nationality', t.custNationalityPlaceholder);
+
+  safeSet('lbl-cust-job', t.custJobLabel);
+  safeSet('badge-opt-cust-job', t.badgeOptional);
+  safePlaceholder('cust-job', t.custJobPlaceholder);
+
+  safeSet('lbl-cust-gender', t.custGenderLabel);
+  safeSet('badge-opt-cust-gender', t.badgeOptional);
+  safeSet('opt-gender-none', t.optGenderNone);
+  safeSet('opt-gender-male', t.optGenderMale);
+  safeSet('opt-gender-female', t.optGenderFemale);
+
+  safeSet('lbl-cust-address', t.custAddressLabel);
+  safeSet('badge-opt-cust-address', t.badgeOptional);
+  safePlaceholder('cust-address', t.custAddressPlaceholder);
+
   safeSet('lbl-add-valas-title', t.addValasTitle);
   safeSet('lbl-add-valas-sub', t.addValasSub);
   safeSet('lbl-curr-select', t.currLabel);
@@ -1060,6 +1116,11 @@ function setReceiptLanguage(lang, showToastNotification = true) {
   safeSet('lbl-rcpt-cust', t.rcptCustLabel);
   safeSet('lbl-rcpt-phone', t.rcptPhoneLabel);
   safeSet('lbl-rcpt-id', t.rcptIdLabel);
+  safeSet('lbl-rcpt-nationality', t.rcptNationalityLabel);
+  safeSet('lbl-rcpt-npwp', t.rcptNpwpLabel);
+  safeSet('lbl-rcpt-job', t.rcptJobLabel);
+  safeSet('lbl-rcpt-gender', t.rcptGenderLabel);
+  safeSet('lbl-rcpt-address', t.rcptAddressLabel);
   safeSet('lbl-rcpt-delivery', t.rcptServiceLabel);
   safeSet('rcpt-delivery-val', t.rcptDeliveryVal);
 
@@ -1817,6 +1878,11 @@ function updateLiveReceiptMetadata() {
   const custName = document.getElementById('cust-name').value.trim();
   const custPhone = document.getElementById('cust-phone').value.trim();
   const custId = document.getElementById('cust-id').value.trim();
+  const custNpwp = document.getElementById('cust-npwp')?.value.trim() || '';
+  const custNationality = document.getElementById('cust-nationality')?.value.trim() || '';
+  const custJob = document.getElementById('cust-job')?.value.trim() || '';
+  const custGender = document.getElementById('cust-gender')?.value.trim() || '';
+  const custAddress = document.getElementById('cust-address')?.value.trim() || '';
   const signatureInput = document.getElementById('input-signature-customer');
   const isRcptEn = state.receiptLang === 'en';
 
@@ -1853,6 +1919,61 @@ function updateLiveReceiptMetadata() {
     idRow.classList.add('hidden');
   }
 
+  const natRow = document.getElementById('rcpt-nationality-row');
+  const natVal = document.getElementById('rcpt-cust-nationality');
+  if (natRow && natVal) {
+    if (custNationality) {
+      natVal.textContent = custNationality.toUpperCase();
+      natRow.classList.remove('hidden');
+    } else {
+      natRow.classList.add('hidden');
+    }
+  }
+
+  const npwpRow = document.getElementById('rcpt-npwp-row');
+  const npwpVal = document.getElementById('rcpt-cust-npwp');
+  if (npwpRow && npwpVal) {
+    if (custNpwp) {
+      npwpVal.textContent = custNpwp.toUpperCase();
+      npwpRow.classList.remove('hidden');
+    } else {
+      npwpRow.classList.add('hidden');
+    }
+  }
+
+  const jobRow = document.getElementById('rcpt-job-row');
+  const jobVal = document.getElementById('rcpt-cust-job');
+  if (jobRow && jobVal) {
+    if (custJob) {
+      jobVal.textContent = custJob.toUpperCase();
+      jobRow.classList.remove('hidden');
+    } else {
+      jobRow.classList.add('hidden');
+    }
+  }
+
+  const genderRow = document.getElementById('rcpt-gender-row');
+  const genderVal = document.getElementById('rcpt-cust-gender');
+  if (genderRow && genderVal) {
+    if (custGender) {
+      genderVal.textContent = custGender.toUpperCase();
+      genderRow.classList.remove('hidden');
+    } else {
+      genderRow.classList.add('hidden');
+    }
+  }
+
+  const addrRow = document.getElementById('rcpt-address-row');
+  const addrVal = document.getElementById('rcpt-cust-address');
+  if (addrRow && addrVal) {
+    if (custAddress) {
+      addrVal.textContent = custAddress.toUpperCase();
+      addrRow.classList.remove('hidden');
+    } else {
+      addrRow.classList.add('hidden');
+    }
+  }
+
   if (state.isDelivery) {
     deliveryRow.classList.remove('hidden');
     document.getElementById('rcpt-delivery-val').textContent = isRcptEn ? 'DELIVERY SERVICE' : 'DELIVERY (ANTAR)';
@@ -1880,6 +2001,11 @@ async function processTransaction() {
   const custName = document.getElementById('cust-name').value.trim();
   const custPhone = document.getElementById('cust-phone').value.trim();
   const custId = document.getElementById('cust-id').value.trim();
+  const custNpwp = document.getElementById('cust-npwp')?.value.trim() || '';
+  const custNationality = document.getElementById('cust-nationality')?.value.trim() || '';
+  const custJob = document.getElementById('cust-job')?.value.trim() || '';
+  const custGender = document.getElementById('cust-gender')?.value.trim() || '';
+  const custAddress = document.getElementById('cust-address')?.value.trim() || '';
   const signatureName = document.getElementById('input-signature-customer').value.trim();
   const isEn = state.appLang === 'en';
 
@@ -1914,6 +2040,11 @@ async function processTransaction() {
     customer_name: custName.toUpperCase(),
     customer_phone: custPhone,
     customer_id_no: custId,
+    customer_npwp: custNpwp,
+    customer_nationality: custNationality.toUpperCase(),
+    customer_job: custJob.toUpperCase(),
+    customer_gender: custGender,
+    customer_address: custAddress.toUpperCase(),
     customer_signature_name: signatureName.toUpperCase() || custName.toUpperCase(),
     teller_name: getActiveTellerName(),
     total_idr: total,
@@ -1999,6 +2130,11 @@ function resetForm() {
   document.getElementById('cust-name').value = '';
   document.getElementById('cust-phone').value = '';
   document.getElementById('cust-id').value = '';
+  const npwpInp = document.getElementById('cust-npwp'); if (npwpInp) npwpInp.value = '';
+  const natInp = document.getElementById('cust-nationality'); if (natInp) natInp.value = '';
+  const jobInp = document.getElementById('cust-job'); if (jobInp) jobInp.value = '';
+  const genInp = document.getElementById('cust-gender'); if (genInp) genInp.value = '';
+  const addrInp = document.getElementById('cust-address'); if (addrInp) addrInp.value = '';
   document.getElementById('input-payment').value = '';
   document.getElementById('check-delivery').checked = false;
   document.getElementById('delivery-fields').classList.add('hidden');
@@ -2068,6 +2204,61 @@ function renderReceiptData(tx) {
       idRow.classList.remove('hidden');
     } else {
       idRow.classList.add('hidden');
+    }
+  }
+
+  const natRow = document.getElementById('rcpt-nationality-row');
+  const natVal = document.getElementById('rcpt-cust-nationality');
+  if (natRow && natVal) {
+    if (tx.customer_nationality) {
+      natVal.textContent = tx.customer_nationality.toUpperCase();
+      natRow.classList.remove('hidden');
+    } else {
+      natRow.classList.add('hidden');
+    }
+  }
+
+  const npwpRow = document.getElementById('rcpt-npwp-row');
+  const npwpVal = document.getElementById('rcpt-cust-npwp');
+  if (npwpRow && npwpVal) {
+    if (tx.customer_npwp) {
+      npwpVal.textContent = tx.customer_npwp.toUpperCase();
+      npwpRow.classList.remove('hidden');
+    } else {
+      npwpRow.classList.add('hidden');
+    }
+  }
+
+  const jobRow = document.getElementById('rcpt-job-row');
+  const jobVal = document.getElementById('rcpt-cust-job');
+  if (jobRow && jobVal) {
+    if (tx.customer_job) {
+      jobVal.textContent = tx.customer_job.toUpperCase();
+      jobRow.classList.remove('hidden');
+    } else {
+      jobRow.classList.add('hidden');
+    }
+  }
+
+  const genderRow = document.getElementById('rcpt-gender-row');
+  const genderVal = document.getElementById('rcpt-cust-gender');
+  if (genderRow && genderVal) {
+    if (tx.customer_gender) {
+      genderVal.textContent = tx.customer_gender.toUpperCase();
+      genderRow.classList.remove('hidden');
+    } else {
+      genderRow.classList.add('hidden');
+    }
+  }
+
+  const addrRow = document.getElementById('rcpt-address-row');
+  const addrVal = document.getElementById('rcpt-cust-address');
+  if (addrRow && addrVal) {
+    if (tx.customer_address) {
+      addrVal.textContent = tx.customer_address.toUpperCase();
+      addrRow.classList.remove('hidden');
+    } else {
+      addrRow.classList.add('hidden');
     }
   }
 
@@ -2232,6 +2423,11 @@ function buildCurrentFormReceiptData() {
   const custName = document.getElementById('cust-name').value.trim() || 'CUSTOMER';
   const custPhone = document.getElementById('cust-phone').value.trim();
   const custId = document.getElementById('cust-id').value.trim();
+  const custNpwp = document.getElementById('cust-npwp')?.value.trim() || '';
+  const custNationality = document.getElementById('cust-nationality')?.value.trim() || '';
+  const custJob = document.getElementById('cust-job')?.value.trim() || '';
+  const custGender = document.getElementById('cust-gender')?.value.trim() || '';
+  const custAddress = document.getElementById('cust-address')?.value.trim() || '';
   const signatureName = document.getElementById('input-signature-customer').value.trim();
   const { total, payment, change } = calculateTotals();
 
@@ -2243,6 +2439,11 @@ function buildCurrentFormReceiptData() {
     customer_name: custName.toUpperCase(),
     customer_phone: custPhone,
     customer_id_no: custId,
+    customer_npwp: custNpwp,
+    customer_nationality: custNationality.toUpperCase(),
+    customer_job: custJob.toUpperCase(),
+    customer_gender: custGender,
+    customer_address: custAddress.toUpperCase(),
     customer_signature_name: signatureName.toUpperCase() || custName.toUpperCase(),
     teller_name: getActiveTellerName(),
     total_idr: total,
@@ -2323,7 +2524,13 @@ function handleShareWhatsApp() {
   text += `${isEn ? 'Date' : 'Tanggal'}   : ${currentData.created_at_formatted}\n`;
   text += `${isEn ? 'Type' : 'Tipe'}      : ${currentData.type === 'BELI' ? (isEn ? 'BUY CURRENCY (BUY)' : 'BELI VALAS (BUY)') : (isEn ? 'SELL CURRENCY (SELL)' : 'JUAL VALAS (SELL)')}\n`;
   text += `${isEn ? 'Customer' : 'Customer'}  : ${currentData.customer_name}\n`;
+  if (currentData.customer_phone) text += `${isEn ? 'Phone' : 'No. HP'}      : ${currentData.customer_phone}\n`;
   if (currentData.customer_id_no) text += `${isEn ? 'Passport/ID' : 'No. ID'}    : ${currentData.customer_id_no}\n`;
+  if (currentData.customer_nationality) text += `${isEn ? 'Nationality' : 'Kewarganegaraan'}: ${currentData.customer_nationality}\n`;
+  if (currentData.customer_npwp) text += `NPWP        : ${currentData.customer_npwp}\n`;
+  if (currentData.customer_job) text += `${isEn ? 'Occupation' : 'Pekerjaan'} : ${currentData.customer_job}\n`;
+  if (currentData.customer_gender) text += `${isEn ? 'Gender' : 'Jenis Kelamin'}: ${currentData.customer_gender}\n`;
+  if (currentData.customer_address) text += `${isEn ? 'Address' : 'Alamat'}    : ${currentData.customer_address}\n`;
   text += `--------------------------------\n`;
   text += `*${isEn ? 'EXCHANGE DETAILS:' : 'RINCIAN TRANSAKSI VALAS:'}*\n`;
 
@@ -2513,7 +2720,12 @@ function renderHistoryTable(transactions) {
     if (!search) return true;
     return (t.receipt_no && t.receipt_no.toLowerCase().includes(search)) ||
            (t.customer_name && t.customer_name.toLowerCase().includes(search)) ||
-           (t.customer_phone && t.customer_phone.includes(search));
+           (t.customer_phone && t.customer_phone.includes(search)) ||
+           (t.customer_id_no && t.customer_id_no.toLowerCase().includes(search)) ||
+           (t.customer_npwp && t.customer_npwp.toLowerCase().includes(search)) ||
+           (t.customer_nationality && t.customer_nationality.toLowerCase().includes(search)) ||
+           (t.customer_job && t.customer_job.toLowerCase().includes(search)) ||
+           (t.customer_address && t.customer_address.toLowerCase().includes(search));
   });
 
   if (filtered.length === 0) {
@@ -3218,8 +3430,14 @@ function initEventListeners() {
   });
 
   // Customer Name & Inputs Live Update
-  ['cust-name', 'cust-phone', 'cust-id'].forEach(id => {
-    document.getElementById(id).addEventListener('input', updateLiveReceiptMetadata);
+  ['cust-name', 'cust-phone', 'cust-id', 'cust-npwp', 'cust-nationality', 'cust-job', 'cust-gender', 'cust-address'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.addEventListener('input', updateLiveReceiptMetadata);
+      if (el.tagName === 'SELECT') {
+        el.addEventListener('change', updateLiveReceiptMetadata);
+      }
+    }
   });
 
   // Signature Name Edit Trigger

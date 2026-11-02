@@ -490,6 +490,11 @@ router.post('/api/transactions', requireAuth, (req, res) => {
       customer_name,
       customer_phone,
       customer_id_no,
+      customer_npwp,
+      customer_nationality,
+      customer_job,
+      customer_gender,
+      customer_address,
       teller_name,
       total_idr,
       paid_amount,
@@ -514,10 +519,11 @@ router.post('/api/transactions', requireAuth, (req, res) => {
     const insertTx = db.prepare(`
       INSERT INTO transactions (
         receipt_no, type, customer_name, customer_phone, customer_id_no,
+        customer_npwp, customer_nationality, customer_job, customer_gender, customer_address,
         teller_name, total_idr, paid_amount, change_amount,
         is_delivery, delivery_address, delivery_time, delivery_status,
         courier_name, notes, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     const result = insertTx.run(
@@ -526,6 +532,11 @@ router.post('/api/transactions', requireAuth, (req, res) => {
       customer_name.trim(),
       customer_phone ? customer_phone.trim() : '',
       customer_id_no ? customer_id_no.trim() : '',
+      customer_npwp ? customer_npwp.trim() : '',
+      customer_nationality ? customer_nationality.trim() : '',
+      customer_job ? customer_job.trim() : '',
+      customer_gender ? customer_gender.trim() : '',
+      customer_address ? customer_address.trim() : '',
       teller_name || 'TELLER',
       Number(total_idr) || 0,
       Number(paid_amount) || 0,
@@ -569,6 +580,11 @@ router.post('/api/transactions', requireAuth, (req, res) => {
         customer_name: customer_name.trim(),
         customer_phone: customer_phone ? customer_phone.trim() : '',
         customer_id_no: customer_id_no ? customer_id_no.trim() : '',
+        customer_npwp: customer_npwp ? customer_npwp.trim() : '',
+        customer_nationality: customer_nationality ? customer_nationality.trim() : '',
+        customer_job: customer_job ? customer_job.trim() : '',
+        customer_gender: customer_gender ? customer_gender.trim() : '',
+        customer_address: customer_address ? customer_address.trim() : '',
         teller_name: teller_name || 'TELLER',
         total_idr: Number(total_idr) || 0,
         paid_amount: Number(paid_amount) || 0,
@@ -635,10 +651,11 @@ router.post('/api/sync', requireAuth, (req, res) => {
     const insertTx = db.prepare(`
       INSERT INTO transactions (
         receipt_no, type, customer_name, customer_phone, customer_id_no,
+        customer_npwp, customer_nationality, customer_job, customer_gender, customer_address,
         teller_name, total_idr, paid_amount, change_amount,
         is_delivery, delivery_address, delivery_time, delivery_status,
         courier_name, notes, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
     const insertItem = db.prepare(`
       INSERT INTO transaction_items (transaction_id, currency_code, amount, rate, subtotal_idr)
@@ -654,6 +671,11 @@ router.post('/api/sync', requireAuth, (req, res) => {
           tx.customer_name,
           tx.customer_phone || '',
           tx.customer_id_no || '',
+          tx.customer_npwp || '',
+          tx.customer_nationality || '',
+          tx.customer_job || '',
+          tx.customer_gender || '',
+          tx.customer_address || '',
           tx.teller_name || 'TELLER',
           Number(tx.total_idr),
           Number(tx.paid_amount),
