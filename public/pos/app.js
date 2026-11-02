@@ -526,6 +526,19 @@ const state = {
   activeTab: 'tab-pos'
 };
 
+function formatCustomerGender(gender, lang = 'id') {
+  if (!gender) return '';
+  const g = String(gender).trim().toUpperCase();
+  const isEn = lang === 'en';
+  if (g.includes('LAKI') || g === 'MALE' || g === 'L' || g === 'PRIA') {
+    return isEn ? 'MALE' : 'LAKI-LAKI';
+  }
+  if (g.includes('PEREMPUAN') || g === 'FEMALE' || g === 'P' || g === 'WANITA') {
+    return isEn ? 'FEMALE' : 'PEREMPUAN';
+  }
+  return g;
+}
+
 function escapeHtml(text) {
   if (!text) return '';
   return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -898,6 +911,11 @@ function setAppLanguage(lang) {
   safeSet('opt-gender-none', t.optGenderNone);
   safeSet('opt-gender-male', t.optGenderMale);
   safeSet('opt-gender-female', t.optGenderFemale);
+  const cgSelect = document.getElementById('cust-gender');
+  if (cgSelect) {
+    const curVal = cgSelect.value;
+    cgSelect.value = curVal;
+  }
 
   safeSet('lbl-cust-address', t.custAddressLabel);
   safeSet('badge-opt-cust-address', t.badgeOptional);
@@ -1158,7 +1176,11 @@ function setReceiptLanguage(lang, showToastNotification = true) {
     permitEl.classList.remove('hidden');
   }
 
-  updateLiveReceiptMetadata();
+  if (state.currentReceipt) {
+    renderReceiptData(state.currentReceipt);
+  } else {
+    updateLiveReceiptMetadata();
+  }
   renderCart();
 
   if (showToastNotification) {
@@ -1956,7 +1978,7 @@ function updateLiveReceiptMetadata() {
   const genderVal = document.getElementById('rcpt-cust-gender');
   if (genderRow && genderVal) {
     if (custGender) {
-      genderVal.textContent = custGender.toUpperCase();
+      genderVal.textContent = formatCustomerGender(custGender, state.receiptLang);
       genderRow.classList.remove('hidden');
     } else {
       genderRow.classList.add('hidden');
@@ -2244,7 +2266,7 @@ function renderReceiptData(tx) {
   const genderVal = document.getElementById('rcpt-cust-gender');
   if (genderRow && genderVal) {
     if (tx.customer_gender) {
-      genderVal.textContent = tx.customer_gender.toUpperCase();
+      genderVal.textContent = formatCustomerGender(tx.customer_gender, state.receiptLang);
       genderRow.classList.remove('hidden');
     } else {
       genderRow.classList.add('hidden');
@@ -2529,7 +2551,7 @@ function handleShareWhatsApp() {
   if (currentData.customer_nationality) text += `${isEn ? 'Nationality' : 'Kewarganegaraan'}: ${currentData.customer_nationality}\n`;
   if (currentData.customer_npwp) text += `NPWP        : ${currentData.customer_npwp}\n`;
   if (currentData.customer_job) text += `${isEn ? 'Occupation' : 'Pekerjaan'} : ${currentData.customer_job}\n`;
-  if (currentData.customer_gender) text += `${isEn ? 'Gender' : 'Jenis Kelamin'}: ${currentData.customer_gender}\n`;
+  if (currentData.customer_gender) text += `${isEn ? 'Gender' : 'Jenis Kelamin'}: ${formatCustomerGender(currentData.customer_gender, isEn ? 'en' : 'id')}\n`;
   if (currentData.customer_address) text += `${isEn ? 'Address' : 'Alamat'}    : ${currentData.customer_address}\n`;
   text += `--------------------------------\n`;
   text += `*${isEn ? 'EXCHANGE DETAILS:' : 'RINCIAN TRANSAKSI VALAS:'}*\n`;

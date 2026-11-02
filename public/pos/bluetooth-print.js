@@ -380,7 +380,10 @@ class BluetoothPrinter {
       addLine(BluetoothPrinter.padLine(isEn ? 'Occupation' : 'Pekerjaan', String(data.customer_job).toUpperCase(), width));
     }
     if (data.customer_gender) {
-      addLine(BluetoothPrinter.padLine(isEn ? 'Gender' : 'Jenis Kelamin', String(data.customer_gender).toUpperCase(), width));
+      const gUpper = String(data.customer_gender).toUpperCase();
+      const isFemale = gUpper.includes('PEREMPUAN') || gUpper.includes('FEMALE') || gUpper === 'P' || gUpper === 'WANITA';
+      const formattedGender = isEn ? (isFemale ? 'FEMALE' : 'MALE') : (isFemale ? 'PEREMPUAN' : 'LAKI-LAKI');
+      addLine(BluetoothPrinter.padLine(isEn ? 'Gender' : 'Jenis Kelamin', formattedGender, width));
     }
     if (data.customer_address) {
       addLine(BluetoothPrinter.padLine(isEn ? 'Address' : 'Alamat', String(data.customer_address).toUpperCase(), width));
