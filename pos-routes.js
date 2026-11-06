@@ -388,6 +388,18 @@ router.get('/api/rates', requireAuth, (req, res) => {
   }
 });
 
+// Public, read-only buy rates for the TV board (public/pos/display.html).
+// No login: the same numbers are shown on the shop TV anyway.
+router.get('/api/display/rates', (req, res) => {
+  try {
+    const rates = db.prepare('SELECT code, buy_rate, updated_at FROM rates').all();
+    res.set('Cache-Control', 'no-store');
+    res.json({ success: true, data: rates });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 router.post('/api/rates', requireAuth, (req, res) => {
   try {
     const { code, name, buy_rate, sell_rate, denomination } = req.body;

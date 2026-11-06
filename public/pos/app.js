@@ -1826,6 +1826,7 @@ function renderRatesTable() {
   setText('#btn-bulk-buy-cancel', isEn ? 'Cancel' : 'Batal');
   setText('#btn-bulk-buy-save', isEn ? 'Save all buy rates' : 'Simpan semua kurs beli');
   setText('#btn-bulk-buy-edit span', isEn ? 'Edit all buy rates' : 'Edit kurs beli sekaligus');
+  setText('#btn-open-tv-display span', isEn ? 'TV display' : 'Tampilan TV');
   if (!bulk) return;
   const inputs = [...tbody.querySelectorAll('.rate-bulk-input')];
   inputs.forEach((inp, i) => {
