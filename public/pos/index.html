@@ -877,20 +877,6 @@
     html.light #sum-turnover-idr { color: #0f766e !important; font-weight: 900 !important; }
 
     /* Tab 5 Settings Panels in Light Mode */
-    html.light #subtab-btn-sheets:not(.bg-emerald-600),
-    html.light #subtab-btn-store:not(.bg-emerald-600),
-    html.light #subtab-btn-users:not(.bg-emerald-600),
-    html.light #subtab-btn-database:not(.bg-cyan-600),
-    html.light #subtab-btn-compliance:not(.bg-amber-600) {
-      color: #475569 !important;
-    }
-    html.light #subtab-btn-sheets:hover,
-    html.light #subtab-btn-store:hover,
-    html.light #subtab-btn-users:hover,
-    html.light #subtab-btn-database:hover,
-    html.light #subtab-btn-compliance:hover {
-      color: #0f172a !important;
-    }
     html.light #card-underlying-warning {
       background-color: #eff6ff !important;
       border-color: #93c5fd !important;
@@ -913,39 +899,6 @@
       background-color: #f8fafc !important;
       border-color: #e2e8f0 !important;
       color: #0f172a !important;
-    }
-    html.light #subtab-panel-sheets {
-      border-color: #10b981 !important;
-    }
-    html.light #subtab-panel-sheets .bg-navy-900\/90,
-    html.light #subtab-panel-sheets .bg-navy-900\/60 {
-      background-color: #f8fafc !important;
-      border-color: #e2e8f0 !important;
-    }
-    html.light #setting-sheets-url {
-      background-color: #ffffff !important;
-      color: #0f172a !important;
-      border-color: #10b981 !important;
-    }
-    html.light #btn-save-sheets-config {
-      background-color: #0d9488 !important;
-      color: #ffffff !important;
-    }
-    html.light #btn-save-sheets-config:hover {
-      background-color: #0f766e !important;
-    }
-    html.light #btn-sheets-test,
-    html.light #btn-sheets-sync-today,
-    html.light #btn-open-sheets-guide {
-      background-color: #f1f5f9 !important;
-      color: #1e293b !important;
-      border-color: #cbd5e1 !important;
-      font-weight: 600 !important;
-    }
-    html.light #btn-sheets-test:hover,
-    html.light #btn-sheets-sync-today:hover,
-    html.light #btn-open-sheets-guide:hover {
-      background-color: #e2e8f0 !important;
     }
 
     /* Modals in Light Mode */
@@ -1010,7 +963,6 @@
     html.light #btn-submit-tx,
     html.light #btn-add-item,
     html.light #btn-modal-add-rate,
-    html.light #btn-open-add-user,
     html.light #btn-login-submit,
     html.light #lbl-btn-save-rate,
     html.light #btn-copy-sheets-script,
@@ -1021,7 +973,6 @@
     html.light #btn-submit-tx:hover,
     html.light #btn-add-item:hover,
     html.light #btn-modal-add-rate:hover,
-    html.light #btn-open-add-user:hover,
     html.light #btn-login-submit:hover,
     html.light #btn-copy-sheets-script:hover,
     html.light #btn-done-modal-printer-guide:hover {
@@ -1200,8 +1151,109 @@
     #btn-toggle-receipt[aria-expanded="true"] .receipt-chevron { transform: rotate(90deg); }
     #cust-extra-details > summary::-webkit-details-marker { display: none; }
 
+    /* ==================== SETTINGS ====================
+       Panels are split into sections by rules (no nested cards), every subtab
+       shares one active style, and one button vocabulary is used throughout.
+       Turquoise = primary action or current selection only. */
+    .set-tabs { display: flex; gap: 4px; padding: 4px; overflow-x: auto; scrollbar-width: none; border-radius: 12px; background: #06121e; border: 1px solid #13324c; }
+    .set-tabs::-webkit-scrollbar { display: none; }
+    .set-tab { flex: 1 0 auto; display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; padding: 0 14px; border-radius: 8px; font-size: 14px; font-weight: 600; color: #94a3b8; white-space: nowrap; transition: background-color .15s, color .15s; }
+    .set-tab:hover { color: #f1f5f9; background: #0c2134; }
+    .set-tab[aria-selected="true"] { background: #00E2DE; color: #031720; font-weight: 700; }
+
+    .set-section { padding: 20px 16px; }
+    @media (min-width: 640px) { .set-section { padding: 24px; } }
+    .set-section + .set-section { border-top: 1px solid #13324c; }
+    .set-desc { margin-top: 4px; font-size: 14px; line-height: 1.5; color: #94a3b8; max-width: 65ch; }
+    .set-hint { margin-top: 6px; font-size: 13px; line-height: 1.5; color: #94a3b8; max-width: 72ch; }
+    .set-link { display: inline-flex; align-items: center; min-height: 32px; font-size: 14px; font-weight: 600; color: #00E2DE; text-underline-offset: 3px; }
+    .set-link:hover { text-decoration: underline; }
+
+    .set-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 16px; border-radius: 8px; border: 1px solid transparent; font-size: 14px; font-weight: 600; white-space: nowrap; transition: background-color .15s, border-color .15s, color .15s; }
+    .set-btn:disabled { opacity: .6; cursor: not-allowed; }
+    .set-btn--primary { background: #00E2DE; color: #031720; font-weight: 700; }
+    .set-btn--primary:hover { background: #00c8c4; }
+    .set-btn--secondary { background: #13324c; border-color: #1b4566; color: #e2e8f0; }
+    .set-btn--secondary:hover { background: #1b4566; }
+    .set-btn--ghost { padding: 0 10px; color: #cbd5e1; }
+    .set-btn--ghost:hover { color: #f1f5f9; background: #13324c; }
+    .set-tab:focus-visible, .set-btn:focus-visible, .set-link:focus-visible,
+    .set-seg input:focus-visible + span, .set-choice:has(:focus-visible) { outline: 2px solid #00E2DE; outline-offset: 2px; }
+
+    .set-status { display: inline-flex; align-items: center; gap: 6px; min-height: 24px; padding: 0 10px; border-radius: 9999px; font-size: 12px; font-weight: 600; white-space: nowrap; background: #13324c; color: #cbd5e1; }
+    .set-status--ok { background: rgba(16, 185, 129, .14); color: #34d399; }
+    .set-status--warn { background: rgba(245, 158, 11, .14); color: #fbbf24; }
+    .set-status--danger { background: rgba(239, 68, 68, .14); color: #f87171; }
+    .set-status--ok::before, .set-status--warn::before, .set-status--danger::before { content: ""; width: 6px; height: 6px; border-radius: 9999px; background: currentColor; }
+
+    .set-dl { border-top: 1px solid #13324c; }
+    .set-dl > div { display: grid; grid-template-columns: 1fr; gap: 2px 16px; padding: 10px 0; border-bottom: 1px solid #13324c; font-size: 14px; }
+    @media (min-width: 640px) { .set-dl > div { grid-template-columns: 11rem minmax(0, 1fr); } }
+    .set-dl dt { color: #94a3b8; }
+    .set-dl dd { color: #e2e8f0; min-width: 0; }
+    .set-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; background: #13324c; border: 1px solid #13324c; border-radius: 10px; overflow: hidden; }
+    @media (min-width: 640px) { .set-stats { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+    .set-stats > div { padding: 12px 14px; background: #06121e; }
+    .set-stats dt { font-size: 13px; color: #94a3b8; }
+    .set-stats dd { margin-top: 2px; font-size: 22px; font-weight: 700; color: #f1f5f9; font-variant-numeric: tabular-nums; }
+
+    .set-choice { display: flex; align-items: flex-start; gap: 10px; padding: 12px; border-radius: 10px; background: #06121e; border: 1px solid #1b4566; cursor: pointer; transition: border-color .15s, background-color .15s; }
+    .set-choice:hover { border-color: #255b85; }
+    .set-choice:has(:checked) { border-color: #00E2DE; background: rgba(0, 226, 222, .08); }
+    .set-seg { display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 4px; border-radius: 10px; background: #06121e; border: 1px solid #1b4566; }
+    .set-seg label { cursor: pointer; }
+    .set-seg span { display: flex; align-items: center; min-height: 40px; padding: 0 14px; border-radius: 7px; font-size: 14px; font-weight: 600; color: #94a3b8; transition: background-color .15s, color .15s; }
+    .set-seg label:hover span { color: #f1f5f9; }
+    .set-seg input:checked + span { background: #00E2DE; color: #031720; }
+
+    .set-table { width: 100%; text-align: left; font-size: 14px; color: #cbd5e1; }
+    .set-table thead { background: #06121e; }
+    .set-table th { padding: 10px 12px; font-size: 13px; font-weight: 600; color: #94a3b8; border-bottom: 1px solid #13324c; white-space: nowrap; }
+    .set-table td { padding: 10px 12px; vertical-align: middle; }
+    .set-table tbody tr { transition: background-color .15s; }
+    .set-table tbody tr:hover { background: rgba(255, 255, 255, .03); }
+    .set-table tbody tr.set-row--self { background: rgba(0, 226, 222, .06); }
+    .set-btn--sm { min-height: 36px; padding: 0 12px; font-size: 13px; }
+    .set-btn--danger { background: rgba(239, 68, 68, .12); border-color: rgba(239, 68, 68, .45); color: #fca5a5; }
+    .set-btn--danger:hover { background: rgba(239, 68, 68, .22); }
+    .set-status--brand { background: rgba(0, 226, 222, .12); color: #00E2DE; }
+
+    html.light .set-tabs, html.light .set-seg { background: #f1f5f9; border-color: #e2e8f0; }
+    html.light .set-tab, html.light .set-seg span { color: #475569; }
+    html.light .set-tab:hover { color: #0f172a; background: #e2e8f0; }
+    html.light .set-seg label:hover span { color: #0f172a; }
+    html.light .set-tab[aria-selected="true"], html.light .set-seg input:checked + span { background: #0f766e; color: #ffffff; }
+    html.light .set-section + .set-section, html.light .set-dl, html.light .set-dl > div, html.light .set-table th { border-color: #e2e8f0; }
+    html.light .set-desc, html.light .set-hint, html.light .set-dl dt, html.light .set-stats dt, html.light .set-table th { color: #475569; }
+    html.light .set-dl dd, html.light .set-table { color: #1e293b; }
+    html.light .set-stats { background: #e2e8f0; border-color: #e2e8f0; }
+    html.light .set-stats > div, html.light .set-table thead { background: #f8fafc; }
+    html.light .set-stats dd { color: #0f172a; }
+    html.light .set-link { color: #0f766e; }
+    html.light .set-btn--primary { background: #0f766e; color: #ffffff; }
+    html.light .set-btn--primary:hover { background: #115e59; }
+    html.light .set-btn--secondary { background: #f1f5f9; border-color: #cbd5e1; color: #1e293b; }
+    html.light .set-btn--secondary:hover { background: #e2e8f0; }
+    html.light .set-btn--ghost { color: #334155; }
+    html.light .set-btn--ghost:hover { color: #0f172a; background: #f1f5f9; }
+    html.light .set-status { background: #f1f5f9; color: #334155; }
+    html.light .set-status--ok { background: #d1fae5; color: #065f46; }
+    html.light .set-status--warn { background: #fef3c7; color: #92400e; }
+    html.light .set-status--danger { background: #fee2e2; color: #991b1b; }
+    html.light .set-status--brand { background: #ccfbf1; color: #0f766e; }
+    html.light .set-btn--danger { background: #fef2f2; border-color: #fecaca; color: #b91c1c; }
+    html.light .set-btn--danger:hover { background: #fee2e2; }
+    html.light .set-table tbody tr:hover { background: #f8fafc; }
+    html.light .set-table tbody tr.set-row--self { background: #f0fdfa; }
+    html.light .set-choice { background: #f8fafc; border-color: #cbd5e1; }
+    html.light .set-choice:has(:checked) { border-color: #0d9488; background: #f0fdfa; }
+    html.light .divide-navy-700 > * + * { border-color: #e2e8f0 !important; }
+    html.light .set-tab:focus-visible, html.light .set-btn:focus-visible, html.light .set-link:focus-visible,
+    html.light .set-seg input:focus-visible + span, html.light .set-choice:has(:focus-visible) { outline-color: #0d9488; }
+
     @media (prefers-reduced-motion: reduce) {
-      .pos-workspace, .pos-summary, .mode-btn, .cur-tile, .receipt-chevron { transition: none; }
+      .pos-workspace, .pos-summary, .mode-btn, .cur-tile, .receipt-chevron,
+      .set-tab, .set-btn, .set-seg span, .set-choice { transition: none; }
     }
   </style>
 </head>
@@ -1393,7 +1445,7 @@
         <span id="i18n-tab-history">Riwayat & Laporan</span>
       </button>
       <button class="nav-tab px-3 sm:px-4 py-2.5 font-medium text-slate-400 hover:text-slate-200 border-b-2 border-transparent flex items-center gap-1.5 whitespace-nowrap" data-target="tab-sheets">
-        <svg class="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
         <span id="i18n-tab-sheets">Google Sheets</span>
       </button>
       <button class="nav-tab px-3 sm:px-4 py-2.5 font-medium text-slate-400 hover:text-slate-200 border-b-2 border-transparent flex items-center gap-1.5 whitespace-nowrap" data-target="tab-settings">
@@ -1917,144 +1969,6 @@
           <span id="lbl-btn-submit-mobile">Proses</span>
         </button>
       </div>
-
-      <!-- PANEL 4: Database & Cadangan Data (Database & Backup) -->
-      <div id="subtab-panel-database" class="hidden bg-navy-800 border border-navy-700 rounded-xl p-4 sm:p-6 max-w-3xl mx-auto shadow-sm space-y-6">
-        <!-- Section: Info Database Server -->
-        <div class="space-y-4">
-          <div class="flex items-center justify-between pb-3 border-b border-navy-700">
-            <div class="flex items-center gap-2.5">
-              <div class="w-10 h-10 rounded-lg bg-cyan-500/20 border border-cyan-500/40 flex items-center justify-center text-cyan-400">
-                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
-              </div>
-              <div>
-                <h3 class="text-base font-bold text-white flex items-center gap-2">
-                  <span>Status & Penyimpanan Database</span>
-                  <span class="px-2 py-0.5 rounded-full text-[10px] bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/40">Online & Persistent</span>
-                </h3>
-                <p class="text-xs text-slate-400">Arsitektur database SQLite dengan multi-tier auto backup yang aman saat pembaruan kode</p>
-              </div>
-            </div>
-            <button type="button" id="btn-refresh-db-info" class="p-2 rounded-lg bg-navy-900 hover:bg-navy-700 text-slate-300 hover:text-white border border-navy-700 transition-all text-xs flex items-center gap-1.5" title="Muat ulang status database">
-              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-              <span>Refresh</span>
-            </button>
-          </div>
-
-          <!-- Cards Summary -->
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-            <div class="bg-navy-900 border border-navy-700 rounded-lg p-3">
-              <span class="text-slate-400 block mb-1 text-[11px]">Riwayat Transaksi</span>
-              <div class="flex items-baseline gap-1.5">
-                <span id="db-stat-tx" class="text-lg font-bold text-white">-</span>
-                <span class="text-[11px] text-slate-400">data</span>
-              </div>
-            </div>
-            <div class="bg-navy-900 border border-navy-700 rounded-lg p-3">
-              <span class="text-slate-400 block mb-1 text-[11px]">Akun Kasir</span>
-              <div class="flex items-baseline gap-1.5">
-                <span id="db-stat-users" class="text-lg font-bold text-white">-</span>
-                <span class="text-[11px] text-slate-400">user</span>
-              </div>
-            </div>
-            <div class="bg-navy-900 border border-navy-700 rounded-lg p-3">
-              <span class="text-slate-400 block mb-1 text-[11px]">Papan Kurs</span>
-              <div class="flex items-baseline gap-1.5">
-                <span id="db-stat-rates" class="text-lg font-bold text-white">-</span>
-                <span class="text-[11px] text-slate-400">valas</span>
-              </div>
-            </div>
-            <div class="bg-navy-900 border border-navy-700 rounded-lg p-3">
-              <span class="text-slate-400 block mb-1 text-[11px]">Pengaturan Toko</span>
-              <div class="flex items-baseline gap-1.5">
-                <span id="db-stat-settings" class="text-lg font-bold text-white">-</span>
-                <span class="text-[11px] text-slate-400">item</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Database Storage Details -->
-          <div class="bg-navy-900/80 border border-navy-700 rounded-lg p-3.5 space-y-2 text-xs">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-              <span class="text-slate-400 font-medium">Lokasi File Database (SQLite):</span>
-              <span id="db-info-path" class="font-mono text-emerald-400 text-[11px] break-all">-</span>
-            </div>
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-              <span class="text-slate-400 font-medium">Folder Cadangan Server:</span>
-              <span id="db-info-storage" class="font-mono text-slate-300 text-[11px] break-all">-</span>
-            </div>
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-              <span class="text-slate-400 font-medium">Perlindungan Pembaruan Git:</span>
-              <span id="db-info-protection" class="font-bold text-emerald-400 flex items-center gap-1">
-                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                <span>Aktif (Data aman dan tidak tertimpa saat deploy)</span>
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Section: Download & Restore Backup -->
-        <div class="pt-2 border-t border-navy-700 space-y-4">
-          <div>
-            <h4 class="text-sm font-bold text-white flex items-center gap-2 mb-1">
-              <svg class="w-4 h-4 text-brand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              <span>Cadangan Offline (Download & Restore Snapshot)</span>
-            </h4>
-            <p class="text-xs text-slate-400">Unduh seluruh database POS ke komputer kasir dalam format JSON untuk arsip berkala, atau pulihkan jika dibutuhkan.</p>
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <!-- Download Backup Card -->
-            <div class="bg-navy-850 border border-navy-700 rounded-xl p-4 flex flex-col justify-between space-y-3">
-              <div>
-                <h5 class="font-bold text-white text-xs mb-1 flex items-center gap-1.5">
-                  <svg class="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                  <span>Download Backup Lengkap (.json)</span>
-                </h5>
-                <p class="text-[11px] text-slate-400">Mencakup semua transaksi, akun kasir, kurs valas, dan konfigurasi toko.</p>
-              </div>
-              <button type="button" id="btn-download-db-backup" class="w-full py-2.5 px-4 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all shadow">
-                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                <span>Unduh File Cadangan (.json)</span>
-              </button>
-            </div>
-
-            <!-- Restore Backup Card (Admin only) -->
-            <div id="card-restore-backup" class="bg-navy-850 border border-navy-700 rounded-xl p-4 flex flex-col justify-between space-y-3">
-              <div>
-                <h5 class="font-bold text-white text-xs mb-1 flex items-center gap-1.5">
-                  <svg class="w-4 h-4 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                  <span>Pulihkan dari File Backup (.json)</span>
-                </h5>
-                <p class="text-[11px] text-slate-400">Pilih file snapshot JSON yang pernah diunduh untuk memulihkan akun, transaksi, atau kurs.</p>
-              </div>
-              <input type="file" id="input-restore-file" accept=".json,application/json" class="hidden">
-              <button type="button" id="btn-trigger-restore-db" class="w-full py-2.5 px-4 rounded-lg bg-navy-700 hover:bg-navy-600 text-slate-200 border border-navy-600 font-bold text-xs flex items-center justify-center gap-2 transition-all">
-                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                <span>Pilih File & Pulihkan</span>
-              </button>
-            </div>
-          </div>
-
-          <div id="restore-status-box" class="hidden p-3 rounded-lg bg-navy-900 border border-navy-700 text-xs text-slate-300">
-            <!-- Restore results injected here -->
-          </div>
-        </div>
-
-        <!-- Section: Integrasi Cloud Google Sheets Info -->
-        <div class="p-4 rounded-xl bg-emerald-950/20 border border-emerald-500/40 text-xs text-slate-300 flex items-start gap-3">
-          <div class="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shrink-0">
-            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>
-          </div>
-          <div class="space-y-1">
-            <h5 class="font-bold text-white">Cadangan Cloud Real-Time (Google Sheets)</h5>
-            <p class="text-slate-400">Selain tersimpan di database server, setiap transaksi otomatis dikirim langsung ke spreadsheet Google Sheets Anda secara real-time. Anda tidak perlu khawatir kehilangan data transaksi meskipun server atau perangkat kasir berganti.</p>
-            <div class="pt-1">
-              <button type="button" id="btn-goto-sheets-tab" class="font-bold text-emerald-400 hover:text-emerald-300 underline text-xs">Buka Pengaturan Integrasi Google Sheets &rarr;</button>
-            </div>
-          </div>
-        </div>
-      </div>
     </section>
 
     <!-- ==================== TAB 2: PAPAN KURS (RATES) ==================== -->
@@ -2186,378 +2100,311 @@
     </section>
 
     <!-- ==================== TAB 5: PENGATURAN (SETTINGS) ==================== -->
-    <section id="tab-settings" class="tab-content hidden space-y-4">
+    <section id="tab-settings" class="tab-content hidden">
+     <div class="max-w-4xl mx-auto space-y-4">
 
-      <!-- Settings Sub-Navigation Tabs Switcher -->
-      <div class="flex items-center justify-center p-1 bg-navy-900 border border-navy-700 rounded-xl max-w-2xl mx-auto">
-        <button type="button" id="subtab-btn-sheets" class="flex-1 py-2 px-2 rounded-lg text-xs font-bold transition-all text-center flex items-center justify-center gap-1 bg-emerald-600 text-white shadow">
-          <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>
+      <!-- Settings sub-navigation: one active style, scrolls sideways on phones -->
+      <div class="set-tabs" role="tablist" aria-label="Pengaturan">
+        <button type="button" id="subtab-btn-sheets" class="set-tab" role="tab" aria-selected="true" aria-controls="subtab-panel-sheets">
+          <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>
           <span id="lbl-subtab-sheets">Google Sheets</span>
         </button>
-        <button type="button" id="subtab-btn-store" class="flex-1 py-2 px-2 rounded-lg text-xs font-bold transition-all text-center flex items-center justify-center gap-1 text-slate-400 hover:text-white">
-          <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <button type="button" id="subtab-btn-store" class="set-tab" role="tab" aria-selected="false" aria-controls="subtab-panel-store">
+          <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 9l1.5-5h15L21 9"/><path d="M4 9v11h16V9"/><path d="M3 9a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0"/><path d="M10 20v-5h4v5"/></svg>
           <span id="lbl-subtab-store">Profil Toko</span>
         </button>
-        <button type="button" id="subtab-btn-users" class="flex-1 py-2 px-2 rounded-lg text-xs font-bold transition-all text-center flex items-center justify-center gap-1 text-slate-400 hover:text-white">
-          <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <button type="button" id="subtab-btn-users" class="set-tab" role="tab" aria-selected="false" aria-controls="subtab-panel-users">
+          <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
           <span id="lbl-subtab-users">Akun Kasir</span>
         </button>
-        <button type="button" id="subtab-btn-database" class="flex-1 py-2 px-2 rounded-lg text-xs font-bold transition-all text-center flex items-center justify-center gap-1 text-slate-400 hover:text-white">
-          <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+        <button type="button" id="subtab-btn-database" class="set-tab" role="tab" aria-selected="false" aria-controls="subtab-panel-database">
+          <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
           <span id="lbl-subtab-database">Database & Backup</span>
         </button>
-        <button type="button" id="subtab-btn-compliance" class="flex-1 py-2 px-2 rounded-lg text-xs font-bold transition-all text-center flex items-center justify-center gap-1 text-slate-400 hover:text-white">
-          <svg class="w-4 h-4 shrink-0 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <button type="button" id="subtab-btn-compliance" class="set-tab" role="tab" aria-selected="false" aria-controls="subtab-panel-compliance">
+          <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
           <span id="lbl-subtab-compliance">Kepatuhan BI</span>
         </button>
       </div>
 
-      <!-- PANEL 1: Google Sheets Backup Integration (ACTIVE DEFAULT) -->
-      <div id="subtab-panel-sheets" class="bg-navy-800 border-2 border-emerald-500/60 rounded-xl p-4 sm:p-6 max-w-3xl mx-auto shadow-xl space-y-4">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-navy-700 gap-2">
-          <div class="flex items-center gap-2.5">
-            <div class="w-10 h-10 rounded-lg bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400">
-              <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      <!-- PANEL 1: Google Sheets -->
+      <div id="subtab-panel-sheets" role="tabpanel" aria-labelledby="subtab-btn-sheets" class="set-panel bg-navy-800 border border-navy-700 rounded-xl">
+        <div class="set-section flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+          <div class="min-w-0">
+            <div class="flex flex-wrap items-center gap-2">
+              <h2 class="pos-h text-slate-100" id="lbl-sheets-card-title">Google Sheets</h2>
+              <span id="sheets-config-status" class="set-status">Belum diatur</span>
             </div>
-            <div>
-              <h3 class="text-base sm:text-lg font-bold text-white flex items-center gap-2">
-                <span id="lbl-sheets-card-title">Integrasi Google Sheets (Pencatatan Cloud Otomatis)</span>
-                <span class="px-2 py-0.5 rounded-full text-[10px] bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30">AKTIF</span>
-              </h3>
-              <p class="text-xs text-slate-400" id="lbl-sheets-card-subtitle">Mencatat data transaksi langsung ke tab tanggal pada spreadsheet Anda</p>
-            </div>
+            <p class="set-desc" id="lbl-sheets-card-subtitle">Mencatat data transaksi langsung ke tab tanggal pada spreadsheet Anda</p>
           </div>
-          <a href="https://docs.google.com/spreadsheets/d/15lmFybUAOq4M8qpza8fPKWS-OfwWwck5L_b45eZ3oBo/edit?usp=sharing" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-950/70 border border-emerald-500/50 text-emerald-300 text-xs font-semibold hover:bg-emerald-900/60 transition-colors w-fit shadow-sm">
-            <span>Buka Google Sheets</span>
-            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          <a href="https://docs.google.com/spreadsheets/d/15lmFybUAOq4M8qpza8fPKWS-OfwWwck5L_b45eZ3oBo/edit?usp=sharing" target="_blank" rel="noopener noreferrer" class="set-btn set-btn--secondary shrink-0 self-start">
+            <span>Buka spreadsheet</span>
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
           </a>
         </div>
 
-        <!-- Target Info Box -->
-        <div class="bg-navy-900/90 border border-navy-700/80 rounded-lg p-3 text-xs space-y-1.5 text-slate-300">
-          <div class="flex items-center justify-between">
-            <span class="text-slate-400" id="lbl-sheets-target-doc">Spreadsheet Target:</span>
-            <span class="font-bold text-emerald-400 font-mono">Oktober MC Skyline</span>
-          </div>
-          <div class="flex items-center justify-between">
-            <span class="text-slate-400" id="lbl-sheets-rule-mapping">Sistem Tab:</span>
-            <span class="text-slate-200">Tab "1" sampai "31" sesuai tanggal transaksi (Beli di BUY, Jual di SELL)</span>
-          </div>
-        </div>
-
-        <!-- Settings Form Fields -->
-        <div class="space-y-3 text-xs sm:text-sm">
-          <div class="bg-navy-900/60 p-3 rounded-lg border border-navy-700/60">
-            <div class="flex items-center justify-between mb-1.5">
-              <label class="block text-slate-100 font-bold text-sm" id="lbl-set-sheets-url">URL Web App Google Apps Script</label>
-              <button type="button" id="btn-open-sheets-guide-link" class="text-xs text-brand hover:underline font-semibold flex items-center gap-1">
-                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                <span>Panduan Buat URL Web App</span>
-              </button>
+        <div class="set-section space-y-5">
+          <div>
+            <div class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 mb-1.5">
+              <label for="setting-sheets-url" class="pos-label !mb-0" id="lbl-set-sheets-url">URL Web App Google Apps Script</label>
+              <button type="button" id="btn-open-sheets-guide-link" class="set-link">Panduan & salin script</button>
             </div>
-            <input type="url" id="setting-sheets-url" placeholder="https://script.google.com/macros/s/AKfycb.../exec" class="w-full bg-navy-950 border-2 border-emerald-500/70 rounded-xl px-3.5 py-2.5 text-slate-100 font-mono text-xs sm:text-sm focus:outline-none focus:border-brand shadow-inner">
-            <p class="text-[11px] text-slate-400 mt-1">Tempelkan URL Web App yang Anda dapatkan dari menu Extensions > Apps Script di Google Sheets Anda.</p>
-            <div class="flex items-center gap-1.5 mt-2 text-[11px] text-emerald-400 font-medium">
-              <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-              <span id="lbl-sheets-persisted-note">Tersimpan permanen: Cukup simpan sekali, URL tidak perlu dimasukkan lagi setiap login.</span>
+            <input type="url" id="setting-sheets-url" placeholder="https://script.google.com/macros/s/AKfycb.../exec" class="pos-input w-full bg-navy-900 border border-navy-600 rounded-lg text-slate-100 placeholder-slate-500 font-mono !text-[14px]">
+            <p class="set-hint">Dari Extensions › Apps Script › Deploy, berakhiran <code class="font-mono text-slate-300">/exec</code>. <span id="lbl-sheets-persisted-note">Cukup disimpan sekali; tidak perlu diisi ulang saat login.</span></p>
+          </div>
+
+          <div class="flex items-start gap-3">
+            <input type="checkbox" id="setting-sheets-auto-sync" checked class="mt-0.5 w-5 h-5 shrink-0 text-brand bg-navy-900 border-navy-600 rounded focus:ring-brand cursor-pointer">
+            <label for="setting-sheets-auto-sync" class="text-sm text-slate-200 cursor-pointer select-none" id="lbl-set-sheets-auto-sync">Otomatis kirim transaksi ke Google Sheets setiap kali transaksi disimpan atau dicetak</label>
+          </div>
+
+          <dl class="set-dl">
+            <div>
+              <dt id="lbl-sheets-target-doc">Spreadsheet</dt>
+              <dd class="font-mono text-slate-100">Oktober MC Skyline</dd>
             </div>
-          </div>
-
-          <div class="flex items-center gap-2 pt-1 px-1">
-            <input type="checkbox" id="setting-sheets-auto-sync" checked class="w-4 h-4 text-brand bg-navy-900 border-navy-600 rounded focus:ring-brand cursor-pointer">
-            <label for="setting-sheets-auto-sync" class="text-xs text-slate-300 cursor-pointer select-none font-medium" id="lbl-set-sheets-auto-sync">
-              Otomatis kirim transaksi ke Google Sheets setiap kali transaksi disimpan atau dicetak
-            </label>
-          </div>
+            <div>
+              <dt id="lbl-sheets-rule-mapping">Tab</dt>
+              <dd>Tab "1"–"31" sesuai tanggal transaksi. Beli masuk BUY, jual masuk SELL.</dd>
+            </div>
+          </dl>
         </div>
 
-        <!-- Action Buttons -->
-        <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-navy-700">
-          <button type="button" id="btn-save-sheets-config" class="py-2.5 px-4 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-navy-950 font-bold flex items-center gap-1.5 transition-all text-xs shadow-md">
-            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-            <span id="lbl-btn-sheets-save">Simpan URL & Pengaturan</span>
-          </button>
-          <button type="button" id="btn-sheets-test" class="py-2.5 px-4 rounded-lg bg-navy-700 hover:bg-navy-600 text-slate-200 font-semibold flex items-center gap-1.5 transition-all text-xs">
-            <svg class="w-4 h-4 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M22 12h-4M6 12H2M12 6V2M12 22v-4"/></svg>
-            <span id="lbl-btn-sheets-test">Tes Koneksi Google Sheets</span>
-          </button>
-          <button type="button" id="btn-sheets-sync-today" class="py-2.5 px-4 rounded-lg bg-navy-700 hover:bg-navy-600 text-slate-200 font-semibold flex items-center gap-1.5 transition-all text-xs">
-            <svg class="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            <span id="lbl-btn-sheets-sync-today">Backup Hari Ini ke Google Sheets</span>
-          </button>
-          <button type="button" id="btn-open-sheets-guide" class="py-2.5 px-4 rounded-lg bg-navy-900 hover:bg-navy-700 border border-navy-600 text-brand font-semibold flex items-center gap-1.5 transition-all text-xs">
-            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-            <span id="lbl-btn-sheets-guide">Panduan 1 Menit & Salin Script</span>
-          </button>
+        <div class="set-section space-y-3">
+          <div class="flex flex-wrap items-center gap-2">
+            <button type="button" id="btn-save-sheets-config" class="set-btn set-btn--primary">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+              <span id="lbl-btn-sheets-save">Simpan URL & Pengaturan</span>
+            </button>
+            <button type="button" id="btn-sheets-test" class="set-btn set-btn--secondary">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M22 12h-4M6 12H2M12 6V2M12 22v-4"/></svg>
+              <span id="lbl-btn-sheets-test">Tes koneksi</span>
+            </button>
+            <button type="button" id="btn-sheets-sync-today" class="set-btn set-btn--secondary">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <span id="lbl-btn-sheets-sync-today">Kirim transaksi hari ini</span>
+            </button>
+          </div>
+          <!-- Dynamic Status Alert Box -->
+          <div id="sheets-status-alert" class="hidden" role="status"></div>
         </div>
-
-        <!-- Dynamic Status Alert Box -->
-        <div id="sheets-status-alert" class="hidden p-3 rounded-lg text-xs border"></div>
       </div>
 
-      <!-- PANEL 2: Toko & Struk 58mm (HIDDEN DEFAULT, SWITCHABLE VIA TAB) -->
-      <div id="subtab-panel-store" class="hidden bg-navy-800 border border-navy-700 rounded-xl p-4 sm:p-6 max-w-3xl mx-auto shadow-sm">
-        <h2 class="text-base font-bold text-white mb-4 pb-2 border-b border-navy-700 flex items-center gap-2">
-          <svg class="w-5 h-5 text-brand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-          <span id="lbl-settings-title">Pengaturan Toko & Struk 58mm</span>
-        </h2>
-
-        <form id="form-settings" class="space-y-4 text-xs sm:text-sm">
-          <!-- ==================== PENGATURAN LOGO & FAVICON ==================== -->
-          <div class="bg-navy-900/60 p-4 rounded-xl border border-navy-700 space-y-3">
-            <div class="flex items-center justify-between pb-2 border-b border-navy-700/80">
-              <div class="flex items-center gap-2">
-                <div class="w-8 h-8 rounded-lg bg-brand/10 border border-brand/30 flex items-center justify-center text-brand">
-                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-                </div>
-                <div>
-                  <h3 class="font-bold text-slate-100 text-xs sm:text-sm" id="lbl-logo-title">Logo Aplikasi & Favicon Browser</h3>
-                  <p class="text-[11px] text-slate-400" id="lbl-logo-sub">Ubah logo sistem kasir, ikon tab browser (favicon), dan logo struk</p>
-                </div>
-              </div>
-              <span id="logo-status-tag" class="text-[10px] px-2 py-0.5 rounded-full bg-brand/20 text-brand font-semibold border border-brand/30">Logo Skyline</span>
+      <!-- PANEL 2: Profil Toko & Struk -->
+      <div id="subtab-panel-store" role="tabpanel" aria-labelledby="subtab-btn-store" class="hidden set-panel bg-navy-800 border border-navy-700 rounded-xl">
+        <form id="form-settings">
+          <!-- Identitas toko -->
+          <div class="set-section space-y-4">
+            <div>
+              <h2 class="pos-h text-slate-100" id="lbl-settings-title">Pengaturan Toko & Struk</h2>
+              <p class="set-desc">Data ini tercetak di setiap struk transaksi.</p>
             </div>
-
-            <!-- Preview Card -->
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
-              <!-- Logo Preview Dark & Light -->
-              <div class="flex flex-col items-center justify-center p-3 rounded-lg bg-navy-950 border border-navy-800 text-center">
-                <span class="text-[10px] text-slate-400 mb-1.5 font-medium" id="lbl-logo-preview-dark">Tampilan Dark Theme</span>
-                <div class="w-14 h-14 rounded-xl bg-navy-900 border border-navy-700 flex items-center justify-center p-2 overflow-hidden shadow-inner">
-                  <img id="setting-logo-preview-dark" src="/assets/logo.svg" alt="Preview Dark" class="w-full h-full object-contain">
-                </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div class="sm:col-span-2">
+                <label for="setting-store-name" class="pos-label" id="lbl-set-store-name">Nama Money Changer</label>
+                <input type="text" id="setting-store-name" value="Skyline Exchange" class="pos-input w-full bg-navy-900 border border-navy-600 rounded-lg text-slate-100 font-medium">
               </div>
-
-              <div class="flex flex-col items-center justify-center p-3 rounded-lg bg-slate-100 border border-slate-300 text-center">
-                <span class="text-[10px] text-slate-600 mb-1.5 font-medium" id="lbl-logo-preview-light">Tampilan Light Theme</span>
-                <div class="w-14 h-14 rounded-xl bg-white border border-slate-200 flex items-center justify-center p-2 overflow-hidden shadow-sm">
-                  <img id="setting-logo-preview-light" src="/assets/logo.svg" alt="Preview Light" class="w-full h-full object-contain">
-                </div>
+              <div class="sm:col-span-2">
+                <label for="setting-store-address" class="pos-label" id="lbl-set-store-addr">Alamat Outlet / Counter</label>
+                <input type="text" id="setting-store-address" value="Jl. Bypass Ngurah Rai No. 4X, Kuta, Bali" class="pos-input w-full bg-navy-900 border border-navy-600 rounded-lg text-slate-100">
               </div>
-
-              <!-- Favicon Browser Tab Mimic Preview -->
-              <div class="flex flex-col items-center justify-center p-3 rounded-lg bg-navy-950 border border-navy-800 text-center">
-                <span class="text-[10px] text-slate-400 mb-1.5 font-medium" id="lbl-logo-favicon-tab">Ikon Tab Browser (Favicon)</span>
-                <div class="w-full py-1.5 px-2.5 rounded-md bg-navy-850 border border-navy-700 flex items-center gap-2 max-w-[180px]">
-                  <img id="setting-favicon-preview" src="/assets/favicon.svg" alt="Favicon" class="w-4 h-4 object-contain shrink-0">
-                  <span class="text-[10px] text-slate-200 font-medium truncate">Skyline Exchange - POS</span>
+              <div>
+                <label for="setting-store-phone" class="pos-label" id="lbl-set-store-phone">No. WhatsApp & Telepon</label>
+                <input type="text" id="setting-store-phone" value="+6285-122-777-970" class="pos-input w-full bg-navy-900 border border-navy-600 rounded-lg text-slate-100 num">
+              </div>
+              <div>
+                <label for="setting-default-teller" class="pos-label" id="lbl-set-teller">Nama Teller Aktif di Kasir</label>
+                <input type="text" id="setting-default-teller" value="TELLER 01" class="pos-input w-full uppercase bg-navy-900 border border-navy-600 rounded-lg text-slate-100 font-mono font-bold">
+              </div>
+              <div class="sm:col-span-2">
+                <label for="setting-store-permit" class="pos-label" id="lbl-set-permit">Nomor Izin KUPVA / Bank Indonesia</label>
+                <input type="text" id="setting-store-permit" placeholder="Contoh: KUPVA BB No. 12/34/BI/2026 (boleh kosong)" class="pos-input w-full bg-navy-900 border border-navy-600 rounded-lg text-slate-100 placeholder-slate-500">
+                <div class="flex items-center gap-2.5 mt-2">
+                  <input type="checkbox" id="setting-show-permit" class="w-5 h-5 shrink-0 text-brand bg-navy-900 border-navy-600 rounded focus:ring-brand cursor-pointer">
+                  <label for="setting-show-permit" class="text-sm text-slate-300 cursor-pointer select-none" id="lbl-set-show-permit">Tampilkan di Struk (Saat ini disembunyikan)</label>
                 </div>
               </div>
             </div>
+          </div>
 
-            <!-- Upload Controls -->
-            <div class="flex flex-wrap items-center gap-2 pt-1">
-              <label class="py-2 px-3.5 rounded-lg bg-brand hover:bg-brand-hover text-navy-950 font-bold text-xs flex items-center gap-1.5 cursor-pointer transition-all shadow-sm">
-                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <!-- Logo aplikasi & favicon -->
+          <div class="set-section space-y-4">
+            <div class="flex flex-wrap items-start justify-between gap-2">
+              <div class="min-w-0">
+                <h3 class="pos-h text-slate-100" id="lbl-logo-title">Logo Aplikasi & Favicon Browser</h3>
+                <p class="set-desc" id="lbl-logo-sub">Ubah logo sistem kasir, ikon tab browser (favicon), dan logo struk</p>
+              </div>
+              <span id="logo-status-tag" class="set-status">Logo Default Skyline</span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div class="flex flex-col items-center gap-2 p-3 rounded-lg bg-navy-950 border border-navy-700 text-center">
+                <span class="text-xs font-medium text-slate-400" id="lbl-logo-preview-dark">Tampilan Dark Theme</span>
+                <div class="w-14 h-14 rounded-xl bg-navy-900 border border-navy-700 flex items-center justify-center p-2 overflow-hidden">
+                  <img id="setting-logo-preview-dark" src="/assets/logo.svg" alt="Pratinjau logo di tema gelap" class="w-full h-full object-contain">
+                </div>
+              </div>
+              <div class="flex flex-col items-center gap-2 p-3 rounded-lg bg-slate-100 border border-slate-300 text-center">
+                <span class="text-xs font-medium text-slate-600" id="lbl-logo-preview-light">Tampilan Light Theme</span>
+                <div class="w-14 h-14 rounded-xl bg-white border border-slate-200 flex items-center justify-center p-2 overflow-hidden">
+                  <img id="setting-logo-preview-light" src="/assets/logo.svg" alt="Pratinjau logo di tema terang" class="w-full h-full object-contain">
+                </div>
+              </div>
+              <div class="flex flex-col items-center gap-2 p-3 rounded-lg bg-navy-950 border border-navy-700 text-center">
+                <span class="text-xs font-medium text-slate-400" id="lbl-logo-favicon-tab">Ikon Tab Browser (Favicon)</span>
+                <div class="w-full max-w-[180px] h-14 flex items-center">
+                  <div class="w-full py-1.5 px-2.5 rounded-md bg-navy-850 border border-navy-700 flex items-center gap-2">
+                    <img id="setting-favicon-preview" src="/assets/favicon.svg" alt="Pratinjau favicon" class="w-4 h-4 object-contain shrink-0">
+                    <span class="text-xs text-slate-200 font-medium truncate">Skyline Exchange - POS</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2">
+              <label class="set-btn set-btn--secondary cursor-pointer focus-within:ring-2 focus-within:ring-brand">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                 <span id="lbl-btn-upload-logo">Upload Logo / Gambar Baru</span>
-                <input type="file" id="input-store-logo" accept="image/png,image/jpeg,image/svg+xml,image/webp,image/x-icon,image/gif" class="hidden">
+                <input type="file" id="input-store-logo" accept="image/png,image/jpeg,image/svg+xml,image/webp,image/x-icon,image/gif" class="sr-only">
               </label>
-
-              <button type="button" id="btn-reset-store-logo" class="py-2 px-3 rounded-lg bg-navy-700 hover:bg-navy-600 text-slate-300 font-medium text-xs transition-colors flex items-center gap-1.5 border border-navy-600">
-                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+              <button type="button" id="btn-reset-store-logo" class="set-btn set-btn--ghost">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
                 <span id="lbl-btn-reset-logo">Gunakan Logo Default Skyline</span>
               </button>
             </div>
+            <p class="set-hint !mt-2" id="lbl-logo-file-help">Mendukung file: PNG, SVG, JPG, WebP, ICO (Otomatis diterapkan ke logo header, login, dan favicon browser).</p>
+          </div>
 
-            <div class="pt-2 border-t border-navy-700/60 text-[11px] text-slate-400">
-              <p id="lbl-logo-file-help">Mendukung file: <strong>PNG, SVG, JPG, WebP, ICO</strong> (Otomatis diterapkan ke logo header, login, dan favicon browser).</p>
+          <!-- Struk thermal -->
+          <div class="set-section space-y-5">
+            <div>
+              <h3 class="pos-h text-slate-100">Struk thermal</h3>
+              <p class="set-desc">Ukuran kertas, logo, dan catatan di bagian bawah struk.</p>
             </div>
 
-            <!-- DEDICATED CARD: PENGATURAN LOGO DI KERTAS STRUK THERMAL -->
-            <div class="mt-4 pt-4 border-t border-navy-750 bg-navy-950/70 p-3.5 sm:p-4 rounded-xl border border-navy-700/80 space-y-3.5">
-              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-navy-800">
-                <div class="flex items-center gap-2">
-                  <div class="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400">
-                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>
-                  </div>
-                  <div>
-                    <h4 class="font-bold text-white text-xs sm:text-sm flex items-center gap-2">
-                      <span id="lbl-rcpt-logo-heading">Logo di Kertas Struk Thermal (Print Out)</span>
-                      <span id="setting-rcpt-logo-status" class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-semibold border border-emerald-500/30">Tampil di Kertas Struk (Aktif)</span>
-                    </h4>
-                    <p class="text-[11px] text-slate-400" id="lbl-rcpt-logo-desc">Cetak logo di bagian atas nota struk kasir (berlaku untuk cetak via Windows Printer Driver, USB, dan Bluetooth)</p>
-                  </div>
-                </div>
-              </div>
-
-              <div class="grid grid-cols-1 sm:grid-cols-12 gap-3.5 items-center">
-                <!-- Controls: Toggle & Ukuran -->
-                <div class="sm:col-span-7 space-y-3">
-                  <!-- Toggle Switch -->
-                  <label class="flex items-center gap-3 p-2.5 rounded-lg bg-navy-900 border border-navy-750 cursor-pointer hover:border-brand/40 transition-colors">
-                    <input type="checkbox" id="setting-show-rcpt-logo" checked class="w-5 h-5 text-brand bg-navy-950 border-navy-600 rounded focus:ring-brand focus:ring-offset-0">
-                    <div>
-                      <span class="block text-xs font-bold text-slate-100" id="lbl-show-rcpt-logo">Cetak Logo di Kertas Struk Thermal</span>
-                      <span class="block text-[11px] text-slate-400" id="lbl-show-rcpt-logo-sub">Saat aktif, logo toko otomatis tercetak di setiap lembar struk transaksi</span>
-                    </div>
-                  </label>
-
-                  <!-- Ukuran Logo di Kertas Struk -->
-                  <div class="space-y-1.5">
-                    <label class="block text-[11px] font-semibold text-slate-300" id="lbl-rcpt-logo-size">Ukuran Logo di Kertas Struk:</label>
-                    <div class="grid grid-cols-3 gap-2">
-                      <label class="flex items-center justify-center gap-1.5 p-2 rounded-lg bg-navy-900 border border-navy-750 text-xs font-medium text-slate-300 cursor-pointer hover:border-brand/40 transition-all has-[:checked]:border-brand has-[:checked]:bg-brand/10 has-[:checked]:text-brand">
-                        <input type="radio" name="setting-rcpt-logo-size" value="small" class="hidden">
-                        <span>Kecil (12mm)</span>
-                      </label>
-                      <label class="flex items-center justify-center gap-1.5 p-2 rounded-lg bg-navy-900 border border-navy-750 text-xs font-medium text-slate-300 cursor-pointer hover:border-brand/40 transition-all has-[:checked]:border-brand has-[:checked]:bg-brand/10 has-[:checked]:text-brand">
-                        <input type="radio" name="setting-rcpt-logo-size" value="medium" checked class="hidden">
-                        <span>Standar (16mm)</span>
-                      </label>
-                      <label class="flex items-center justify-center gap-1.5 p-2 rounded-lg bg-navy-900 border border-navy-750 text-xs font-medium text-slate-300 cursor-pointer hover:border-brand/40 transition-all has-[:checked]:border-brand has-[:checked]:bg-brand/10 has-[:checked]:text-brand">
-                        <input type="radio" name="setting-rcpt-logo-size" value="large" class="hidden">
-                        <span>Besar (22mm)</span>
-                      </label>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Mini Receipt Preview Mockup -->
-                <div class="sm:col-span-5 flex flex-col items-center justify-center">
-                  <span class="text-[10px] text-slate-400 mb-1.5 font-medium flex items-center gap-1">
-                    <svg class="w-3.5 h-3.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                    <span>Pratinjau di Kertas Struk</span>
+            <fieldset>
+              <legend class="pos-label" id="lbl-set-paper-size">Ukuran Kertas Thermal Printer</legend>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <label class="set-choice">
+                  <input type="radio" name="setting-paper-size" id="setting-paper-80" value="80" class="mt-0.5 w-4 h-4 text-brand bg-navy-900 border-navy-600 focus:ring-brand" checked>
+                  <span>
+                    <span class="block text-sm font-semibold text-slate-100" id="lbl-paper-80-title">80 mm (Standar Kasir)</span>
+                    <span class="block text-[13px] text-slate-400" id="lbl-paper-80-desc">Lebar 48 kolom, tampilan lega & auto-cutter</span>
                   </span>
-                  <div class="w-full max-w-[210px] bg-white p-3 rounded-lg shadow-md border border-slate-300 text-center font-mono text-black text-[10px] leading-tight select-none">
-                    <div id="setting-mini-rcpt-wrap" class="flex justify-center mb-1 text-center">
-                      <img id="setting-mini-rcpt-logo" src="/assets/logo.svg" alt="Logo Kertas" class="max-h-10 max-w-[120px] object-contain filter grayscale contrast-200">
-                    </div>
-                    <div class="font-bold text-xs uppercase tracking-tight">SKYLINE EXCHANGE</div>
-                    <div class="text-[9px] text-gray-700">Jl. Bypass Ngurah Rai No. 4X, Bali</div>
-                    <div class="text-[8px] text-gray-500 my-1">------------------------------</div>
-                    <div class="text-[8px] text-gray-500 italic">[ Transaksi Valas ]</div>
+                </label>
+                <label class="set-choice">
+                  <input type="radio" name="setting-paper-size" id="setting-paper-58" value="58" class="mt-0.5 w-4 h-4 text-brand bg-navy-900 border-navy-600 focus:ring-brand">
+                  <span>
+                    <span class="block text-sm font-semibold text-slate-100" id="lbl-paper-58-title">58 mm (Printer Mini / Mobile)</span>
+                    <span class="block text-[13px] text-slate-400" id="lbl-paper-58-desc">Lebar 32 kolom, compact untuk printer Bluetooth kecil</span>
+                  </span>
+                </label>
+              </div>
+            </fieldset>
+
+            <div class="grid grid-cols-1 sm:grid-cols-12 gap-5 items-start">
+              <div class="sm:col-span-7 space-y-4">
+                <div class="flex flex-wrap items-center gap-2">
+                  <span class="text-sm font-semibold text-slate-100" id="lbl-rcpt-logo-heading">Logo di Kertas Struk Thermal (Print Out)</span>
+                  <span id="setting-rcpt-logo-status" class="set-status set-status--ok">Tampil di Kertas Struk (Aktif)</span>
+                </div>
+                <p class="set-hint !mt-1" id="lbl-rcpt-logo-desc">Cetak logo di bagian atas nota struk kasir (berlaku untuk cetak via Windows Printer Driver, USB, dan Bluetooth)</p>
+
+                <label class="flex items-start gap-3 cursor-pointer">
+                  <input type="checkbox" id="setting-show-rcpt-logo" checked class="mt-0.5 w-5 h-5 shrink-0 text-brand bg-navy-900 border-navy-600 rounded focus:ring-brand">
+                  <span>
+                    <span class="block text-sm font-semibold text-slate-100" id="lbl-show-rcpt-logo">Cetak Logo di Kertas Struk Thermal</span>
+                    <span class="block text-[13px] text-slate-400" id="lbl-show-rcpt-logo-sub">Saat aktif, logo toko otomatis tercetak di setiap lembar struk transaksi</span>
+                  </span>
+                </label>
+
+                <fieldset>
+                  <legend class="pos-label" id="lbl-rcpt-logo-size">Ukuran Logo di Kertas Struk:</legend>
+                  <div class="set-seg">
+                    <label><input type="radio" name="setting-rcpt-logo-size" value="small" class="sr-only"><span>Kecil (12mm)</span></label>
+                    <label><input type="radio" name="setting-rcpt-logo-size" value="medium" checked class="sr-only"><span>Standar (16mm)</span></label>
+                    <label><input type="radio" name="setting-rcpt-logo-size" value="large" class="sr-only"><span>Besar (22mm)</span></label>
                   </div>
-                </div>
+                </fieldset>
               </div>
-            </div>
-          </div>
-          <div>
-            <label class="block text-slate-300 font-semibold mb-1" id="lbl-set-store-name">Nama Money Changer</label>
-            <input type="text" id="setting-store-name" value="Skyline Exchange" class="w-full bg-navy-900 border border-navy-600 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-brand font-medium">
-          </div>
 
-          <div>
-            <label class="block text-slate-300 font-semibold mb-1" id="lbl-set-store-addr">Alamat Outlet / Counter</label>
-            <input type="text" id="setting-store-address" value="Jl. Bypass Ngurah Rai No. 4X, Kuta, Bali" class="w-full bg-navy-900 border border-navy-600 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-brand">
-          </div>
-
-          <div>
-            <label class="block text-slate-300 font-semibold mb-1" id="lbl-set-store-phone">No. WhatsApp & Telepon</label>
-            <input type="text" id="setting-store-phone" value="+6285-122-777-970" class="w-full bg-navy-900 border border-navy-600 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-brand">
-          </div>
-
-          <div class="pt-2 border-t border-navy-700/80">
-            <label class="block text-slate-300 font-semibold mb-2" id="lbl-set-paper-size">Ukuran Kertas Thermal Printer</label>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <label class="flex items-center gap-2.5 p-3 rounded-xl bg-navy-900 border border-navy-600 cursor-pointer hover:border-brand transition-colors has-[:checked]:border-brand has-[:checked]:bg-brand/10">
-                <input type="radio" name="setting-paper-size" id="setting-paper-80" value="80" class="text-brand bg-navy-900 border-navy-600 focus:ring-brand" checked>
-                <div>
-                  <div class="font-bold text-slate-100 text-xs sm:text-sm" id="lbl-paper-80-title">80 mm (Standar Kasir)</div>
-                  <div class="text-[11px] text-slate-400" id="lbl-paper-80-desc">Lebar 48 kolom, tampilan lega & auto-cutter</div>
-                </div>
-              </label>
-              <label class="flex items-center gap-2.5 p-3 rounded-xl bg-navy-900 border border-navy-600 cursor-pointer hover:border-brand transition-colors has-[:checked]:border-brand has-[:checked]:bg-brand/10">
-                <input type="radio" name="setting-paper-size" id="setting-paper-58" value="58" class="text-brand bg-navy-900 border-navy-600 focus:ring-brand">
-                <div>
-                  <div class="font-bold text-slate-100 text-xs sm:text-sm" id="lbl-paper-58-title">58 mm (Printer Mini / Mobile)</div>
-                  <div class="text-[11px] text-slate-400" id="lbl-paper-58-desc">Lebar 32 kolom, compact untuk printer Bluetooth kecil</div>
-                </div>
-              </label>
-            </div>
-          </div>
-
-          <!-- Bluetooth, USB & Serial Thermal Printer Diagnostic & Test Section -->
-          <div class="pt-3 border-t border-navy-700/80 bg-navy-900/60 p-4 rounded-xl border border-navy-700">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
-              <div class="flex items-center gap-2">
-                <div class="w-8 h-8 rounded-lg bg-brand/10 border border-brand/30 flex items-center justify-center text-brand">
-                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="7" y="2" width="10" height="7" rx="1"/><rect x="5" y="9" width="14" height="11" rx="2"/><line x1="9" y1="5" x2="9" y2="7"/><line x1="15" y1="5" x2="15" y2="7"/></svg>
-                </div>
-                <div>
-                  <div class="font-bold text-slate-100 text-xs sm:text-sm" id="lbl-printer-diag-title">Pengujian & Status Printer Thermal (Bluetooth, USB & Serial COM)</div>
-                  <div class="text-[11px] text-slate-400" id="lbl-printer-diag-sub">Periksa koneksi printer Bluetooth, kabel USB, atau Serial COM yang sudah Paired di Windows</div>
-                </div>
-              </div>
-              <div class="flex items-center gap-2 flex-wrap">
-                <!-- BT Status Badge -->
-                <div id="settings-bt-status-badge" class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-700/60 text-slate-300 border border-slate-600 flex items-center gap-1.5">
-                  <span class="w-2 h-2 rounded-full bg-slate-400"></span>
-                  <span id="settings-bt-status-text">BT: Belum Terhubung</span>
-                </div>
-                <!-- USB Status Badge -->
-                <div id="settings-usb-status-badge" class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-700/60 text-slate-300 border border-slate-600 flex items-center gap-1.5">
-                  <span class="w-2 h-2 rounded-full bg-slate-400"></span>
-                  <span id="settings-usb-status-text">USB: Belum Terhubung</span>
-                </div>
-                <!-- Serial / COM Status Badge -->
-                <div id="settings-serial-status-badge" class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-700/60 text-slate-300 border border-slate-600 flex items-center gap-1.5">
-                  <span class="w-2 h-2 rounded-full bg-slate-400"></span>
-                  <span id="settings-serial-status-text">Serial COM: Belum Terhubung</span>
+              <!-- Mini receipt preview -->
+              <div class="sm:col-span-5 flex flex-col items-center gap-2">
+                <span class="text-xs font-medium text-slate-400">Pratinjau di kertas struk</span>
+                <div class="w-full max-w-[210px] bg-white p-3 rounded-lg border border-slate-300 text-center font-mono text-black text-[10px] leading-tight select-none" aria-hidden="true">
+                  <div id="setting-mini-rcpt-wrap" class="flex justify-center mb-1 text-center">
+                    <img id="setting-mini-rcpt-logo" src="/assets/logo.svg" alt="" class="max-h-10 max-w-[120px] object-contain filter grayscale contrast-200">
+                  </div>
+                  <div class="font-bold text-xs uppercase tracking-tight">SKYLINE EXCHANGE</div>
+                  <div class="text-[9px] text-gray-700">Jl. Bypass Ngurah Rai No. 4X, Bali</div>
+                  <div class="text-[8px] text-gray-500 my-1">------------------------------</div>
+                  <div class="text-[8px] text-gray-500 italic">[ Transaksi Valas ]</div>
                 </div>
               </div>
             </div>
 
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-              <button type="button" id="btn-settings-bt-connect" class="py-2.5 px-3 rounded-lg bg-navy-800 hover:bg-navy-700 border border-brand/40 text-brand text-xs font-bold flex items-center justify-center gap-1.5 transition-colors">
-                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6.5 6.5l11 11L12 23V1l5.5 5.5-11 11"/></svg>
+            <div class="grid grid-cols-1 gap-4">
+              <div>
+                <label for="setting-disclaimer-1" class="pos-label" id="lbl-set-disc1">Catatan Disclaimer 1 Struk</label>
+                <input type="text" id="setting-disclaimer-1" value="Periksa fisik uang sebelum meninggalkan kasir." class="pos-input w-full bg-navy-900 border border-navy-600 rounded-lg text-slate-100">
+              </div>
+              <div>
+                <label for="setting-disclaimer-2" class="pos-label" id="lbl-set-disc2">Catatan Disclaimer 2 Struk</label>
+                <input type="text" id="setting-disclaimer-2" value="Uang yang sudah ditukar tidak dapat dikembalikan." class="pos-input w-full bg-navy-900 border border-navy-600 rounded-lg text-slate-100">
+              </div>
+            </div>
+          </div>
+
+          <!-- Printer thermal -->
+          <div class="set-section space-y-4">
+            <div>
+              <h3 class="pos-h text-slate-100" id="lbl-printer-diag-title">Printer thermal</h3>
+              <p class="set-desc" id="lbl-printer-diag-sub">Hubungkan dan tes printer Bluetooth, USB, atau Serial COM.</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+              <div id="settings-bt-status-badge" class="px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-700/60 text-slate-300 border border-slate-600 flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-slate-400"></span>
+                <span id="settings-bt-status-text">BT: Belum Terhubung</span>
+              </div>
+              <div id="settings-usb-status-badge" class="px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-700/60 text-slate-300 border border-slate-600 flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-slate-400"></span>
+                <span id="settings-usb-status-text">USB: Belum Terhubung</span>
+              </div>
+              <div id="settings-serial-status-badge" class="px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-700/60 text-slate-300 border border-slate-600 flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-slate-400"></span>
+                <span id="settings-serial-status-text">Serial COM: Belum Terhubung</span>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+              <button type="button" id="btn-settings-bt-connect" class="set-btn set-btn--secondary w-full">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M6.5 6.5l11 11L12 23V1l5.5 5.5-11 11"/></svg>
                 <span id="lbl-btn-settings-connect">Hubungkan BT</span>
               </button>
-
-              <button type="button" id="btn-settings-usb-connect" class="py-2.5 px-3 rounded-lg bg-navy-800 hover:bg-navy-700 border border-brand/40 text-brand text-xs font-bold flex items-center justify-center gap-1.5 transition-colors">
-                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="7" y="2" width="10" height="7" rx="1"/><rect x="5" y="9" width="14" height="11" rx="2"/><line x1="9" y1="5" x2="9" y2="7"/><line x1="15" y1="5" x2="15" y2="7"/></svg>
+              <button type="button" id="btn-settings-usb-connect" class="set-btn set-btn--secondary w-full">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="7" y="2" width="10" height="7" rx="1"/><rect x="5" y="9" width="14" height="11" rx="2"/><line x1="9" y1="5" x2="9" y2="7"/><line x1="15" y1="5" x2="15" y2="7"/></svg>
                 <span id="lbl-btn-settings-usb-connect">Hubungkan USB</span>
               </button>
-
-              <button type="button" id="btn-settings-serial-connect" class="py-2.5 px-3 rounded-lg bg-navy-800 hover:bg-navy-700 border border-brand/40 text-brand text-xs font-bold flex items-center justify-center gap-1.5 transition-colors" title="Hubungkan Printer Bluetooth Paired atau USB Serial via Port COM">
-                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M3 12h3m12 0h3M12 3v3m0 12v3"/></svg>
+              <button type="button" id="btn-settings-serial-connect" class="set-btn set-btn--secondary w-full" title="Hubungkan Printer Bluetooth Paired atau USB Serial via Port COM">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M3 12h3m12 0h3M12 3v3m0 12v3"/></svg>
                 <span id="lbl-btn-settings-serial-connect">Hubungkan Serial / COM</span>
               </button>
-
-              <button type="button" id="btn-settings-browser-test" class="py-2.5 px-3 rounded-lg bg-navy-800 hover:bg-navy-700 border border-navy-600 text-slate-200 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors">
-                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+              <button type="button" id="btn-settings-browser-test" class="set-btn set-btn--secondary w-full">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
                 <span id="lbl-btn-settings-test-sys">Tes Cetak USB / Driver</span>
               </button>
             </div>
 
-            <div class="mt-3 pt-3 border-t border-navy-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <p class="text-[11px] text-slate-400 leading-relaxed" id="lbl-printer-diag-note">
-                Printer Bluetooth sudah berstatus <strong>"Paired"</strong> di Windows? Hubungkan lewat <strong>Serial / COM</strong> atau langsung cetak lewat <strong>Tes Cetak USB / Driver</strong>.
-              </p>
-              <button type="button" id="btn-open-printer-guide" class="shrink-0 px-3 py-1.5 rounded-lg bg-navy-800 hover:bg-navy-700 text-brand border border-brand/40 text-xs font-bold flex items-center gap-1.5 transition-colors">
-                <span>❓</span>
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <p class="set-hint !mt-0 max-w-prose" id="lbl-printer-diag-note">Printer Bluetooth sudah berstatus <strong>"Paired"</strong> di Windows? Hubungkan lewat <strong>Serial / COM</strong> atau langsung cetak lewat <strong>Tes Cetak USB / Driver</strong>.</p>
+              <button type="button" id="btn-open-printer-guide" class="set-link shrink-0">
                 <span id="lbl-btn-printer-guide">Panduan Printer Paired / Driver</span>
               </button>
             </div>
           </div>
 
-          <div class="pt-2 border-t border-navy-700/80">
-            <div class="flex items-center justify-between mb-2">
-              <label class="text-slate-300 font-semibold" id="lbl-set-permit">Nomor Izin KUPVA / Bank Indonesia</label>
-              <label class="flex items-center gap-1.5 text-xs text-slate-400 cursor-pointer">
-                <input type="checkbox" id="setting-show-permit" class="w-4 h-4 text-brand bg-navy-900 border-navy-600 rounded focus:ring-brand">
-                <span id="lbl-set-show-permit">Tampilkan di Struk (Saat ini disembunyikan)</span>
-              </label>
-            </div>
-            <input type="text" id="setting-store-permit" placeholder="Contoh: KUPVA BB No. 12/34/BI/2026 (bisa dikosongkan)" class="w-full bg-navy-900 border border-navy-600 rounded-lg px-3 py-2 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand">
-          </div>
-
-          <div class="pt-2 border-t border-navy-700/80">
-            <label class="block text-slate-300 font-semibold mb-1" id="lbl-set-teller">Nama Teller Aktif di Kasir</label>
-            <input type="text" id="setting-default-teller" value="TELLER 01" class="w-full uppercase bg-navy-900 border border-navy-600 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-brand font-mono font-bold">
-          </div>
-
-          <div class="pt-2 border-t border-navy-700/80">
-            <label class="block text-slate-300 font-semibold mb-1" id="lbl-set-disc1">Catatan Disclaimer 1 Struk</label>
-            <input type="text" id="setting-disclaimer-1" value="Periksa fisik uang sebelum meninggalkan kasir." class="w-full bg-navy-900 border border-navy-600 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-brand">
-          </div>
-
-          <div>
-            <label class="block text-slate-300 font-semibold mb-1" id="lbl-set-disc2">Catatan Disclaimer 2 Struk</label>
-            <input type="text" id="setting-disclaimer-2" value="Uang yang sudah ditukar tidak dapat dikembalikan." class="w-full bg-navy-900 border border-navy-600 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-brand">
-          </div>
-
-          <div class="pt-4 flex justify-end">
-            <button type="submit" class="py-2.5 px-6 rounded-lg bg-brand hover:bg-brand-hover text-navy-950 font-bold transition-all shadow">
+          <div class="set-section flex justify-end">
+            <button type="submit" class="set-btn set-btn--primary">
               <span id="lbl-btn-save-settings">Simpan Pengaturan</span>
             </button>
           </div>
@@ -2565,84 +2412,62 @@
       </div>
 
       <!-- PANEL 3: Akun Kasir & Keamanan -->
-      <div id="subtab-panel-users" class="hidden bg-navy-800 border border-navy-700 rounded-xl p-4 sm:p-6 max-w-3xl mx-auto shadow-sm space-y-6">
-        <!-- Section: Ganti Password Saya -->
-        <div>
-          <h3 class="text-base font-bold text-white mb-2 pb-2 border-b border-navy-700 flex items-center gap-2">
-            <svg class="w-5 h-5 text-brand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-            <span>Ubah Password Akun Saya</span>
-          </h3>
-          <form id="form-change-pwd" class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs sm:text-sm">
+      <div id="subtab-panel-users" role="tabpanel" aria-labelledby="subtab-btn-users" class="hidden set-panel bg-navy-800 border border-navy-700 rounded-xl">
+        <!-- Ganti password saya -->
+        <div class="set-section space-y-4">
+          <div>
+            <h2 class="pos-h text-slate-100">Ubah password akun saya</h2>
+            <p class="set-desc">Minimal 6 karakter.</p>
+          </div>
+          <form id="form-change-pwd" class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
             <div>
-              <label class="block text-slate-300 font-semibold mb-1">Password Saat Ini</label>
-              <input type="password" id="input-old-pwd" required placeholder="Password lama" class="w-full bg-navy-900 border border-navy-600 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-brand">
+              <label for="input-old-pwd" class="pos-label">Password saat ini</label>
+              <input type="password" id="input-old-pwd" required autocomplete="current-password" class="pos-input w-full bg-navy-900 border border-navy-600 rounded-lg text-slate-100">
             </div>
             <div>
-              <label class="block text-slate-300 font-semibold mb-1">Password Baru</label>
-              <input type="password" id="input-new-pwd" required placeholder="Minimal 6 karakter" class="w-full bg-navy-900 border border-navy-600 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-brand">
+              <label for="input-new-pwd" class="pos-label">Password baru</label>
+              <input type="password" id="input-new-pwd" required autocomplete="new-password" class="pos-input w-full bg-navy-900 border border-navy-600 rounded-lg text-slate-100">
             </div>
-            <div class="flex flex-col justify-end">
-              <button type="submit" class="w-full py-2 px-4 rounded-lg bg-navy-700 hover:bg-navy-600 text-brand border border-brand/40 font-bold transition-all">
-                Simpan Password
-              </button>
-            </div>
+            <button type="submit" class="set-btn set-btn--secondary w-full">Simpan password</button>
           </form>
         </div>
 
-        <!-- Section: Profil Kasir & Daftar Akun (Teller View) -->
-        <div id="teller-user-profile-section" class="hidden bg-navy-850 border border-navy-700 rounded-xl p-4 sm:p-5 space-y-4 shadow-sm">
-          <div class="flex items-center justify-between pb-3 border-b border-navy-700">
-            <div class="flex items-center gap-2.5">
-              <div class="w-9 h-9 rounded-lg bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400">
-                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-              </div>
-              <div>
-                <h3 class="text-sm sm:text-base font-bold text-white">Profil Kasir Aktif</h3>
-                <p class="text-xs text-slate-400">Data akun kasir Anda yang aktif bertransaksi di POS</p>
-              </div>
-            </div>
-            <span class="px-2.5 py-1 rounded-full text-[11px] bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/40 flex items-center gap-1.5">
-              <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-              <span>Aktif & Tersimpan</span>
-            </span>
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-            <div class="bg-navy-900/90 border border-navy-700/80 rounded-lg p-3">
-              <span class="text-slate-400 block mb-1">Nama Kasir di Struk</span>
-              <span id="teller-profile-display-name" class="font-bold text-white text-sm">-</span>
-            </div>
-            <div class="bg-navy-900/90 border border-navy-700/80 rounded-lg p-3">
-              <span class="text-slate-400 block mb-1">Username Login</span>
-              <span id="teller-profile-username" class="font-mono font-bold text-brand text-sm">-</span>
-            </div>
-            <div class="bg-navy-900/90 border border-navy-700/80 rounded-lg p-3">
-              <span class="text-slate-400 block mb-1">Peran (Role)</span>
-              <span id="teller-profile-role" class="font-bold text-slate-200 text-sm">TELLER</span>
+        <!-- Profil kasir & daftar akun (teller view) -->
+        <div id="teller-user-profile-section" class="hidden set-section space-y-4">
+          <div class="flex flex-wrap items-start justify-between gap-2">
+            <div>
+              <h3 class="pos-h text-slate-100">Profil kasir aktif</h3>
+              <p class="set-desc">Pendaftaran dan penghapusan akun hanya bisa dilakukan Administrator.</p>
             </div>
           </div>
-
-          <div class="p-3 rounded-lg bg-navy-900/60 border border-navy-700/70 text-xs text-slate-300 flex items-start gap-2">
-            <svg class="w-4 h-4 text-brand shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-            <span>Akun kasir Anda tersimpan permanen di database server dan offline browser. Pendaftaran akun baru dan penghapusan akun dibatasi khusus Administrator.</span>
-          </div>
+          <dl class="set-dl">
+            <div>
+              <dt>Nama di struk</dt>
+              <dd id="teller-profile-display-name" class="font-semibold text-slate-100">-</dd>
+            </div>
+            <div>
+              <dt>Username login</dt>
+              <dd id="teller-profile-username" class="font-mono font-semibold text-slate-100">-</dd>
+            </div>
+            <div>
+              <dt>Peran</dt>
+              <dd id="teller-profile-role" class="font-semibold text-slate-100">TELLER</dd>
+            </div>
+          </dl>
 
           <div>
-            <h4 class="text-xs font-bold text-slate-300 mb-2 flex items-center gap-1.5">
-              <svg class="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-              <span>Daftar Kasir & Teller Terdaftar di Toko</span>
-            </h4>
+            <h4 class="text-sm font-semibold text-slate-200 mb-2">Kasir terdaftar di toko</h4>
             <div class="overflow-x-auto rounded-lg border border-navy-700">
-              <table class="w-full text-xs text-left text-slate-300">
-                <thead class="bg-navy-900 text-slate-400 uppercase text-[10px] tracking-wider border-b border-navy-700 font-semibold">
+              <table class="set-table">
+                <thead>
                   <tr>
-                    <th class="py-2.5 px-3">Username</th>
-                    <th class="py-2.5 px-3">Nama Display (Struk)</th>
-                    <th class="py-2.5 px-3">Role</th>
-                    <th class="py-2.5 px-3 text-right">Status</th>
+                    <th>Username</th>
+                    <th>Nama di struk</th>
+                    <th>Peran</th>
+                    <th class="text-right">Status</th>
                   </tr>
                 </thead>
-                <tbody id="teller-readonly-users-body" class="divide-y divide-navy-700 bg-navy-850/50">
+                <tbody id="teller-readonly-users-body" class="divide-y divide-navy-700">
                   <!-- Rendered dynamically -->
                 </tbody>
               </table>
@@ -2650,30 +2475,30 @@
           </div>
         </div>
 
-        <!-- Section: Manajemen Akun Kasir (Admin only) -->
-        <div id="admin-user-management-section">
-          <div class="flex flex-wrap items-center justify-between pb-2 border-b border-navy-700 gap-2 mb-3">
-            <h3 class="text-base font-bold text-white flex items-center gap-2">
-              <svg class="w-5 h-5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-              <span>Daftar Akun Kasir & Teller</span>
-            </h3>
-            <button type="button" id="btn-open-add-user" class="py-1.5 px-3 rounded-lg bg-brand hover:bg-brand-hover text-navy-950 font-bold text-xs flex items-center gap-1.5 transition-all shadow">
-              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              <span>Tambah Kasir Baru</span>
+        <!-- Manajemen akun kasir (admin only) -->
+        <div id="admin-user-management-section" class="set-section space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h3 class="pos-h text-slate-100">Akun kasir & teller</h3>
+              <p class="set-desc">Tambah, reset password, atau hapus akun.</p>
+            </div>
+            <button type="button" id="btn-open-add-user" class="set-btn set-btn--primary">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              <span>Tambah kasir</span>
             </button>
           </div>
 
           <div class="overflow-x-auto rounded-lg border border-navy-700">
-            <table class="w-full text-xs text-left text-slate-300">
-              <thead class="bg-navy-900 text-slate-400 uppercase text-[10px] tracking-wider border-b border-navy-700 font-semibold">
+            <table class="set-table">
+              <thead>
                 <tr>
-                  <th class="py-2.5 px-3">Username</th>
-                  <th class="py-2.5 px-3">Nama Display (Struk)</th>
-                  <th class="py-2.5 px-3">Role</th>
-                  <th class="py-2.5 px-3 text-right">Aksi</th>
+                  <th>Username</th>
+                  <th>Nama di struk</th>
+                  <th>Peran</th>
+                  <th class="text-right">Aksi</th>
                 </tr>
               </thead>
-              <tbody id="user-table-body" class="divide-y divide-navy-700 bg-navy-850/50">
+              <tbody id="user-table-body" class="divide-y divide-navy-700">
                 <!-- User rows rendered dynamically -->
               </tbody>
             </table>
@@ -2681,114 +2506,155 @@
         </div>
       </div>
 
-      <!-- PANEL 5: Standar Kepatuhan Bank Indonesia (KUPVA BB) -->
-      <div id="subtab-panel-compliance" class="hidden bg-navy-800 border border-navy-700 rounded-xl p-4 sm:p-6 max-w-4xl mx-auto shadow-sm space-y-6">
-        <!-- Header -->
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-navy-700 gap-2">
-          <div class="flex items-center gap-2.5">
-            <div class="w-10 h-10 rounded-lg bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400">
-              <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      <!-- PANEL 4: Database & Backup -->
+      <div id="subtab-panel-database" role="tabpanel" aria-labelledby="subtab-btn-database" class="hidden set-panel bg-navy-800 border border-navy-700 rounded-xl">
+        <div class="set-section space-y-4">
+          <div class="flex flex-wrap items-start justify-between gap-2">
+            <div class="min-w-0">
+              <h2 class="pos-h text-slate-100">Database server</h2>
+              <p class="set-desc">SQLite dengan backup otomatis berlapis, aman saat kode diperbarui.</p>
+            </div>
+            <button type="button" id="btn-refresh-db-info" class="set-btn set-btn--secondary" title="Muat ulang status database">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+              <span>Muat ulang</span>
+            </button>
+          </div>
+
+          <dl class="set-stats">
+            <div><dt>Transaksi</dt><dd><span id="db-stat-tx">-</span></dd></div>
+            <div><dt>Akun kasir</dt><dd><span id="db-stat-users">-</span></dd></div>
+            <div><dt>Kurs valas</dt><dd><span id="db-stat-rates">-</span></dd></div>
+            <div><dt>Item pengaturan</dt><dd><span id="db-stat-settings">-</span></dd></div>
+          </dl>
+
+          <dl class="set-dl">
+            <div>
+              <dt>File database</dt>
+              <dd id="db-info-path" class="font-mono text-[13px] break-all">-</dd>
             </div>
             <div>
-              <h3 class="text-base sm:text-lg font-bold text-white flex items-center gap-2">
-                <span id="lbl-compliance-header">Standar Kepatuhan Bank Indonesia (KUPVA BB)</span>
-                <span class="px-2 py-0.5 rounded-full text-[10px] bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">PBI APU PPT</span>
-              </h3>
-              <p class="text-xs text-slate-400" id="lbl-compliance-sub">Pengawasan transaksi valuta asing: Ambang Batas USD 10.000, PEP & EDD, serta Skrining DTTOT/DPPSPM</p>
+              <dt>Folder cadangan</dt>
+              <dd id="db-info-storage" class="font-mono text-[13px] break-all">-</dd>
             </div>
-          </div>
-          <button type="button" id="btn-open-add-dttot" class="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-navy-950 text-xs font-bold transition-all flex items-center gap-1.5 shadow">
-            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            <span id="lbl-btn-add-dttot">Tambah Data DTTOT</span>
-          </button>
+            <div>
+              <dt>Perlindungan deploy</dt>
+              <dd id="db-info-protection">-</dd>
+            </div>
+          </dl>
         </div>
 
-        <!-- 3 Feature Overview Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-          <!-- Card 1: Underlying USD 10K -->
-          <div class="bg-navy-900 border border-navy-700/80 rounded-xl p-3.5 space-y-2">
-            <div class="flex items-center justify-between">
-              <span class="font-bold text-blue-400 flex items-center gap-1.5 text-xs">
-                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                Threshold Valas
-              </span>
-              <span class="px-1.5 py-0.5 rounded text-[10px] bg-blue-500/20 text-blue-300 font-bold">≥ USD 10.000</span>
+        <div class="set-section space-y-4">
+          <div>
+            <h3 class="pos-h text-slate-100">Cadangan offline</h3>
+            <p class="set-desc">File JSON berisi semua transaksi, akun kasir, kurs, dan pengaturan toko.</p>
+          </div>
+          <div class="divide-y divide-navy-700 border-y border-navy-700">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 py-3">
+              <div class="min-w-0">
+                <div class="text-sm font-semibold text-slate-100">Unduh cadangan</div>
+                <p class="text-[13px] text-slate-400">Simpan ke komputer kasir untuk arsip berkala.</p>
+              </div>
+              <button type="button" id="btn-download-db-backup" class="set-btn set-btn--primary shrink-0">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                <span>Unduh .json</span>
+              </button>
             </div>
-            <p class="text-slate-300 text-[11px] leading-relaxed">
-              Mendeteksi otomatis total transaksi ekuivalen USD 10.000 ke atas dan mewajibkan lampiran nomor dokumen underlying (tiket, invoice, medis, pendidikan).
-            </p>
-            <div class="text-[10px] text-slate-400 flex items-center gap-1">
-              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Validasi Kasir Aktif
+            <div id="card-restore-backup" class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 py-3">
+              <div class="min-w-0">
+                <div class="text-sm font-semibold text-slate-100">Pulihkan dari cadangan</div>
+                <p class="text-[13px] text-slate-400">Khusus Administrator. Pilih file .json yang pernah diunduh.</p>
+              </div>
+              <input type="file" id="input-restore-file" accept=".json,application/json" class="hidden">
+              <button type="button" id="btn-trigger-restore-db" class="set-btn set-btn--secondary shrink-0">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                <span>Pilih file & pulihkan</span>
+              </button>
+            </div>
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 py-3">
+              <div class="min-w-0">
+                <div class="text-sm font-semibold text-slate-100">Cadangan cloud (Google Sheets)</div>
+                <p class="text-[13px] text-slate-400">Setiap transaksi juga dikirim ke spreadsheet, jadi data tetap ada walau server atau perangkat kasir berganti.</p>
+              </div>
+              <button type="button" id="btn-goto-sheets-tab" class="set-link shrink-0">Atur Google Sheets</button>
             </div>
           </div>
 
-          <!-- Card 2: PEP & EDD -->
-          <div class="bg-navy-900 border border-navy-700/80 rounded-xl p-3.5 space-y-2">
-            <div class="flex items-center justify-between">
-              <span class="font-bold text-amber-400 flex items-center gap-1.5 text-xs">
-                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                PEP & EDD
-              </span>
-              <span class="px-1.5 py-0.5 rounded text-[10px] bg-amber-500/20 text-amber-300 font-bold">High Risk</span>
-            </div>
-            <p class="text-slate-300 text-[11px] leading-relaxed">
-              Penetapan status PEP (Politically Exposed Persons), penelusuran sumber dana, tujuan transaksi, dan konfirmasi persetujuan Direksi.
-            </p>
-            <div class="text-[10px] text-slate-400 flex items-center gap-1">
-              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Prosedur EDD Siap
-            </div>
-          </div>
-
-          <!-- Card 3: DTTOT Screening -->
-          <div class="bg-navy-900 border border-navy-700/80 rounded-xl p-3.5 space-y-2">
-            <div class="flex items-center justify-between">
-              <span class="font-bold text-rose-400 flex items-center gap-1.5 text-xs">
-                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
-                DTTOT / DPPSPM
-              </span>
-              <span class="px-1.5 py-0.5 rounded text-[10px] bg-rose-500/20 text-rose-300 font-bold">Freeze List</span>
-            </div>
-            <p class="text-slate-300 text-[11px] leading-relaxed">
-              Skrining nama nasabah secara real-time saat pengetikan kasir. Pemblokiran transaksi seketika tanpa penundaan (Freeze Without Delay).
-            </p>
-            <div class="text-[10px] text-slate-400 flex items-center gap-1">
-              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Real-Time Match Aktif
-            </div>
+          <div id="restore-status-box" class="hidden p-3 rounded-lg bg-navy-900 border border-navy-700 text-[13px] text-slate-300">
+            <!-- Restore results injected here -->
           </div>
         </div>
+      </div>
 
-        <!-- Screening Test Tool Box -->
-        <div class="bg-navy-900/90 border border-navy-700 rounded-xl p-3.5 space-y-2.5">
-          <div class="flex items-center justify-between">
-            <h4 class="text-xs font-bold text-slate-200 flex items-center gap-1.5">
-              <svg class="w-4 h-4 text-brand shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-              Uji Coba Skrining Nama (Simulasi DTTOT / DPPSPM)
-            </h4>
-            <span class="text-[10px] text-slate-400">Pengecekan nama instan ke database</span>
+      <!-- PANEL 5: Kepatuhan Bank Indonesia (KUPVA BB) -->
+      <div id="subtab-panel-compliance" role="tabpanel" aria-labelledby="subtab-btn-compliance" class="hidden set-panel bg-navy-800 border border-navy-700 rounded-xl">
+        <div class="set-section space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+            <div class="min-w-0">
+              <h2 class="pos-h text-slate-100" id="lbl-compliance-header">Standar Kepatuhan Bank Indonesia (KUPVA BB)</h2>
+              <p class="set-desc" id="lbl-compliance-sub">Pengawasan transaksi valuta asing: Ambang Batas USD 10.000, PEP & EDD, serta Skrining DTTOT/DPPSPM</p>
+            </div>
+            <button type="button" id="btn-open-add-dttot" class="set-btn set-btn--primary shrink-0 self-start">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              <span id="lbl-btn-add-dttot">Tambah Data DTTOT</span>
+            </button>
           </div>
-          <div class="flex items-center gap-2">
-            <input type="text" id="test-dttot-input" placeholder="Ketik nama untuk diuji (Contoh: Santoso, Hambali, Abu Wardah)..." class="flex-1 bg-navy-950 border border-navy-600 rounded-lg px-3 py-1.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand">
-            <button type="button" id="btn-test-dttot" class="px-3 py-1.5 rounded-lg bg-navy-700 hover:bg-navy-600 text-slate-200 text-xs font-bold transition-all flex items-center gap-1">
+
+          <!-- Rules the cashier screen enforces -->
+          <ul class="divide-y divide-navy-700 border-y border-navy-700">
+            <li class="grid sm:grid-cols-[13rem_1fr] gap-x-4 gap-y-1 py-3">
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="text-sm font-semibold text-slate-100">Ambang batas valas</span>
+                <span class="set-status num">≥ USD 10.000</span>
+              </div>
+              <p class="text-[13px] text-slate-300 max-w-prose">Transaksi setara USD 10.000 ke atas wajib melampirkan nomor dokumen underlying (tiket, invoice, medis, pendidikan).</p>
+            </li>
+            <li class="grid sm:grid-cols-[13rem_1fr] gap-x-4 gap-y-1 py-3">
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="text-sm font-semibold text-slate-100">PEP & EDD</span>
+                <span class="set-status set-status--warn">Risiko tinggi</span>
+              </div>
+              <p class="text-[13px] text-slate-300 max-w-prose">Nasabah PEP (Politically Exposed Person) wajib ditelusuri sumber dana dan tujuan transaksinya, dengan persetujuan Direksi.</p>
+            </li>
+            <li class="grid sm:grid-cols-[13rem_1fr] gap-x-4 gap-y-1 py-3">
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="text-sm font-semibold text-slate-100">DTTOT / DPPSPM</span>
+                <span class="set-status set-status--danger">Blokir</span>
+              </div>
+              <p class="text-[13px] text-slate-300 max-w-prose">Nama nasabah diperiksa saat kasir mengetik. Jika cocok, transaksi diblokir seketika (freeze without delay).</p>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Screening test -->
+        <div class="set-section space-y-3">
+          <div>
+            <h3 class="pos-h text-slate-100">Uji skrining nama</h3>
+            <p class="set-desc">Cek satu nama ke daftar DTTOT / DPPSPM tanpa membuat transaksi.</p>
+          </div>
+          <div class="flex flex-col sm:flex-row gap-2">
+            <label for="test-dttot-input" class="sr-only">Nama yang diuji</label>
+            <input type="text" id="test-dttot-input" placeholder="Contoh: Santoso" class="pos-input flex-1 min-w-0 bg-navy-900 border border-navy-600 rounded-lg text-slate-100 placeholder-slate-500">
+            <button type="button" id="btn-test-dttot" class="set-btn set-btn--secondary">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
               <span>Periksa</span>
             </button>
           </div>
-          <div id="test-dttot-result" class="hidden p-2.5 rounded-lg text-xs font-medium"></div>
+          <div id="test-dttot-result" class="hidden" role="status"></div>
         </div>
 
-        <!-- DTTOT Database Table -->
-        <div class="space-y-3">
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <div class="flex items-center gap-2">
-              <h4 class="text-xs font-bold text-slate-200 flex items-center gap-1.5">
-                <svg class="w-4 h-4 text-amber-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-                Daftar Terduga Teroris & Organisasi Teroris (DTTOT / DPPSPM)
-              </h4>
-              <span id="badge-dttot-count" class="px-2 py-0.5 rounded-full text-[10px] bg-navy-700 text-slate-300 font-mono">17 Data</span>
+        <!-- DTTOT list -->
+        <div class="set-section space-y-3">
+          <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+            <div class="flex flex-wrap items-center gap-2">
+              <h3 class="pos-h text-slate-100">Daftar DTTOT / DPPSPM</h3>
+              <span id="badge-dttot-count" class="set-status num">17 Data</span>
             </div>
-            <div class="flex items-center gap-2 text-xs">
-              <input type="text" id="dttot-filter-search" placeholder="Cari nama / alias..." class="bg-navy-900 border border-navy-600 rounded-lg px-2.5 py-1 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand">
-              <select id="dttot-filter-type" class="bg-navy-900 border border-navy-600 rounded-lg px-2 py-1 text-xs text-slate-200 focus:outline-none focus:border-brand">
-                <option value="ALL">Semua Tipe</option>
+            <div class="flex items-center gap-2">
+              <label for="dttot-filter-search" class="sr-only">Cari nama atau alias</label>
+              <input type="text" id="dttot-filter-search" placeholder="Cari nama / alias" class="pos-input !h-10 !text-sm w-full sm:w-52 bg-navy-900 border border-navy-600 rounded-lg text-slate-100 placeholder-slate-500">
+              <label for="dttot-filter-type" class="sr-only">Jenis daftar</label>
+              <select id="dttot-filter-type" class="pos-input !h-10 !text-sm bg-navy-900 border border-navy-600 rounded-lg text-slate-200">
+                <option value="ALL">Semua tipe</option>
                 <option value="DTTOT">DTTOT</option>
                 <option value="DPPSPM">DPPSPM</option>
                 <option value="INTERNAL">INTERNAL</option>
@@ -2796,20 +2662,20 @@
             </div>
           </div>
 
-          <div class="border border-navy-700 rounded-xl overflow-hidden">
-            <div class="overflow-x-auto max-h-72">
-              <table class="w-full text-left text-xs">
-                <thead class="bg-navy-900/90 text-slate-400 uppercase text-[11px] font-semibold sticky top-0 border-b border-navy-700">
+          <div class="border border-navy-700 rounded-lg overflow-hidden">
+            <div class="overflow-x-auto max-h-80">
+              <table class="set-table">
+                <thead class="sticky top-0">
                   <tr>
-                    <th class="py-2.5 px-3">Nama Lengkap</th>
-                    <th class="py-2.5 px-3">Alias / Nama Lain</th>
-                    <th class="py-2.5 px-2">Kewarganegaraan</th>
-                    <th class="py-2.5 px-2">Daftar</th>
-                    <th class="py-2.5 px-3">Keterangan / Afiliasi</th>
-                    <th class="py-2.5 px-2 text-center w-16">Aksi</th>
+                    <th>Nama lengkap</th>
+                    <th>Alias</th>
+                    <th>Kewarganegaraan</th>
+                    <th>Daftar</th>
+                    <th>Keterangan / afiliasi</th>
+                    <th class="text-center w-16">Aksi</th>
                   </tr>
                 </thead>
-                <tbody id="dttot-table-body" class="divide-y divide-navy-700/60 font-sans">
+                <tbody id="dttot-table-body" class="divide-y divide-navy-700">
                   <!-- Populated by JS -->
                 </tbody>
               </table>
@@ -2818,6 +2684,7 @@
         </div>
       </div>
 
+     </div>
     </section>
 
   </main>
@@ -3070,10 +2937,10 @@
   <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col space-y-2 pointer-events-none"></div>
 
   <!-- Scripts -->
-  <script src="/pos/bluetooth-print.js?v=3.1"></script>
-  <script src="/pos/usb-print.js?v=3.1"></script>
-  <script src="/pos/serial-print.js?v=3.1"></script>
-  <script src="/pos/app.js?v=3.1"></script>
+  <script src="/pos/bluetooth-print.js?v=3.5"></script>
+  <script src="/pos/usb-print.js?v=3.5"></script>
+  <script src="/pos/serial-print.js?v=3.5"></script>
+  <script src="/pos/app.js?v=3.5"></script>
 
   <!-- Modal Tambah Data DTTOT -->
   <div id="modal-add-dttot" class="fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-3 hidden">
