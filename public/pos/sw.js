@@ -1,4 +1,6 @@
-const CACHE_NAME = 'skyline-pos-v2.4';
+const CACHE_NAME = 'skyline-pos-v2.5';
+// Styling comes from the Tailwind CDN runtime; without it cached, offline mode renders unstyled
+const TAILWIND_URL = 'https://cdn.tailwindcss.com/';
 const isPosScope = self.registration.scope.includes('/pos');
 const prefix = isPosScope ? '/pos' : '';
 
@@ -7,14 +9,34 @@ const ASSETS = [
   prefix + '/index.html',
   prefix + '/app.js',
   prefix + '/bluetooth-print.js',
+  prefix + '/usb-print.js',
+  prefix + '/serial-print.js',
   prefix + '/icon.svg',
+  prefix + '/logo.svg',
+  prefix + '/favicon.svg',
   prefix + '/manifest.json'
 ];
+
+// Best-effort: a missing branding file must not fail the whole install
+const OPTIONAL_ASSETS = ['/assets/logo.svg', '/assets/favicon.svg'];
+
+// Opaque (no-cors) response, same as what the <script> tag requests
+function cacheTailwind(cache) {
+  return fetch(TAILWIND_URL, { mode: 'no-cors' })
+    .then((res) => cache.put(TAILWIND_URL, res))
+    .catch(() => {});
+}
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
+    caches.open(CACHE_NAME).then((cache) =>
+      Promise.all([
+        cache.addAll(ASSETS),
+        cacheTailwind(cache),
+        ...OPTIONAL_ASSETS.map((url) => cache.add(url).catch(() => {}))
+      ])
+    )
   );
 });
 
@@ -40,6 +62,21 @@ self.addEventListener('fetch', (event) => {
           headers: { 'Content-Type': 'application/json' }
         });
       })
+    );
+    return;
+  }
+
+  // Tailwind CDN: stale-while-revalidate so the UI stays styled offline
+  if (event.request.url.startsWith('https://cdn.tailwindcss.com')) {
+    event.respondWith(
+      caches.open(CACHE_NAME).then((cache) =>
+        cache.match(TAILWIND_URL).then((cached) => {
+          const network = fetch(event.request)
+            .then((res) => { cache.put(TAILWIND_URL, res.clone()); return res; })
+            .catch(() => cached);
+          return cached || network;
+        })
+      )
     );
     return;
   }

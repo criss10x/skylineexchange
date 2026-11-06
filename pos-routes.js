@@ -79,23 +79,27 @@ function generateReceiptNo() {
   const dd = String(now.getDate()).padStart(2, '0');
   const datePrefix = `SE-${yyyy}${mm}${dd}`;
 
-  const row = db.prepare(`
-    SELECT receipt_no FROM transactions 
-    WHERE receipt_no LIKE ? 
-    ORDER BY id DESC LIMIT 1
-  `).get(`${datePrefix}-%`);
-
-  let nextSeq = 1;
-  if (row && row.receipt_no) {
-    const parts = row.receipt_no.split('-');
-    if (parts.length === 3) {
-      const currentSeq = parseInt(parts[2], 10);
-      if (!isNaN(currentSeq)) {
-        nextSeq = currentSeq + 1;
-      }
-    }
+  const rows = db.prepare('SELECT receipt_no FROM transactions WHERE receipt_no LIKE ?').all(`${datePrefix}-%`);
+  let maxSeq = 0;
+  for (const row of rows) {
+    const m = /^SE-\d{8}-(\d+)$/.exec(row.receipt_no);
+    if (m) maxSeq = Math.max(maxSeq, parseInt(m[1], 10));
   }
-  return `${datePrefix}-${String(nextSeq).padStart(4, '0')}`;
+  const exists = db.prepare('SELECT 1 FROM transactions WHERE receipt_no = ?');
+  let seq = maxSeq + 1;
+  while (exists.get(`${datePrefix}-${String(seq).padStart(4, '0')}`)) seq++;
+  return `${datePrefix}-${String(seq).padStart(4, '0')}`;
+}
+
+// A receipt number already printed on an offline receipt is kept when possible;
+// if it is taken by a different transaction, a suffixed number is assigned instead.
+function resolveReceiptNo(requested) {
+  if (!requested) return generateReceiptNo();
+  const exists = db.prepare('SELECT 1 FROM transactions WHERE receipt_no = ?');
+  if (!exists.get(requested)) return requested;
+  let n = 1;
+  while (exists.get(`${requested}-R${n}`)) n++;
+  return `${requested}-R${n}`;
 }
 
 // ==================== AUTH MIDDLEWARE ====================
@@ -522,30 +526,29 @@ router.post('/api/transactions', requireAuth, (req, res) => {
     }
 
     // Bank Indonesia Compliance Check: DTTOT Real-Time Enforcement (Freeze Without Delay)
-    const cleanCustName = (customer_name || '').trim().toUpperCase();
-    if (cleanCustName) {
-      const dttotMatch = db.prepare(`
-        SELECT * FROM dttot_list 
-        WHERE UPPER(name) = ? 
-           OR UPPER(aliases) LIKE ? 
-           OR ? LIKE '%' || UPPER(name) || '%'
-        LIMIT 1
-      `).get(cleanCustName, `%${cleanCustName}%`, cleanCustName);
+    const dttotMatch = findDttotMatch(customer_name);
+    if (dttotMatch) {
+      return res.status(403).json({
+        success: false,
+        error: 'TRANSAKSI DIBEKUKAN: Nama nasabah terindikasi dalam Daftar Terduga Teroris / Organisasi Teroris (DTTOT/DPPSPM). Sesuai regulasi Bank Indonesia (PBI APU PPT), transaksi wajib DIBEKUKAN serta-merta tanpa penundaan (Freeze Without Delay).',
+        dttot_match: {
+          name: dttotMatch.name,
+          aliases: dttotMatch.aliases,
+          list_type: dttotMatch.list_type
+        }
+      });
+    }
 
-      if (dttotMatch) {
-        return res.status(403).json({
-          success: false,
-          error: 'TRANSAKSI DIBEKUKAN: Nama nasabah terindikasi dalam Daftar Terduga Teroris / Organisasi Teroris (DTTOT/DPPSPM). Sesuai regulasi Bank Indonesia (PBI APU PPT), transaksi wajib DIBEKUKAN serta-merta tanpa penundaan (Freeze Without Delay).',
-          dttot_match: {
-            name: dttotMatch.name,
-            aliases: dttotMatch.aliases,
-            list_type: dttotMatch.list_type
-          }
-        });
+    // Retried request (e.g. response lost on a flaky connection): return the saved transaction
+    const clientTxId = typeof req.body.client_tx_id === 'string' ? req.body.client_tx_id.trim() : '';
+    if (clientTxId) {
+      const existing = db.prepare('SELECT id, receipt_no, created_at FROM transactions WHERE client_tx_id = ?').get(clientTxId);
+      if (existing) {
+        return res.json({ success: true, duplicate: true, data: existing });
       }
     }
 
-    const finalReceiptNo = receipt_no || generateReceiptNo();
+    const finalReceiptNo = resolveReceiptNo(receipt_no);
     const now = created_at || new Date().toISOString();
 
     const insertTx = db.prepare(`
@@ -556,8 +559,8 @@ router.post('/api/transactions', requireAuth, (req, res) => {
         is_underlying, underlying_type, underlying_doc_no, dttot_check_status,
         teller_name, total_idr, paid_amount, change_amount,
         is_delivery, delivery_address, delivery_time, delivery_status,
-        courier_name, notes, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        courier_name, notes, created_at, client_tx_id
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     const result = insertTx.run(
@@ -578,7 +581,7 @@ router.post('/api/transactions', requireAuth, (req, res) => {
       is_underlying ? 1 : 0,
       underlying_type ? underlying_type.trim() : '',
       underlying_doc_no ? underlying_doc_no.trim() : '',
-      dttot_check_status || 'CLEARED',
+      'CLEARED',
       teller_name || 'TELLER',
       Number(total_idr) || 0,
       Number(paid_amount) || 0,
@@ -589,7 +592,8 @@ router.post('/api/transactions', requireAuth, (req, res) => {
       delivery_status || (is_delivery ? 'PENDING' : 'COMPLETED'),
       courier_name || '',
       notes || '',
-      now
+      now,
+      clientTxId
     );
 
     const txId = result.lastInsertRowid;
@@ -634,7 +638,7 @@ router.post('/api/transactions', requireAuth, (req, res) => {
         is_underlying: is_underlying ? 1 : 0,
         underlying_type: underlying_type ? underlying_type.trim() : '',
         underlying_doc_no: underlying_doc_no ? underlying_doc_no.trim() : '',
-        dttot_check_status: dttot_check_status || 'CLEARED',
+        dttot_check_status: 'CLEARED',
         teller_name: teller_name || 'TELLER',
         total_idr: Number(total_idr) || 0,
         paid_amount: Number(paid_amount) || 0,
@@ -688,6 +692,19 @@ router.patch('/api/transactions/:id/delivery', requireAuth, (req, res) => {
   }
 });
 
+// DTTOT screening shared by live POST and offline sync
+function findDttotMatch(customerName) {
+  const clean = (customerName || '').trim().toUpperCase();
+  if (!clean) return null;
+  return db.prepare(`
+    SELECT * FROM dttot_list 
+    WHERE UPPER(name) = ? 
+       OR UPPER(aliases) LIKE ? 
+       OR ? LIKE '%' || UPPER(name) || '%'
+    LIMIT 1
+  `).get(clean, `%${clean}%`, clean);
+}
+
 // ==================== BATCH OFFLINE SYNC API ====================
 router.post('/api/sync', requireAuth, (req, res) => {
   try {
@@ -697,7 +714,10 @@ router.post('/api/sync', requireAuth, (req, res) => {
     }
 
     let syncedCount = 0;
-    const checkReceipt = db.prepare('SELECT id FROM transactions WHERE receipt_no = ?');
+    const flagged = [];
+    const findByClientId = db.prepare('SELECT id FROM transactions WHERE client_tx_id = ?');
+    const findByReceipt = db.prepare('SELECT id, created_at, total_idr, customer_name FROM transactions WHERE receipt_no = ?');
+    const renamed = [];
     const insertTx = db.prepare(`
       INSERT INTO transactions (
         receipt_no, type, customer_name, customer_phone, customer_id_no,
@@ -706,8 +726,8 @@ router.post('/api/sync', requireAuth, (req, res) => {
         is_underlying, underlying_type, underlying_doc_no, dttot_check_status,
         teller_name, total_idr, paid_amount, change_amount,
         is_delivery, delivery_address, delivery_time, delivery_status,
-        courier_name, notes, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        courier_name, notes, created_at, client_tx_id
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
     const insertItem = db.prepare(`
       INSERT INTO transaction_items (transaction_id, currency_code, amount, rate, subtotal_idr)
@@ -715,51 +735,66 @@ router.post('/api/sync', requireAuth, (req, res) => {
     `);
 
     for (const tx of transactions) {
-      const exists = checkReceipt.get(tx.receipt_no);
-      if (!exists) {
-        const result = insertTx.run(
-          tx.receipt_no,
-          tx.type,
-          tx.customer_name,
-          tx.customer_phone || '',
-          tx.customer_id_no || '',
-          tx.customer_npwp || '',
-          tx.customer_nationality || '',
-          tx.customer_job || '',
-          tx.customer_gender || '',
-          tx.customer_address || '',
-          tx.is_pep ? 1 : 0,
-          tx.pep_institution || '',
-          tx.source_of_funds || '',
-          tx.transaction_purpose || '',
-          tx.is_underlying ? 1 : 0,
-          tx.underlying_type || '',
-          tx.underlying_doc_no || '',
-          tx.dttot_check_status || 'CLEARED',
-          tx.teller_name || 'TELLER',
-          Number(tx.total_idr),
-          Number(tx.paid_amount),
-          Number(tx.change_amount),
-          tx.is_delivery ? 1 : 0,
-          tx.delivery_address || '',
-          tx.delivery_time || '',
-          tx.delivery_status || 'COMPLETED',
-          tx.courier_name || '',
-          tx.notes || '',
-          tx.created_at
-        );
-        const newId = result.lastInsertRowid;
-        if (Array.isArray(tx.items)) {
-          for (const item of tx.items) {
-            insertItem.run(newId, item.currency_code, Number(item.amount), Number(item.rate), Number(item.subtotal_idr));
-          }
+      // Same device transaction already stored (re-sent queue): skip
+      const clientTxId = typeof tx.client_tx_id === 'string' ? tx.client_tx_id.trim() : '';
+      if (clientTxId && findByClientId.get(clientTxId)) continue;
+
+      // Older queued items have no client_tx_id: treat as the same transaction only if it matches exactly
+      const sameReceipt = findByReceipt.get(tx.receipt_no);
+      if (sameReceipt && !clientTxId
+        && sameReceipt.created_at === tx.created_at
+        && Number(sameReceipt.total_idr) === Number(tx.total_idr)
+        && sameReceipt.customer_name === tx.customer_name) continue;
+
+      // A different transaction holds this number: keep the data, assign a new number
+      const finalReceiptNo = resolveReceiptNo(tx.receipt_no);
+      if (finalReceiptNo !== tx.receipt_no) renamed.push({ from: tx.receipt_no, to: finalReceiptNo });
+      tx.receipt_no = finalReceiptNo;
+
+      if (findDttotMatch(tx.customer_name)) flagged.push(tx.receipt_no);
+      const result = insertTx.run(
+        tx.receipt_no,
+        tx.type,
+        tx.customer_name,
+        tx.customer_phone || '',
+        tx.customer_id_no || '',
+        tx.customer_npwp || '',
+        tx.customer_nationality || '',
+        tx.customer_job || '',
+        tx.customer_gender || '',
+        tx.customer_address || '',
+        tx.is_pep ? 1 : 0,
+        tx.pep_institution || '',
+        tx.source_of_funds || '',
+        tx.transaction_purpose || '',
+        tx.is_underlying ? 1 : 0,
+        tx.underlying_type || '',
+        tx.underlying_doc_no || '',
+        findDttotMatch(tx.customer_name) ? 'FLAGGED_ON_SYNC' : 'CLEARED_ON_SYNC',
+        tx.teller_name || 'TELLER',
+        Number(tx.total_idr),
+        Number(tx.paid_amount),
+        Number(tx.change_amount),
+        tx.is_delivery ? 1 : 0,
+        tx.delivery_address || '',
+        tx.delivery_time || '',
+        tx.delivery_status || 'COMPLETED',
+        tx.courier_name || '',
+        tx.notes || '',
+        tx.created_at,
+        clientTxId
+      );
+      const newId = result.lastInsertRowid;
+      if (Array.isArray(tx.items)) {
+        for (const item of tx.items) {
+          insertItem.run(newId, item.currency_code, Number(item.amount), Number(item.rate), Number(item.subtotal_idr));
         }
-        syncedCount++;
       }
+      syncedCount++;
+    }
 
     if (syncedCount > 0 && db.backupTransactionsToFile) {
       try { db.backupTransactionsToFile(); } catch (e) {}
-    }
     }
 
     // Auto-sync to Google Sheets in background if enabled
@@ -771,7 +806,7 @@ router.post('/api/sync', requireAuth, (req, res) => {
         .catch(e => console.error(`[Google Sheets Batch Sync Error]:`, e.message));
     }
 
-    res.json({ success: true, synced: syncedCount });
+    res.json({ success: true, synced: syncedCount, flagged, renamed });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }

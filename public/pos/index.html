@@ -11,12 +11,19 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
+  <!-- Plus Jakarta Sans (DESIGN.md); falls back to the system UI font when offline -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
       theme: {
         extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'ui-sans-serif', 'system-ui', '-apple-system', '"Segoe UI"', 'Roboto', 'sans-serif']
+          },
           colors: {
             brand: {
               DEFAULT: '#00E2DE',
@@ -41,7 +48,7 @@
   <!-- Inline Theme Script to prevent theme flashing on load -->
   <script>
     (function() {
-      var saved = localStorage.getItem('skyline_pos_theme') || 'light';
+      var saved = localStorage.getItem('skyline_pos_theme') || 'dark';
       if (saved === 'light') {
         document.documentElement.classList.add('light');
       } else {
@@ -104,6 +111,8 @@
       .grid,
       .lg\:grid-cols-12,
       .lg\:col-span-5,
+      #receipt-panel-body,
+      #receipt-panel-body.hidden,
       #receipt-container-wrapper {
         display: block !important;
         visibility: visible !important;
@@ -464,7 +473,19 @@
       background-color: #f8fafc !important;
       border-color: #cbd5e1 !important;
     }
-    html.light .bg-navy-700 {
+    /* Opacity variants were missed by the rules above and stayed dark navy,
+       leaving light-theme text (e.g. "PEMBAYARAN (IDR)") at ~1.6:1 contrast */
+    html.light .bg-navy-850\/50,
+    html.light .bg-navy-850\/80,
+    html.light .bg-navy-900\/60,
+    html.light .bg-navy-900\/80,
+    html.light .bg-navy-900\/90 {
+      background-color: #f8fafc !important;
+      border-color: #cbd5e1 !important;
+    }
+    html.light .bg-navy-700\/40 {
+      background-color: #f1f5f9 !important;
+    }    html.light .bg-navy-700 {
       background-color: #f1f5f9 !important;
       border-color: #cbd5e1 !important;
       color: #1e293b !important;
@@ -660,8 +681,7 @@
 
     /* 3. Automated / Read-Only Fields (Kurs Papan) in Light Theme */
     html.light .input-auto-calculated,
-    html.light input.input-auto-calculated,
-    html.light #item-rate {
+    html.light input.input-auto-calculated {
       background-color: #f1f5f9 !important;
       border: 1px solid #cbd5e1 !important;
       border-left: 4px solid #94a3b8 !important;
@@ -730,12 +750,6 @@
       background-color: #e2e8f0 !important;
       color: #0f172a !important;
     }
-    html.light #chip-custom-curr {
-      background-color: #ccfbf1 !important;
-      color: #0f766e !important;
-      border-color: #5eead4 !important;
-      font-weight: 700 !important;
-    }
 
     /* Tables across all tabs in Light Mode */
     html.light table thead,
@@ -770,11 +784,6 @@
     }
     html.light table tbody td {
       color: #0f172a !important;
-    }
-    html.light #items-count-badge {
-      background-color: #f1f5f9 !important;
-      color: #475569 !important;
-      border: 1px solid #e2e8f0 !important;
     }
 
     /* Action Buttons in Tables */
@@ -1005,8 +1014,7 @@
     html.light #btn-login-submit,
     html.light #lbl-btn-save-rate,
     html.light #btn-copy-sheets-script,
-    html.light #btn-done-modal-printer-guide,
-    html.light #btn-direct-bt-print {
+    html.light #btn-done-modal-printer-guide {
       background-color: #0d9488 !important;
       color: #ffffff !important;
     }
@@ -1016,8 +1024,7 @@
     html.light #btn-open-add-user:hover,
     html.light #btn-login-submit:hover,
     html.light #btn-copy-sheets-script:hover,
-    html.light #btn-done-modal-printer-guide:hover,
-    html.light #btn-direct-bt-print:hover {
+    html.light #btn-done-modal-printer-guide:hover {
       background-color: #0f766e !important;
     }
 
@@ -1087,6 +1094,114 @@
     html.light label .text-slate-300,
     html.light label .text-slate-400 {
       color: #334155 !important;
+    }
+
+    /* ==================== CASHIER WORKSPACE (tab-pos) ====================
+       One loud element: the summary panel, tinted by the active mode.
+       BELI = emerald, JUAL = amber; turquoise stays for primary actions only,
+       red only for DTTOT / errors / delete. */
+    :root {
+      --mode: #10b981;
+      --mode-ink: #34d399;
+      --mode-on: #022c1e;
+      --mode-soft: rgba(16, 185, 129, 0.12);
+      --mode-line: rgba(16, 185, 129, 0.45);
+    }
+    #tab-pos[data-mode="JUAL"] {
+      --mode: #f59e0b;
+      --mode-ink: #fbbf24;
+      --mode-on: #2b1700;
+      --mode-soft: rgba(245, 158, 11, 0.12);
+      --mode-line: rgba(245, 158, 11, 0.5);
+    }
+    html.light #tab-pos { --mode-ink: #047857; --mode-soft: rgba(16, 185, 129, 0.10); }
+    html.light #tab-pos[data-mode="JUAL"] { --mode-ink: #b45309; --mode-soft: rgba(245, 158, 11, 0.12); }
+
+    .num { font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
+    .mode-ink { color: var(--mode-ink); }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+
+    /* Workspace edge in the mode colour, so the mode is visible at every scroll position */
+    @media (min-width: 1024px) {
+      .pos-workspace { border-left: 4px solid var(--mode); padding-left: 16px; transition: border-color .2s; }
+    }
+    @media (max-width: 1023px) {
+      .pos-workspace { border-top: 4px solid var(--mode); padding-top: 12px; }
+    }
+
+    .pos-h { font-size: 16px; font-weight: 700; letter-spacing: -0.01em; }
+    .pos-label { display: block; margin-bottom: 6px; font-size: 13px; font-weight: 500; color: #cbd5e1; }
+    html.light .pos-label { color: #334155; }
+    .pos-input { height: 44px; padding: 0 12px; font-size: 15px; transition: border-color .15s, box-shadow .15s; }
+    select.pos-input { padding-right: 32px; }
+    .pos-input--num { font-variant-numeric: tabular-nums; font-weight: 700; font-size: 16px; }
+    .pos-input:focus { outline: none; border-color: #00E2DE !important; box-shadow: 0 0 0 3px rgba(0, 226, 222, 0.25); }
+    html.light .pos-input:focus { border-color: #0d9488 !important; box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.2); }
+
+    /* Mode switch */
+    .mode-btn {
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      height: 44px; padding: 0 12px; border-radius: 6px;
+      font-size: 15px; font-weight: 600; color: #94a3b8; transition: background-color .15s, color .15s;
+    }
+    .mode-btn:hover { color: #f1f5f9; }
+    .mode-btn[aria-pressed="true"] { background: var(--mode); color: var(--mode-on); font-weight: 700; }
+    html.light .mode-btn { color: #475569; }
+    html.light .mode-btn:hover { color: #0f172a; }
+    html.light .mode-btn[aria-pressed="true"] { color: var(--mode-on); }
+
+    /* Currency tiles */
+    .cur-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+    @media (min-width: 640px) { .cur-tiles { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+    @media (min-width: 1280px) { .cur-tiles { grid-template-columns: repeat(8, minmax(0, 1fr)); } }
+    .cur-tile {
+      min-height: 52px; padding: 6px 4px; border-radius: 8px; text-align: center;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+      background: #06121e; border: 1px solid #1b4566; color: #e2e8f0;
+      transition: border-color .15s, background-color .15s;
+    }
+    .cur-tile:hover { border-color: #255b85; }
+    .cur-tile__code { font-size: 13px; font-weight: 700; line-height: 1.15; white-space: nowrap; }
+    .cur-tile__rate { font-size: 12px; color: #94a3b8; line-height: 1.2; }
+    .cur-tile--other { font-size: 13px; font-weight: 600; color: #94a3b8; border-style: dashed; }
+    .cur-tile[aria-pressed="true"] { border: 2px solid var(--mode); background: var(--mode-soft); }
+    .cur-tile[aria-pressed="true"] .cur-tile__rate { color: var(--mode-ink); font-weight: 600; }
+    html.light .cur-tile { background: #f8fafc; border-color: #cbd5e1; color: #0f172a; }
+    html.light .cur-tile:hover { border-color: #94a3b8; }
+    html.light .cur-tile__rate, html.light .cur-tile--other { color: #475569; }
+    html.light .cur-tile[aria-pressed="true"] { border-color: var(--mode); background: var(--mode-soft); }
+
+    /* Summary panel: the one loud element */
+    .pos-summary {
+      padding: 20px; border-radius: 16px;
+      background: #0c2134; border: 1px solid #13324c; border-top: 6px solid var(--mode);
+      transition: border-color .2s;
+    }
+    html.light .pos-summary { background: #ffffff; border-color: #e2e8f0; border-top-color: var(--mode); box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06); }
+    .pos-summary__mode { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; color: var(--mode-ink); }
+    .pos-summary__dot { width: 10px; height: 10px; border-radius: 9999px; background: var(--mode); }
+    #pos-summary .pos-summary__total,
+    html.light #pos-summary .pos-summary__total {
+      display: block; margin-top: 2px; font-weight: 800 !important; letter-spacing: -0.02em; line-height: 1.1;
+      font-size: clamp(32px, 3.4vw, 44px); color: #f8fafc !important; overflow-wrap: anywhere;
+    }
+    html.light #pos-summary .pos-summary__total { color: #0f172a !important; }
+    #pos-summary #lbl-total-idr, #pos-summary #lbl-change-idr { color: #94a3b8 !important; font-weight: 500 !important; }
+    html.light #pos-summary #lbl-total-idr, html.light #pos-summary #lbl-change-idr { color: #475569 !important; }
+    .pos-summary__sub { padding: 12px; border-radius: 10px; background: var(--mode-soft); border: 1px solid var(--mode-line); }
+    #pos-summary #calc-change-idr, #pos-summary #calc-payout-idr,
+    html.light #pos-summary #calc-change-idr, html.light #pos-summary #calc-payout-idr { color: var(--mode-ink) !important; text-shadow: none !important; }
+    #pos-summary #lbl-payout-idr { color: var(--mode-ink); }
+    .cash-chip { height: 32px; padding: 0 10px; border-radius: 6px; font-size: 13px; font-weight: 600; background: #13324c; color: #cbd5e1; }
+    .cash-chip:hover { background: #1b4566; }
+    html.light .cash-chip { background: #f1f5f9; color: #1e293b; }
+    html.light .cash-chip:hover { background: #e2e8f0; }
+
+    #btn-toggle-receipt[aria-expanded="true"] .receipt-chevron { transform: rotate(90deg); }
+    #cust-extra-details > summary::-webkit-details-marker { display: none; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .pos-workspace, .pos-summary, .mode-btn, .cur-tile, .receipt-chevron { transition: none; }
     }
   </style>
 </head>
@@ -1183,10 +1298,10 @@
           <div class="flex items-center gap-2">
             <h1 class="text-base sm:text-lg font-bold tracking-tight text-white flex items-center gap-1.5">
               Skyline Exchange
-              <span class="text-[10px] uppercase font-semibold px-2 py-0.5 rounded-full bg-brand/20 text-brand border border-brand/30">POS Valas</span>
+              <span class="hidden sm:inline text-[10px] uppercase font-semibold px-2 py-0.5 rounded-full bg-brand/20 text-brand border border-brand/30">POS Valas</span>
             </h1>
           </div>
-          <p class="text-[11px] text-slate-400">Jl. Bypass Ngurah Rai No. 4X, Kuta, Bali</p>
+          <p class="hidden sm:block text-[11px] text-slate-400">Jl. Bypass Ngurah Rai No. 4X, Kuta, Bali</p>
         </div>
       </div>
 
@@ -1194,7 +1309,7 @@
       <div class="flex items-center flex-wrap gap-2 text-xs">
         <!-- Online/Offline Badge -->
         <div id="connection-badge" class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
           <span id="connection-status-text" class="font-medium">Online</span>
         </div>
 
@@ -1211,7 +1326,7 @@
           <svg class="w-3.5 h-3.5 text-brand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M6.5 6.5l11 11L12 23V1l5.5 5.5-11 11"/>
           </svg>
-          <span id="bt-printer-name" class="font-medium">Hubungkan Printer BT</span>
+          <span id="bt-printer-name" class="hidden sm:inline font-medium">Hubungkan Printer BT</span>
           <span id="bt-status-dot" class="w-2 h-2 rounded-full bg-slate-500"></span>
         </button>
 
@@ -1223,7 +1338,7 @@
             <line x1="9" y1="5" x2="9" y2="7"/>
             <line x1="15" y1="5" x2="15" y2="7"/>
           </svg>
-          <span id="usb-printer-name" class="font-medium">Hubungkan Printer USB</span>
+          <span id="usb-printer-name" class="hidden sm:inline font-medium">Hubungkan Printer USB</span>
           <span id="usb-status-dot" class="w-2 h-2 rounded-full bg-slate-500"></span>
         </button>
 
@@ -1235,8 +1350,8 @@
 
         <!-- Theme Toggle: Light / Dark -->
         <button type="button" id="btn-theme-toggle" class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-navy-800 hover:bg-navy-700 text-slate-200 border border-navy-700 transition-all text-xs font-semibold cursor-pointer shadow-sm select-none" title="Ganti Tema (Light / Dark)">
-          <span id="theme-toggle-icon" class="text-xs">☀️</span>
-          <span id="theme-toggle-text">Terang</span>
+          <span id="theme-toggle-icon" class="inline-flex"></span>
+          <span id="theme-toggle-text" class="hidden sm:inline">Terang</span>
         </button>
 
         <!-- Live Clock -->
@@ -1292,219 +1407,208 @@
   <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6">
 
     <!-- ==================== TAB 1: KASIR TRANSAKSI (POS) ==================== -->
-    <section id="tab-pos" class="tab-content block">
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
-        
-        <!-- LEFT COLUMN: TRANSACTION FORM & CALCULATOR (7 cols) -->
-        <div class="lg:col-span-7 space-y-4">
+    <section id="tab-pos" class="tab-content block pb-28 lg:pb-0" data-mode="BELI">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
 
-          <!-- Active Cashier Status Bar -->
-          <div id="active-cashier-banner" class="bg-navy-800 border border-navy-700 rounded-xl px-3.5 py-2 flex items-center justify-between shadow-sm">
-            <div class="flex items-center gap-2">
-              <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
-              <span class="text-xs text-slate-400" id="lbl-pos-active-cashier">Kasir Bertugas:</span>
-              <span id="pos-active-cashier-name" class="text-xs sm:text-sm font-bold text-white font-sans">Memuat kasir...</span>
-            </div>
-            <span id="pos-active-cashier-role" class="px-2 py-0.5 rounded text-[10px] bg-brand/20 text-brand font-bold border border-brand/30">TELLER</span>
-          </div>
+        <!-- LEFT: cashier workspace, edged in the active mode colour (BELI emerald / JUAL amber) -->
+        <div class="lg:col-span-7 space-y-4 pos-workspace">
 
-          <!-- 1. Transaction Type Selector & Delivery Switch -->
-          <div class="bg-navy-800 border border-navy-700 rounded-xl p-3.5 sm:p-4 shadow-sm">
-            <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-              <!-- Type Tabs: JUAL vs BELI -->
-              <div class="grid grid-cols-2 p-1 bg-navy-900 rounded-lg border border-navy-700 text-sm font-semibold flex-1">
-                <button type="button" id="btn-type-beli" class="type-btn py-2 px-3 rounded-md transition-all text-center flex items-center justify-center gap-1.5 bg-emerald-600 text-white shadow">
-                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
-                  <span id="lbl-type-beli">BELI VALAS (BUY)</span>
+          <!-- 1. Transaction mode -->
+          <div class="pos-card bg-navy-800 border border-navy-700 rounded-xl p-4">
+            <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+              <div class="mode-switch grid grid-cols-2 gap-1 p-1 rounded-lg bg-navy-900 border border-navy-700 flex-1" role="group" aria-label="Jenis transaksi">
+                <button type="button" id="btn-type-beli" class="mode-btn" data-mode="BELI" aria-pressed="true">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+                  <span id="lbl-type-beli">Beli valas</span>
                 </button>
-                <button type="button" id="btn-type-jual" class="type-btn py-2 px-3 rounded-md transition-all text-center flex items-center justify-center gap-1.5 text-slate-400 hover:text-white">
-                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
-                  <span id="lbl-type-jual">JUAL VALAS (SELL)</span>
+                <button type="button" id="btn-type-jual" class="mode-btn" data-mode="JUAL" aria-pressed="false">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
+                  <span id="lbl-type-jual">Jual valas</span>
                 </button>
               </div>
-
-              <!-- Delivery Mode Toggle -->
-              <label class="flex items-center gap-2 text-xs text-slate-300 cursor-pointer bg-navy-850 px-3 py-2 rounded-lg border border-navy-700 hover:border-brand/40 transition-colors select-none">
-                <input type="checkbox" id="check-delivery" class="w-4 h-4 text-brand bg-navy-900 border-navy-600 rounded focus:ring-brand focus:ring-offset-0">
-                <span class="font-medium text-slate-200" id="lbl-mode-delivery">Mode Delivery</span>
+              <label class="flex items-center gap-2 text-[13px] cursor-pointer select-none px-3 py-2.5 rounded-lg border border-navy-700 bg-navy-900">
+                <input type="checkbox" id="check-delivery" class="w-4 h-4 rounded text-brand bg-navy-900 border-navy-600 focus:ring-brand focus:ring-offset-0">
+                <span class="font-medium text-slate-200" id="lbl-mode-delivery">Antar ke customer</span>
               </label>
             </div>
+            <p class="mt-2.5 text-[13px] text-slate-400" id="type-explanation-text">Customer menyerahkan valas, kasir membayar Rupiah.</p>
 
-            <div id="type-explanation" class="mt-2.5 text-xs text-slate-400 flex items-center gap-1.5">
-              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-              <span id="type-explanation-text">Kasir membeli mata uang asing dari customer. Customer menerima Rupiah (IDR).</span>
-            </div>
-
-            <!-- Visual Indicator Legend Bar -->
-            <div class="mt-3 pt-2.5 border-t border-navy-700/60 flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-400">
-              <span class="font-semibold text-slate-300 flex items-center gap-1.5" id="lbl-legend-title">
-                <svg class="w-3.5 h-3.5 text-brand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                <span>Petunjuk Kolom:</span>
-              </span>
-              <div class="flex items-center flex-wrap gap-2.5">
-                <span class="inline-flex items-center gap-1 font-bold text-rose-400">
-                  <span class="w-2.5 h-2.5 rounded-sm bg-rose-500 shadow-sm"></span>
-                  <span id="lbl-legend-mandatory">Border Tebal = Wajib Diisi</span>
-                </span>
-                <span class="inline-flex items-center gap-1 text-slate-400">
-                  <span class="w-2.5 h-2.5 rounded-sm bg-slate-500/40 border border-slate-500"></span>
-                  <span id="lbl-legend-optional">Border Tipis = Opsional</span>
-                </span>
-                <span class="inline-flex items-center gap-1 text-teal-400 font-medium">
-                  <span class="w-2.5 h-2.5 rounded-sm bg-teal-500/30 border border-teal-400"></span>
-                  <span id="lbl-legend-auto">Otomatis / Kurs Papan</span>
-                </span>
-              </div>
-            </div>
-
-            <!-- Optional Delivery Details Drawer -->
-            <div id="delivery-fields" class="hidden mt-3 pt-3 border-t border-navy-700/80 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+            <!-- Delivery details -->
+            <div id="delivery-fields" class="hidden mt-4 pt-4 border-t border-navy-700 grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div class="sm:col-span-2">
-                <div class="flex items-center justify-between mb-1">
-                  <label class="block text-slate-300 font-semibold" id="lbl-delivery-addr">Alamat Pengantaran / Hotel / Villa <span class="text-rose-400 font-bold">*</span></label>
-                  <span id="badge-req-delivery-addr" class="badge-mandatory">[Wajib Diisi]</span>
-                </div>
-                <input type="text" id="delivery-address" placeholder="Contoh: Hotel Grand Bali Villa No. 12, Kuta" class="w-full bg-navy-900 border-2 border-navy-600 rounded-lg px-3 py-2 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand font-semibold input-mandatory">
+                <label for="delivery-address" class="pos-label" id="lbl-delivery-addr">Alamat antar / hotel / villa *</label>
+                <input type="text" id="delivery-address" placeholder="Hotel Grand Bali, villa no. 12, Kuta" class="pos-input w-full bg-navy-900 border border-navy-600 rounded-lg text-slate-100 placeholder-slate-500">
               </div>
               <div>
-                <div class="flex items-center justify-between mb-1">
-                  <label class="block text-slate-400 mb-1 font-medium" id="lbl-delivery-time">Jadwal Pengantaran</label>
-                  <span id="badge-opt-delivery-time" class="badge-optional">[Opsional]</span>
-                </div>
-                <input type="text" id="delivery-time" placeholder="Contoh: Hari ini, Pukul 15:30 WITA" class="w-full bg-navy-900 border border-navy-600 rounded-lg px-3 py-2 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand input-optional">
+                <label for="delivery-time" class="pos-label" id="lbl-delivery-time">Jadwal antar</label>
+                <input type="text" id="delivery-time" placeholder="Hari ini, 15:30 WITA" class="pos-input w-full bg-navy-900 border border-navy-600 rounded-lg text-slate-100 placeholder-slate-500">
               </div>
               <div>
-                <div class="flex items-center justify-between mb-1">
-                  <label class="block text-slate-400 mb-1 font-medium" id="lbl-delivery-courier">Nama Kurir / Petugas</label>
-                  <span id="badge-opt-delivery-courier" class="badge-optional">[Opsional]</span>
-                </div>
-                <input type="text" id="delivery-courier" placeholder="Nama petugas pengantar" class="w-full bg-navy-900 border border-navy-600 rounded-lg px-3 py-2 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand input-optional">
+                <label for="delivery-courier" class="pos-label" id="lbl-delivery-courier">Kurir</label>
+                <input type="text" id="delivery-courier" placeholder="Nama kurir" class="pos-input w-full bg-navy-900 border border-navy-600 rounded-lg text-slate-100 placeholder-slate-500">
               </div>
             </div>
           </div>
 
-          <!-- 2. Customer KYC Information Card -->
-          <div class="bg-navy-800 border border-navy-700 rounded-xl p-3.5 sm:p-4 shadow-sm">
-            <h2 class="text-xs font-bold text-brand uppercase tracking-wider mb-2.5 flex items-center justify-between">
-              <span class="flex items-center gap-1.5">
-                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                <span id="lbl-cust-title">Data Pelanggan (Customer)</span>
-              </span>
-              <span class="text-[10px] text-slate-400 font-normal" id="lbl-cust-subtitle">KYC & Identitas Transaksi Valas</span>
-            </h2>
+          <!-- 2. Currency -->
+          <div class="pos-card bg-navy-800 border border-navy-700 rounded-xl p-4">
+            <h2 class="pos-h text-slate-100" id="lbl-add-valas-title">Valas</h2>
 
-            <!-- Baris 1: Nama, No Telepon, No ID KTP / Paspor (3 Kolom Seimbang) -->
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
-              <div>
-                <div class="flex items-center justify-between mb-1 h-5">
-                  <label class="block text-slate-300 font-semibold truncate" id="lbl-cust-name">Nama Customer <span class="text-rose-400 font-bold">*</span></label>
-                  <span id="badge-req-cust-name" class="badge-mandatory flex-shrink-0">[Wajib Diisi]</span>
-                </div>
-                <input type="text" id="cust-name" placeholder="Nama Lengkap Customer" required class="w-full h-9 uppercase bg-navy-900 border-2 border-navy-600 rounded-lg px-3 py-1.5 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand font-semibold input-mandatory">
-                <div id="dttot-alert-box" class="hidden mt-2 p-3 bg-red-950/80 border border-red-500 rounded-lg flex items-start gap-2.5 text-xs text-red-200 animate-pulse">
-                  <svg class="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                  <div class="flex-1">
-                    <div class="font-bold text-red-300 text-sm flex items-center gap-1.5" id="dttot-alert-title">
-                      PERINGATAN DTTOT / DPPSPM: TRANSAKSI DIBEKUKAN
-                    </div>
-                    <div class="mt-1 leading-relaxed text-[11px]" id="dttot-alert-desc">
-                      Nama nasabah terindikasi dalam Daftar Terduga Teroris & Organisasi Teroris (DTTOT). Sesuai regulasi Bank Indonesia (PBI APU PPT), transaksi <b>WAJIB DIBEKUKAN serta-merta tanpa penundaan (Freeze Without Delay)</b>.
-                    </div>
-                    <div class="mt-1.5 p-1.5 bg-red-900/50 rounded border border-red-700/60 font-mono text-[11px] text-red-100" id="dttot-alert-detail"></div>
-                  </div>
-                </div>
-              </div>
-              <div>
-                <div class="flex items-center justify-between mb-1 h-5">
-                  <label class="block text-slate-400 font-medium truncate" id="lbl-cust-phone">No. Telepon / WhatsApp</label>
-                  <span id="badge-opt-cust-phone" class="badge-optional flex-shrink-0">[Opsional]</span>
-                </div>
-                <input type="tel" id="cust-phone" placeholder="+628... / Nomor Kontak" class="w-full h-9 bg-navy-900 border border-navy-600 rounded-lg px-3 py-1.5 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand input-optional">
-              </div>
-              <div>
-                <div class="flex items-center justify-between mb-1 h-5">
-                  <label class="block text-slate-400 font-medium truncate" id="lbl-cust-id">No. ID KTP / Paspor</label>
-                  <span id="badge-opt-cust-id" class="badge-optional flex-shrink-0">[Opsional]</span>
-                </div>
-                <input type="text" id="cust-id" placeholder="Nomor KTP atau Paspor" class="w-full h-9 uppercase bg-navy-900 border border-navy-600 rounded-lg px-3 py-1.5 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand font-mono input-optional">
-              </div>
-            </div>
+            <!-- Quick picker: one tile per popular currency, showing the rate for the active mode -->
+            <div id="currency-tiles" class="cur-tiles mt-3" role="group" aria-label="Pilih valas"></div>
 
-            <!-- Baris 2: NPWP, Kewarganegaraan, Pekerjaan (3 Kolom Seragam) -->
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs mt-2.5">
-              <div>
-                <div class="flex items-center justify-between mb-1 h-5">
-                  <label class="block text-slate-400 font-medium truncate" id="lbl-cust-npwp">NPWP</label>
-                  <span id="badge-opt-cust-npwp" class="badge-optional flex-shrink-0">[Opsional]</span>
-                </div>
-                <input type="text" id="cust-npwp" placeholder="Nomor Pokok Wajib Pajak" class="w-full h-9 uppercase bg-navy-900 border border-navy-600 rounded-lg px-3 py-1.5 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand font-mono input-optional">
-              </div>
-              <div>
-                <div class="flex items-center justify-between mb-1 h-5">
-                  <label class="block text-slate-400 font-medium truncate" id="lbl-cust-nationality">Kewarganegaraan</label>
-                  <span id="badge-opt-cust-nationality" class="badge-optional flex-shrink-0">[Opsional]</span>
-                </div>
-                <input type="text" id="cust-nationality" placeholder="Contoh: INDONESIA, AUSTRALIA" class="w-full h-9 uppercase bg-navy-900 border border-navy-600 rounded-lg px-3 py-1.5 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand input-optional">
-              </div>
-              <div>
-                <div class="flex items-center justify-between mb-1 h-5">
-                  <label class="block text-slate-400 font-medium truncate" id="lbl-cust-job">Pekerjaan</label>
-                  <span id="badge-opt-cust-job" class="badge-optional flex-shrink-0">[Opsional]</span>
-                </div>
-                <input type="text" id="cust-job" placeholder="Profesi / Pekerjaan Customer" class="w-full h-9 uppercase bg-navy-900 border border-navy-600 rounded-lg px-3 py-1.5 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand input-optional">
-              </div>
-            </div>
-
-            <!-- Baris 3: Jenis Kelamin & Alamat Tempat Tinggal (Grid 3 Kolom Rapi) -->
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs mt-2.5">
-              <div>
-                <div class="flex items-center justify-between mb-1 h-5">
-                  <label class="block text-slate-400 font-medium truncate" id="lbl-cust-gender">Jenis Kelamin</label>
-                  <span id="badge-opt-cust-gender" class="badge-optional flex-shrink-0">[Opsional]</span>
-                </div>
-                <select id="cust-gender" class="w-full h-9 bg-navy-900 border border-navy-600 rounded-lg px-2.5 py-1.5 text-slate-100 focus:outline-none focus:border-brand input-optional text-xs">
-                  <option value="" id="opt-gender-none">- Pilih Gender -</option>
-                  <option value="LAKI-LAKI" id="opt-gender-male">Laki-Laki</option>
-                  <option value="PEREMPUAN" id="opt-gender-female">Perempuan</option>
+            <div class="grid grid-cols-2 sm:grid-cols-12 gap-3 mt-4 items-end">
+              <div class="col-span-2 sm:col-span-4">
+                <label for="item-currency" class="pos-label" id="lbl-curr-select">Mata uang</label>
+                <select id="item-currency" class="pos-input w-full bg-navy-900 border border-navy-600 rounded-lg text-slate-100 font-semibold">
+                  <!-- Populated dynamically via JS -->
                 </select>
               </div>
-              <div class="sm:col-span-2">
-                <div class="flex items-center justify-between mb-1 h-5">
-                  <label class="block text-slate-400 font-medium truncate" id="lbl-cust-address">Alamat Tempat Tinggal</label>
-                  <span id="badge-opt-cust-address" class="badge-optional flex-shrink-0">[Opsional]</span>
-                </div>
-                <input type="text" id="cust-address" placeholder="Alamat lengkap domisili / tempat tinggal / hotel customer" class="w-full h-9 uppercase bg-navy-900 border border-navy-600 rounded-lg px-3 py-1.5 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand input-optional">
+              <div class="sm:col-span-3">
+                <label for="item-amount" class="pos-label" id="lbl-amount">Jumlah *</label>
+                <input type="text" id="item-amount" inputmode="decimal" autocomplete="off" data-decimal="true" placeholder="100" class="pos-input pos-input--num w-full bg-navy-900 border border-navy-600 rounded-lg text-slate-100 placeholder-slate-500 text-right">
+              </div>
+              <div class="sm:col-span-3">
+                <label for="item-rate" class="pos-label" id="lbl-rate">Kurs</label>
+                <input type="text" id="item-rate" inputmode="decimal" autocomplete="off" data-decimal="true" title="Terisi dari papan kurs. Bisa diubah untuk kurs nego." class="pos-input pos-input--num w-full bg-navy-900 border border-navy-600 rounded-lg text-slate-100 text-right">
+              </div>
+              <div class="col-span-2 sm:col-span-2">
+                <button type="button" id="btn-add-item" class="w-full h-11 px-3 rounded-lg bg-brand hover:bg-brand-hover text-navy-950 font-bold flex items-center justify-center gap-1.5 transition-colors">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  <span id="lbl-btn-add-item">Tambah</span>
+                </button>
               </div>
             </div>
 
-            <!-- PEP (Politically Exposed Person) & Enhanced Due Diligence (EDD) -->
-            <div class="mt-3 pt-3 border-t border-navy-700/80">
-              <div class="flex items-center justify-between">
-                <label class="flex items-center gap-2 cursor-pointer select-none">
-                  <input type="checkbox" id="cust-pep-toggle" class="w-4 h-4 rounded text-brand bg-navy-900 border-navy-600 focus:ring-brand/40">
-                  <span class="text-xs font-semibold text-slate-300 flex items-center gap-1.5" id="lbl-cust-pep">
-                    <svg class="w-4 h-4 text-amber-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                    Nasabah Merupakan PEP (Politically Exposed Person)
-                  </span>
+            <!-- Custom currency (shown when "+ Kustom" is chosen) -->
+            <div id="custom-currency-box" class="hidden mt-4 p-3 rounded-lg bg-navy-900 border border-navy-600 space-y-3">
+              <div class="flex items-center justify-between gap-3">
+                <span class="text-[13px] font-semibold text-slate-200" id="lbl-custom-curr-title">Mata uang lain</span>
+                <label class="flex items-center gap-1.5 text-[12px] text-slate-400 cursor-pointer">
+                  <input type="checkbox" id="check-save-custom-rate" class="w-3.5 h-3.5 rounded text-brand bg-navy-800 border-navy-600">
+                  <span id="lbl-save-custom-rate">Simpan ke papan kurs</span>
                 </label>
-                <span class="badge-optional text-[10px] bg-amber-500/10 text-amber-300 border border-amber-500/30 px-1.5 py-0.5 rounded font-medium" id="badge-pep-notice">High Risk Customer</span>
               </div>
-
-              <!-- Collapsible EDD Fields -->
-              <div id="pep-edd-fields" class="hidden mt-3 p-3 bg-amber-950/20 border border-amber-500/40 rounded-lg space-y-3">
-                <div class="text-[11px] text-amber-300/90 leading-tight flex items-center gap-1.5">
-                  <svg class="w-4 h-4 text-amber-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                  <span id="txt-edd-mandate">PBI APU PPT: Nasabah PEP wajib menjalani Enhanced Due Diligence (EDD) dan Persetujuan Direksi.</span>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label for="custom-curr-code" class="pos-label" id="lbl-custom-code">Kode (VND, AED, CHF) *</label>
+                  <input type="text" id="custom-curr-code" placeholder="VND" maxlength="6" class="pos-input w-full uppercase bg-navy-800 border border-navy-600 rounded-lg text-slate-100 font-semibold">
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-2.5">
+                <div>
+                  <label for="custom-curr-name" class="pos-label" id="lbl-custom-name">Nama mata uang *</label>
+                  <input type="text" id="custom-curr-name" placeholder="Vietnam Dong" class="pos-input w-full bg-navy-800 border border-navy-600 rounded-lg text-slate-100">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. Items -->
+          <div class="pos-card bg-navy-800 border border-navy-700 rounded-xl overflow-hidden">
+            <div class="px-4 pt-4 pb-2 flex items-center justify-between">
+              <h2 class="pos-h text-slate-100" id="lbl-cart-title">Rincian</h2>
+              <span id="items-count-badge" class="num text-[13px] text-slate-400">0 Item</span>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-[14px]">
+                <thead class="text-slate-400 text-[12px] font-medium border-b border-navy-700">
+                  <tr>
+                    <th class="py-2 px-4 font-medium" id="lbl-th-valas">Valas</th>
+                    <th class="py-2 px-3 text-right font-medium" id="lbl-th-amount">Jumlah</th>
+                    <th class="py-2 px-3 text-right font-medium" id="lbl-th-rate">Kurs</th>
+                    <th class="py-2 px-3 text-right font-medium" id="lbl-th-subtotal">Subtotal</th>
+                    <th class="py-2 px-2 w-12"><span class="sr-only" id="lbl-th-action">Hapus</span></th>
+                  </tr>
+                </thead>
+                <tbody id="cart-table-body" class="divide-y divide-navy-700/40 num">
+                  <tr id="empty-cart-row">
+                    <td colspan="5" class="py-8 px-4 text-center text-[13px] text-slate-400">Pilih valas di atas, isi jumlah, lalu tekan Tambah.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 4. Customer -->
+          <div class="pos-card bg-navy-800 border border-navy-700 rounded-xl p-4">
+            <h2 class="pos-h text-slate-100" id="lbl-cust-title">Customer</h2>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
+              <div>
+                <label for="cust-name" class="pos-label" id="lbl-cust-name">Nama *</label>
+                <input type="text" id="cust-name" placeholder="Nama lengkap" required autocomplete="off" class="pos-input w-full uppercase bg-navy-900 border border-navy-600 rounded-lg text-slate-100 placeholder-slate-500 font-semibold">
+              </div>
+              <div>
+                <label for="cust-phone" class="pos-label" id="lbl-cust-phone">Telepon / WhatsApp</label>
+                <input type="tel" id="cust-phone" placeholder="+62…" class="pos-input w-full bg-navy-900 border border-navy-600 rounded-lg text-slate-100 placeholder-slate-500">
+              </div>
+              <div>
+                <label for="cust-id" class="pos-label" id="lbl-cust-id">No. KTP / paspor</label>
+                <input type="text" id="cust-id" placeholder="Nomor identitas" class="pos-input w-full uppercase bg-navy-900 border border-navy-600 rounded-lg text-slate-100 placeholder-slate-500">
+              </div>
+            </div>
+
+            <!-- DTTOT match: the only red in the workspace -->
+            <div id="dttot-alert-box" role="alert" class="hidden mt-3 p-3 rounded-lg bg-red-950/80 border-2 border-red-500 flex items-start gap-3 text-red-100">
+              <svg class="w-5 h-5 text-red-400 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              <div class="flex-1 min-w-0">
+                <div class="font-bold text-[14px] text-red-200" id="dttot-alert-title">PERINGATAN DTTOT / DPPSPM: TRANSAKSI DIBEKUKAN</div>
+                <div class="mt-1 leading-relaxed text-[13px]" id="dttot-alert-desc">Nama nasabah terindikasi dalam Daftar Terduga Teroris & Organisasi Teroris (DTTOT). Sesuai regulasi Bank Indonesia (PBI APU PPT), transaksi <b>WAJIB DIBEKUKAN serta-merta tanpa penundaan (Freeze Without Delay)</b>.</div>
+                <div class="mt-2 p-2 rounded bg-red-900/50 border border-red-700/60 text-[12px] break-words" id="dttot-alert-detail"></div>
+              </div>
+            </div>
+
+            <!-- Optional KYC fields, collapsed to keep the cashier flow short -->
+            <details id="cust-extra-details" class="mt-3 group">
+              <summary class="cursor-pointer select-none list-none inline-flex items-center gap-1.5 text-[13px] font-medium text-slate-400 hover:text-slate-200">
+                <svg class="w-3.5 h-3.5 transition-transform group-open:rotate-90" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="9 6 15 12 9 18"/></svg>
+                <span id="lbl-cust-extra">Data tambahan (NPWP, kewarganegaraan, pekerjaan, alamat)</span>
+              </summary>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
+                <div>
+                  <label for="cust-npwp" class="pos-label" id="lbl-cust-npwp">NPWP</label>
+                  <input type="text" id="cust-npwp" placeholder="Nomor NPWP" class="pos-input w-full uppercase bg-navy-900 border border-navy-600 rounded-lg text-slate-100 placeholder-slate-500">
+                </div>
+                <div>
+                  <label for="cust-nationality" class="pos-label" id="lbl-cust-nationality">Kewarganegaraan</label>
+                  <input type="text" id="cust-nationality" placeholder="Indonesia, Australia" class="pos-input w-full uppercase bg-navy-900 border border-navy-600 rounded-lg text-slate-100 placeholder-slate-500">
+                </div>
+                <div>
+                  <label for="cust-job" class="pos-label" id="lbl-cust-job">Pekerjaan</label>
+                  <input type="text" id="cust-job" placeholder="Pekerjaan" class="pos-input w-full uppercase bg-navy-900 border border-navy-600 rounded-lg text-slate-100 placeholder-slate-500">
+                </div>
+                <div>
+                  <label for="cust-gender" class="pos-label" id="lbl-cust-gender">Jenis kelamin</label>
+                  <select id="cust-gender" class="pos-input w-full bg-navy-900 border border-navy-600 rounded-lg text-slate-100">
+                    <option value="" id="opt-gender-none">Pilih</option>
+                    <option value="LAKI-LAKI" id="opt-gender-male">Laki-laki</option>
+                    <option value="PEREMPUAN" id="opt-gender-female">Perempuan</option>
+                  </select>
+                </div>
+                <div class="sm:col-span-2">
+                  <label for="cust-address" class="pos-label" id="lbl-cust-address">Alamat tinggal</label>
+                  <input type="text" id="cust-address" placeholder="Alamat domisili atau hotel" class="pos-input w-full uppercase bg-navy-900 border border-navy-600 rounded-lg text-slate-100 placeholder-slate-500">
+                </div>
+              </div>
+            </details>
+
+            <!-- PEP & Enhanced Due Diligence -->
+            <div class="mt-4 pt-4 border-t border-navy-700">
+              <label class="flex items-center gap-2 cursor-pointer select-none">
+                <input type="checkbox" id="cust-pep-toggle" class="w-4 h-4 rounded text-brand bg-navy-900 border-navy-600 focus:ring-brand/40">
+                <span class="text-[13px] font-medium text-slate-300" id="lbl-cust-pep">Customer adalah PEP (pejabat publik)</span>
+              </label>
+
+              <div id="pep-edd-fields" class="hidden mt-3 p-3 rounded-lg bg-amber-950/20 border border-amber-500/40 space-y-3">
+                <p class="text-[12px] text-amber-300 leading-snug" id="txt-edd-mandate">PBI APU PPT: Nasabah PEP wajib menjalani Enhanced Due Diligence (EDD) dan Persetujuan Direksi.</p>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <div>
-                    <label class="block text-slate-400 text-xs font-medium mb-1 truncate" id="lbl-pep-institution">Institusi / Jabatan PEP <span class="text-rose-400">*</span></label>
-                    <input type="text" id="pep-institution" placeholder="Contoh: Anggota DPR / Kementerian" class="w-full h-9 bg-navy-900 border border-navy-600 rounded-lg px-2.5 py-1.5 text-slate-100 text-xs focus:outline-none focus:border-amber-400">
+                    <label for="pep-institution" class="pos-label" id="lbl-pep-institution">Institusi / jabatan *</label>
+                    <input type="text" id="pep-institution" placeholder="Anggota DPR, kementerian" class="pos-input w-full bg-navy-900 border border-navy-600 rounded-lg text-slate-100 placeholder-slate-500">
                   </div>
                   <div>
-                    <label class="block text-slate-400 text-xs font-medium mb-1 truncate" id="lbl-pep-source">Sumber Dana (Source of Funds) <span class="text-rose-400">*</span></label>
-                    <select id="pep-source-funds" class="w-full h-9 bg-navy-900 border border-navy-600 rounded-lg px-2 py-1.5 text-slate-100 text-xs focus:outline-none focus:border-amber-400">
-                      <option value="" id="opt-source-none">- Pilih Sumber Dana -</option>
+                    <label for="pep-source-funds" class="pos-label" id="lbl-pep-source">Sumber dana *</label>
+                    <select id="pep-source-funds" class="pos-input w-full bg-navy-900 border border-navy-600 rounded-lg text-slate-100">
+                      <option value="" id="opt-source-none">Pilih sumber dana</option>
                       <option value="GAJI" id="opt-source-salary">Gaji / Penghasilan Resmi</option>
                       <option value="USAHA" id="opt-source-business">Hasil Usaha / Bisnis</option>
                       <option value="TABUNGAN" id="opt-source-savings">Tabungan Pribadi</option>
@@ -1514,9 +1618,9 @@
                     </select>
                   </div>
                   <div>
-                    <label class="block text-slate-400 text-xs font-medium mb-1 truncate" id="lbl-pep-purpose">Tujuan Transaksi (Purpose) <span class="text-rose-400">*</span></label>
-                    <select id="pep-purpose" class="w-full h-9 bg-navy-900 border border-navy-600 rounded-lg px-2 py-1.5 text-slate-100 text-xs focus:outline-none focus:border-amber-400">
-                      <option value="" id="opt-purpose-none">- Pilih Tujuan Transaksi -</option>
+                    <label for="pep-purpose" class="pos-label" id="lbl-pep-purpose">Tujuan transaksi *</label>
+                    <select id="pep-purpose" class="pos-input w-full bg-navy-900 border border-navy-600 rounded-lg text-slate-100">
+                      <option value="" id="opt-purpose-none">Pilih tujuan</option>
                       <option value="LIBURAN" id="opt-purpose-holiday">Wisata / Liburan LN</option>
                       <option value="BISNIS" id="opt-purpose-business">Perjalanan Bisnis</option>
                       <option value="PENDIDIKAN" id="opt-purpose-education">Biaya Pendidikan LN</option>
@@ -1527,421 +1631,291 @@
                     </select>
                   </div>
                 </div>
-                <div class="pt-1">
-                  <label class="flex items-start gap-2 cursor-pointer select-none">
-                    <input type="checkbox" id="check-pep-approval" class="w-4 h-4 rounded text-amber-500 bg-navy-900 border-navy-600 focus:ring-amber-400 mt-0.5">
-                    <span class="text-xs text-slate-300 leading-snug" id="lbl-pep-approval">
-                      Saya mengonfirmasi bahwa transaksi nasabah PEP ini telah mendapatkan <b>Persetujuan Direksi / Senior Management</b> sesuai standar kepatuhan Bank Indonesia.
-                    </span>
-                  </label>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 3. Add Currency Item Quick Form -->
-          <div class="bg-navy-800 border border-navy-700 rounded-xl p-3.5 sm:p-4 shadow-sm">
-            <h2 class="text-xs font-bold text-slate-300 uppercase tracking-wider mb-2.5 flex items-center justify-between">
-              <span class="flex items-center gap-1.5">
-                <svg class="w-4 h-4 text-brand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
-                <span id="lbl-add-valas-title">Tambah Rincian Valas</span>
-              </span>
-              <span class="text-[11px] font-normal text-slate-400" id="lbl-add-valas-sub">Pilih mata uang & isi nominal</span>
-            </h2>
-
-            <div class="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-end text-xs">
-              <!-- Select Currency -->
-              <div class="sm:col-span-4">
-                <div class="flex items-center justify-between mb-1">
-                  <label class="block text-slate-300 font-semibold" id="lbl-curr-select">Mata Uang (Valas) <span class="text-rose-400 font-bold">*</span></label>
-                  <span id="badge-req-curr" class="badge-mandatory">[Pilih]</span>
-                </div>
-                <select id="item-currency" class="w-full bg-navy-900 border-2 border-navy-600 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-brand font-bold">
-                  <!-- Populated dynamically via JS -->
-                </select>
-              </div>
-
-              <!-- Input Quantity / Amount -->
-              <div class="sm:col-span-3">
-                <div class="flex items-center justify-between mb-1">
-                  <label class="block text-slate-300 font-semibold" id="lbl-amount">Jumlah Valas <span class="text-rose-400 font-bold">*</span></label>
-                  <span id="badge-req-amount" class="badge-mandatory">[Wajib Diisi]</span>
-                </div>
-                <input type="number" id="item-amount" min="1" step="any" placeholder="Contoh: 100" class="w-full bg-navy-900 border-2 border-navy-600 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-brand font-mono font-bold text-right input-mandatory">
-              </div>
-
-              <!-- Current Rate (Read-only or overrideable) -->
-              <div class="sm:col-span-3">
-                <div class="flex items-center justify-between mb-1">
-                  <label class="block text-slate-400 font-medium" id="lbl-rate">Kurs (Rate)</label>
-                  <span id="badge-rate-board" class="badge-calculated">[Kurs Papan]</span>
-                </div>
-                <div class="relative">
-                  <input type="number" id="item-rate" step="any" class="w-full bg-navy-900/90 border border-navy-600 rounded-lg px-3 py-2 text-brand focus:outline-none focus:border-brand font-mono font-bold text-right input-auto-calculated" title="Kurs terisi otomatis dari papan kurs. Bisa diedit jika ada negosiasi khusus.">
-                </div>
-              </div>
-
-              <!-- Add Button -->
-              <div class="sm:col-span-2">
-                <button type="button" id="btn-add-item" class="w-full py-2 px-3 rounded-lg bg-brand hover:bg-brand-hover text-navy-950 font-bold transition-all flex items-center justify-center gap-1 shadow-sm">
-                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                  <span id="lbl-btn-add-item">Tambah</span>
-                </button>
-              </div>
-            </div>
-
-            <!-- Custom Currency Input Box (Shows when Custom is selected) -->
-            <div id="custom-currency-box" class="hidden mt-3 p-3 bg-navy-900/90 border border-brand/50 rounded-xl space-y-2">
-              <div class="flex items-center justify-between text-xs">
-                <span class="font-bold text-brand flex items-center gap-1.5">
-                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-                  <span id="lbl-custom-curr-title">Mata Uang Kustom (Custom Currency)</span>
-                </span>
-                <label class="flex items-center gap-1.5 text-[11px] text-slate-300 cursor-pointer">
-                  <input type="checkbox" id="check-save-custom-rate" class="w-3.5 h-3.5 text-brand bg-navy-800 border-navy-600 rounded">
-                  <span id="lbl-save-custom-rate">Simpan ke Papan Kurs</span>
+                <label class="flex items-start gap-2 cursor-pointer select-none">
+                  <input type="checkbox" id="check-pep-approval" class="w-4 h-4 mt-0.5 rounded text-amber-500 bg-navy-900 border-navy-600 focus:ring-amber-400">
+                  <span class="text-[13px] text-slate-300 leading-snug" id="lbl-pep-approval">Saya mengonfirmasi bahwa transaksi nasabah PEP ini telah mendapatkan <b>Persetujuan Direksi / Senior Management</b> sesuai standar kepatuhan Bank Indonesia.</span>
                 </label>
               </div>
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
-                <div>
-                  <label class="block text-slate-400 mb-0.5 text-[11px]" id="lbl-custom-code">Kode Valas (contoh: VND, AED, CHF, NZD) *</label>
-                  <input type="text" id="custom-curr-code" placeholder="VND" maxlength="6" class="w-full uppercase bg-navy-850 border-2 border-navy-600 rounded-lg px-3 py-1.5 text-slate-100 font-mono font-bold focus:outline-none focus:border-brand input-mandatory">
-                </div>
-                <div>
-                  <label class="block text-slate-400 mb-0.5 text-[11px]" id="lbl-custom-name">Nama Mata Uang *</label>
-                  <input type="text" id="custom-curr-name" placeholder="Vietnam Dong" class="w-full bg-navy-850 border-2 border-navy-600 rounded-lg px-3 py-1.5 text-slate-100 focus:outline-none focus:border-brand input-mandatory">
-                </div>
-              </div>
-            </div>
-
-            <!-- Quick currency chips -->
-            <div class="mt-3 flex items-center gap-1.5 flex-wrap text-[11px]">
-              <span class="text-slate-500" id="lbl-quick-curr">Pilihan cepat:</span>
-              <button type="button" class="chip-curr px-2 py-0.5 rounded bg-navy-700 hover:bg-navy-600 text-slate-300 font-mono" data-code="USD">USD</button>
-              <button type="button" class="chip-curr px-2 py-0.5 rounded bg-navy-700 hover:bg-navy-600 text-slate-300 font-mono" data-code="USD 20, 10, 5">USD 20,10,5</button>
-              <button type="button" class="chip-curr px-2 py-0.5 rounded bg-navy-700 hover:bg-navy-600 text-slate-300 font-mono" data-code="USD 2, 1">USD 2,1</button>
-              <button type="button" class="chip-curr px-2 py-0.5 rounded bg-navy-700 hover:bg-navy-600 text-slate-300 font-mono" data-code="AUD">AUD</button>
-              <button type="button" class="chip-curr px-2 py-0.5 rounded bg-navy-700 hover:bg-navy-600 text-slate-300 font-mono" data-code="SGD">SGD</button>
-              <button type="button" class="chip-curr px-2 py-0.5 rounded bg-navy-700 hover:bg-navy-600 text-slate-300 font-mono" data-code="EUR">EUR</button>
-              <button type="button" class="chip-curr px-2 py-0.5 rounded bg-navy-700 hover:bg-navy-600 text-slate-300 font-mono" data-code="GBP">GBP</button>
-              <button type="button" class="chip-curr px-2 py-0.5 rounded bg-navy-700 hover:bg-navy-600 text-slate-300 font-mono" data-code="JPY">JPY</button>
-              <button type="button" class="chip-curr px-2 py-0.5 rounded bg-navy-700 hover:bg-navy-600 text-slate-300 font-mono" data-code="MYR">MYR</button>
-              <button type="button" class="chip-curr px-2 py-0.5 rounded bg-navy-700 hover:bg-navy-600 text-slate-300 font-mono" data-code="HKD">HKD</button>
-              <button type="button" class="chip-curr px-2 py-0.5 rounded bg-navy-700 hover:bg-navy-600 text-slate-300 font-mono" data-code="THB">THB</button>
-              <button type="button" class="chip-curr px-2 py-0.5 rounded bg-navy-700 hover:bg-navy-600 text-slate-300 font-mono" data-code="NTD">NTD</button>
-              <button type="button" class="chip-curr px-2 py-0.5 rounded bg-navy-700 hover:bg-navy-600 text-slate-300 font-mono" data-code="PHP">PHP</button>
-              <button type="button" class="chip-curr px-2 py-0.5 rounded bg-navy-700 hover:bg-navy-600 text-slate-300 font-mono" data-code="INR">INR</button>
-              <button type="button" class="chip-curr px-2 py-0.5 rounded bg-navy-700 hover:bg-navy-600 text-slate-300 font-mono" data-code="CNY">CNY</button>
-              <button type="button" id="chip-custom-curr" class="px-2 py-0.5 rounded bg-brand/20 hover:bg-brand/30 text-brand font-semibold border border-brand/30 transition-colors">+ Kustom</button>
             </div>
           </div>
 
-          <!-- 4. The 4-Column Transaction Items Table (Sesuai Permintaan) -->
-          <div class="bg-navy-800 border border-navy-700 rounded-xl overflow-hidden shadow-sm">
-            <div class="px-4 py-2.5 bg-navy-850 border-b border-navy-700 flex items-center justify-between">
-              <h3 class="text-xs font-bold text-slate-200 uppercase tracking-wider" id="lbl-cart-title">Tabel Rincian Valas (4 Kolom Struk)</h3>
-              <span id="items-count-badge" class="text-xs px-2 py-0.5 rounded-full bg-navy-700 text-slate-300 font-mono">0 Item</span>
+          <!-- Underlying document (shown when the total reaches USD 10,000) -->
+          <div id="card-underlying-warning" class="hidden pos-card p-4 rounded-xl bg-blue-950/40 border border-blue-500/50 space-y-3">
+            <div class="flex items-start justify-between gap-3">
+              <h2 class="pos-h text-blue-200" id="lbl-underlying-title">Wajib dokumen underlying (≥ USD 10.000)</h2>
+              <span class="num shrink-0 text-[12px] font-semibold text-blue-200 px-2 py-0.5 rounded bg-blue-500/20" id="badge-usd-equiv">≈ USD 0</span>
             </div>
-
-            <div class="overflow-x-auto">
-              <table class="w-full text-left text-xs">
-                <thead class="bg-navy-900/60 text-slate-400 uppercase text-[11px] font-semibold border-b border-navy-700/60">
-                  <tr>
-                    <th class="py-2.5 px-3" id="lbl-th-valas">Valas</th>
-                    <th class="py-2.5 px-3 text-right" id="lbl-th-amount">Jumlah</th>
-                    <th class="py-2.5 px-3 text-right" id="lbl-th-rate">Kurs</th>
-                    <th class="py-2.5 px-3 text-right" id="lbl-th-subtotal">Sub Total</th>
-                    <th class="py-2.5 px-2 text-center w-10" id="lbl-th-action">Aksi</th>
-                  </tr>
-                </thead>
-                <tbody id="cart-table-body" class="divide-y divide-navy-700/40 font-mono">
-                  <!-- Empty state row -->
-                  <tr id="empty-cart-row">
-                    <td colspan="5" class="py-8 text-center text-slate-500 font-sans">
-                      <svg class="w-8 h-8 mx-auto mb-2 text-slate-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-                      <span id="lbl-cart-empty-text">Belum ada valas yang ditambahkan.<br>Silakan pilih mata uang dan klik tombol Tambah.</span>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            <!-- Bottom Financial Totals & Payments -->
-            <div class="p-4 bg-navy-850/80 border-t border-navy-700 space-y-3">
-              <!-- Underlying Transaction Warning (Threshold >= USD 10,000) -->
-              <div id="card-underlying-warning" class="hidden p-3 bg-blue-950/40 border border-blue-500/50 rounded-lg space-y-2.5">
-                <div class="flex items-center justify-between">
-                  <span class="font-semibold text-xs text-blue-300 flex items-center gap-1.5" id="lbl-underlying-title">
-                    <svg class="w-4 h-4 text-blue-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-                    Regulasi BI: Kewajiban Dokumen Underlying (≥ USD 10.000)
-                  </span>
-                  <span class="text-[10px] bg-blue-500/20 text-blue-300 border border-blue-500/40 px-2 py-0.5 rounded font-mono font-bold" id="badge-usd-equiv">≈ USD 0.00</span>
-                </div>
-                <p class="text-[11px] text-slate-300 leading-relaxed" id="txt-underlying-desc">
-                  Sesuai Peraturan Bank Indonesia (PBI Transaksi Valas), pembelian valuta asing terhadap Rupiah mencapai atau melebihi <b>USD 10.000 (atau ekuivalennya)</b> wajib melampirkan Dokumen Underlying Transaksi yang sah.
-                </p>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5 pt-1">
-                  <div>
-                    <label class="block text-slate-400 text-xs font-medium mb-1 truncate" id="lbl-underlying-type">Jenis Dokumen Underlying <span class="text-rose-400">*</span></label>
-                    <select id="underlying-doc-type" class="w-full h-9 bg-navy-900 border border-navy-600 rounded-lg px-2 py-1.5 text-slate-100 text-xs focus:outline-none focus:border-blue-400">
-                      <option value="" id="opt-underlying-none">- Pilih Jenis Dokumen -</option>
-                      <option value="TIKET" id="opt-underlying-ticket">Tiket Perjalanan / Paspor & Visa</option>
-                      <option value="INVOICE" id="opt-underlying-invoice">Invoice / Dokumen Dagang Luar Negeri</option>
-                      <option value="PENDIDIKAN" id="opt-underlying-edu">Invoice / Surat Biaya Pendidikan LN</option>
-                      <option value="MEDIS" id="opt-underlying-med">Surat Rujukan / Tagihan Medis LN</option>
-                      <option value="KONTRAK" id="opt-underlying-contract">Perjanjian Kontrak / Tagihan Jasa</option>
-                      <option value="LAINNYA" id="opt-underlying-other">Dokumen Underlying Lainnya</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label class="block text-slate-400 text-xs font-medium mb-1 truncate" id="lbl-underlying-no">Nomor Dokumen / Keterangan <span class="text-rose-400">*</span></label>
-                    <input type="text" id="underlying-doc-no" placeholder="Contoh: No. Tiket, No. Invoice / Surat" class="w-full h-9 bg-navy-900 border border-navy-600 rounded-lg px-2.5 py-1.5 text-slate-100 text-xs focus:outline-none focus:border-blue-400">
-                  </div>
-                </div>
+            <p class="text-[13px] text-slate-300 leading-relaxed" id="txt-underlying-desc">Sesuai Peraturan Bank Indonesia (PBI Transaksi Valas), pembelian valuta asing terhadap Rupiah mencapai atau melebihi <b>USD 10.000 (atau ekuivalennya)</b> wajib melampirkan Dokumen Underlying Transaksi yang sah.</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <label for="underlying-doc-type" class="pos-label" id="lbl-underlying-type">Jenis dokumen *</label>
+                <select id="underlying-doc-type" class="pos-input w-full bg-navy-900 border border-navy-600 rounded-lg text-slate-100">
+                  <option value="" id="opt-underlying-none">Pilih jenis dokumen</option>
+                  <option value="TIKET" id="opt-underlying-ticket">Tiket Perjalanan / Paspor & Visa</option>
+                  <option value="INVOICE" id="opt-underlying-invoice">Invoice / Dokumen Dagang Luar Negeri</option>
+                  <option value="PENDIDIKAN" id="opt-underlying-edu">Invoice / Surat Biaya Pendidikan LN</option>
+                  <option value="MEDIS" id="opt-underlying-med">Surat Rujukan / Tagihan Medis LN</option>
+                  <option value="KONTRAK" id="opt-underlying-contract">Perjanjian Kontrak / Tagihan Jasa</option>
+                  <option value="LAINNYA" id="opt-underlying-other">Dokumen Underlying Lainnya</option>
+                </select>
               </div>
-
-              <!-- Subtotal / Total -->
-              <div id="box-total-display" class="flex items-center justify-between text-sm p-3 rounded-xl bg-navy-900 border border-navy-700">
-                <span class="font-bold text-slate-300 tracking-wide text-xs sm:text-sm" id="lbl-total-idr">TOTAL (IDR)</span>
-                <span id="calc-total-idr" class="font-mono font-black text-xl sm:text-2xl text-brand">Rp 0</span>
-              </div>
-
-              <!-- Pembayaran Input -->
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-navy-700/60 items-center">
-                <div>
-                  <div class="flex items-center justify-between mb-1">
-                    <label class="block text-xs font-semibold text-slate-300" id="lbl-payment-idr">PEMBAYARAN (IDR)</label>
-                    <span id="badge-req-payment" class="badge-optional">(Opsional)</span>
-                  </div>
-                  <div class="relative">
-                    <span class="absolute left-3 top-2.5 text-slate-500 font-mono text-xs">Rp</span>
-                    <input type="number" id="input-payment" min="0" placeholder="0" class="w-full bg-navy-900 border border-navy-600 rounded-lg pl-9 pr-3 py-2 text-slate-100 focus:outline-none focus:border-brand font-mono font-extrabold text-right text-base input-optional">
-                  </div>
-                  <!-- Quick Cash Buttons -->
-                  <div class="flex items-center gap-1.5 mt-1.5 flex-wrap text-[10px]">
-                    <button type="button" id="btn-exact-cash" class="px-2 py-0.5 rounded bg-navy-700 hover:bg-navy-600 text-slate-300 font-medium">
-                      <span id="lbl-exact-cash">Uang Pas</span>
-                    </button>
-                    <button type="button" class="btn-quick-add px-2 py-0.5 rounded bg-navy-700 hover:bg-navy-600 text-slate-300 font-mono" data-val="50000">+50K</button>
-                    <button type="button" class="btn-quick-add px-2 py-0.5 rounded bg-navy-700 hover:bg-navy-600 text-slate-300 font-mono" data-val="100000">+100K</button>
-                    <button type="button" class="btn-quick-add px-2 py-0.5 rounded bg-navy-700 hover:bg-navy-600 text-slate-300 font-mono" data-val="500000">+500K</button>
-                    <button type="button" class="btn-quick-add px-2 py-0.5 rounded bg-navy-700 hover:bg-navy-600 text-slate-300 font-mono" data-val="1000000">+1M</button>
-                  </div>
-                </div>
-
-                <!-- Kembalian Display -->
-                <div id="box-change-display" class="bg-navy-900 p-3 rounded-xl border border-navy-700 flex flex-col justify-center">
-                  <div class="flex items-center justify-between mb-0.5">
-                    <span class="text-xs text-slate-400 font-semibold" id="lbl-change-idr">KEMBALIAN (IDR)</span>
-                    <span id="badge-auto-change" class="badge-calculated">[Kalkulasi Otomatis]</span>
-                  </div>
-                  <span id="calc-change-idr" class="font-mono font-extrabold text-lg text-emerald-400">Rp 0</span>
-                </div>
-              </div>
-
-              <!-- Main Checkout & Print Button -->
-              <div class="pt-3 flex flex-col sm:flex-row items-center gap-2">
-                <button type="button" id="btn-submit-tx" class="flex-1 w-full py-3 px-4 rounded-xl bg-brand hover:bg-brand-hover text-navy-950 font-extrabold text-sm sm:text-base tracking-wide transition-all flex items-center justify-center gap-2 shadow-lg shadow-brand/10">
-                  <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-                  <span id="lbl-btn-submit-tx">Proses Transaksi & Cetak Struk</span>
-                </button>
-                <button type="button" id="btn-reset-form" class="w-full sm:w-auto py-3 px-4 rounded-xl bg-navy-700 hover:bg-navy-600 text-slate-300 font-medium text-xs transition-colors">
-                  <span id="lbl-btn-reset">Reset</span>
-                </button>
+              <div>
+                <label for="underlying-doc-no" class="pos-label" id="lbl-underlying-no">Nomor / keterangan dokumen *</label>
+                <input type="text" id="underlying-doc-no" placeholder="No. tiket, invoice, atau surat" class="pos-input w-full bg-navy-900 border border-navy-600 rounded-lg text-slate-100 placeholder-slate-500">
               </div>
             </div>
           </div>
-
         </div>
 
-        <!-- RIGHT COLUMN: LIVE RECEIPT PREVIEW (5 cols) -->
-        <div class="lg:col-span-5 space-y-4">
-          <div class="bg-navy-800 border border-navy-700 rounded-xl p-3.5 sm:p-4 sticky top-3 shadow-lg flex flex-col">
-            <div class="flex items-center justify-between pb-3 border-b border-navy-700 mb-3">
-              <h2 class="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
-                <svg class="w-4 h-4 text-brand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-                <span id="lbl-receipt-preview-title">Pratinjau Struk 80mm</span>
-              </h2>
-              <div class="flex items-center gap-2">
-                <div class="flex items-center gap-1 bg-navy-900 border border-navy-700 rounded-lg p-0.5 text-[10px]">
-                  <span class="text-slate-400 px-1 font-medium" id="lbl-receipt-lang-tag">Struk:</span>
-                  <button type="button" id="btn-rcpt-lang-id" class="px-1.5 py-0.5 rounded bg-brand text-navy-950 font-bold transition-all">ID</button>
-                  <button type="button" id="btn-rcpt-lang-en" class="px-1.5 py-0.5 rounded text-slate-400 hover:text-white transition-all">EN</button>
+        <!-- RIGHT: sticky summary (the one loud element) + collapsible receipt preview -->
+        <div class="lg:col-span-5 space-y-4 lg:sticky lg:top-[7.5rem]">
+
+          <div id="pos-summary" class="pos-summary">
+            <div class="pos-summary__mode">
+              <span class="pos-summary__dot" aria-hidden="true"></span>
+              <span id="summary-mode-label">Beli valas</span>
+            </div>
+            <div class="mt-3">
+              <span class="block text-[13px] font-medium text-slate-400" id="lbl-total-idr">Total</span>
+              <span id="calc-total-idr" class="pos-summary__total num" aria-live="polite">Rp 0</span>
+            </div>
+
+            <!-- JUAL: cash received + change -->
+            <div id="payment-cash-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+              <div>
+                <label for="input-payment" class="pos-label" id="lbl-payment-idr">Uang diterima</label>
+                <div class="relative">
+                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-[14px]">Rp</span>
+                  <input type="text" id="input-payment" inputmode="numeric" autocomplete="off" placeholder="0" class="pos-input pos-input--num w-full bg-navy-900 border border-navy-600 rounded-lg pl-10 text-slate-100 text-right font-bold">
                 </div>
-                <span id="receipt-col-badge" class="text-[10px] px-2 py-0.5 rounded bg-brand/10 text-brand font-mono border border-brand/20">80mm (48 Kolom)</span>
+                <div class="flex flex-wrap gap-1.5 mt-2">
+                  <button type="button" id="btn-exact-cash" class="cash-chip"><span id="lbl-exact-cash">Uang pas</span></button>
+                  <button type="button" class="btn-quick-add cash-chip num" data-val="50000">+50rb</button>
+                  <button type="button" class="btn-quick-add cash-chip num" data-val="100000">+100rb</button>
+                  <button type="button" class="btn-quick-add cash-chip num" data-val="500000">+500rb</button>
+                  <button type="button" class="btn-quick-add cash-chip num" data-val="1000000">+1jt</button>
+                </div>
+              </div>
+              <div class="pos-summary__sub">
+                <span class="block text-[13px] font-medium text-slate-400" id="lbl-change-idr">Kembalian</span>
+                <span id="calc-change-idr" class="num block text-[22px] font-bold">Rp 0</span>
               </div>
             </div>
 
-            <!-- Receipt Container (Paper Mimic) -->
-            <div id="receipt-container-wrapper" class="flex justify-center bg-navy-950 p-2 sm:p-4 rounded-xl border border-navy-700/80 overflow-y-auto max-h-[calc(100vh-14rem)] lg:max-h-[760px] receipt-scroll-container">
-              <div id="printable-receipt" class="receipt-paper w-full max-w-[380px] p-4 pb-8 text-[12px] select-text transition-all">
-                <!-- Header -->
-                <div id="rcpt-logo-wrapper" class="flex justify-center mb-1.5 text-center">
-                  <img id="rcpt-logo-img" src="/assets/logo.svg" alt="Logo Struk" class="max-h-12 max-w-[140px] mx-auto object-contain filter grayscale contrast-200">
-                </div>
-                <div class="text-center font-bold text-sm tracking-tight text-black" id="rcpt-store-name">
-                  SKYLINE EXCHANGE
-                </div>
-                <div class="text-center text-[10px] text-gray-700 leading-tight mt-0.5" id="rcpt-store-address">
-                  Jl. Bypass Ngurah Rai No. 4X, Kuta, Bali
-                </div>
-                <div class="text-center text-[10px] text-gray-700 leading-tight" id="rcpt-store-phone">
-                  WA: +6285-122-777-970
-                </div>
-                <!-- Permit (Hidden by default) -->
-                <div id="rcpt-store-permit" class="hidden text-center text-[9px] text-gray-600"></div>
+            <!-- BELI: the cashier pays the customer, so there is no payment / change to enter -->
+            <div id="box-payout-display" class="hidden pos-summary__sub mt-4 flex items-center justify-between gap-3">
+              <div class="min-w-0">
+                <span class="block text-[13px] font-semibold" id="lbl-payout-idr">Dibayarkan ke customer</span>
+                <span class="block text-[12px] text-slate-400 mt-0.5" id="lbl-payout-hint">Serahkan Rupiah sejumlah total ke customer.</span>
+              </div>
+              <span id="calc-payout-idr" class="num text-[18px] font-bold whitespace-nowrap shrink-0">Rp 0</span>
+            </div>
 
-                <div class="my-1.5 text-center text-gray-400 font-mono rcpt-div-dash">------------------------------------------------</div>
+            <div class="mt-4 flex gap-2">
+              <button type="button" id="btn-submit-tx" class="flex-1 h-14 px-4 rounded-xl bg-brand hover:bg-brand-hover text-navy-950 font-extrabold text-[16px] flex items-center justify-center gap-2 transition-colors">
+                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                <span id="lbl-btn-submit-tx">Proses & cetak struk</span>
+              </button>
+              <button type="button" id="btn-reset-form" class="h-14 px-4 rounded-xl bg-navy-700 hover:bg-navy-600 text-slate-300 font-medium text-[14px] transition-colors">
+                <span id="lbl-btn-reset">Kosongkan</span>
+              </button>
+            </div>
+          </div>
 
-                <!-- Meta Details -->
-                <div class="space-y-0.5 text-[10px]">
-                  <div class="flex justify-between">
-                    <span class="text-gray-600" id="lbl-rcpt-no">No. Struk</span>
-                    <span class="font-bold text-black" id="rcpt-no">SE-PREVIEW</span>
-                  </div>
-                  <div class="flex justify-between">
-                    <span class="text-gray-600" id="lbl-rcpt-datetime">Tgl & Jam</span>
-                    <span class="text-black" id="rcpt-datetime">--/--/---- --:--</span>
-                  </div>
-                  <div class="flex justify-between">
-                    <span class="text-gray-600" id="lbl-rcpt-type">Tipe</span>
-                    <span class="font-bold text-black" id="rcpt-type">BELI VALAS (BUY)</span>
-                  </div>
-                  <div class="flex justify-between">
-                    <span class="text-gray-600" id="lbl-rcpt-teller">Teller</span>
-                    <span class="text-black" id="rcpt-teller">TELLER 01</span>
-                  </div>
-                </div>
-
-                <div class="my-1 text-center text-gray-400">--------------------------------</div>
-
-                <!-- Customer Details -->
-                <div class="space-y-0.5 text-[10px]">
-                  <div class="flex justify-between">
-                    <span class="text-gray-600" id="lbl-rcpt-cust">Customer</span>
-                    <span class="font-bold text-black uppercase" id="rcpt-cust-name">-</span>
-                  </div>
-                  <div id="rcpt-phone-row" class="hidden flex justify-between">
-                    <span class="text-gray-600" id="lbl-rcpt-phone">No. Telp</span>
-                    <span class="text-black" id="rcpt-cust-phone">-</span>
-                  </div>
-                  <div id="rcpt-id-row" class="hidden flex justify-between">
-                    <span class="text-gray-600" id="lbl-rcpt-id">No. ID</span>
-                    <span class="text-black font-mono uppercase" id="rcpt-cust-id">-</span>
-                  </div>
-                  <div id="rcpt-nationality-row" class="hidden flex justify-between">
-                    <span class="text-gray-600" id="lbl-rcpt-nationality">Kewarganegaraan</span>
-                    <span class="text-black uppercase" id="rcpt-cust-nationality">-</span>
-                  </div>
-                  <div id="rcpt-npwp-row" class="hidden flex justify-between">
-                    <span class="text-gray-600" id="lbl-rcpt-npwp">NPWP</span>
-                    <span class="text-black font-mono uppercase" id="rcpt-cust-npwp">-</span>
-                  </div>
-                  <div id="rcpt-job-row" class="hidden flex justify-between">
-                    <span class="text-gray-600" id="lbl-rcpt-job">Pekerjaan</span>
-                    <span class="text-black uppercase" id="rcpt-cust-job">-</span>
-                  </div>
-                  <div id="rcpt-gender-row" class="hidden flex justify-between">
-                    <span class="text-gray-600" id="lbl-rcpt-gender">Jenis Kelamin</span>
-                    <span class="text-black uppercase" id="rcpt-cust-gender">-</span>
-                  </div>
-                  <div id="rcpt-address-row" class="hidden flex justify-between">
-                    <span class="text-gray-600" id="lbl-rcpt-address">Alamat</span>
-                    <span class="text-black text-right max-w-[180px] break-words uppercase" id="rcpt-cust-address">-</span>
-                  </div>
-                  <div id="rcpt-pep-row" class="hidden flex justify-between text-amber-800 font-semibold">
-                    <span id="lbl-rcpt-pep">Status PEP</span>
-                    <span id="rcpt-cust-pep">YA (HIGH RISK)</span>
-                  </div>
-                  <div id="rcpt-underlying-row" class="hidden flex justify-between text-blue-900 font-semibold">
-                    <span id="lbl-rcpt-underlying">Underlying</span>
-                    <span class="text-right max-w-[170px] break-words uppercase text-[9px]" id="rcpt-cust-underlying">-</span>
-                  </div>
-                  <div id="rcpt-delivery-row" class="hidden flex justify-between text-indigo-700">
-                    <span id="lbl-rcpt-delivery">Layanan</span>
-                    <span class="font-bold" id="rcpt-delivery-val">DELIVERY (ANTAR)</span>
-                  </div>
-                </div>
-
-                <!-- 4 Columns Table -->
-                <div class="my-1 text-center text-gray-800 font-bold font-mono rcpt-div-double">================================================</div>
-                <div class="grid grid-cols-12 text-[10px] sm:text-[11px] font-bold text-black border-b border-gray-400 pb-0.5">
-                  <div class="col-span-3 text-left" id="lbl-col-curr">VALAS</div>
-                  <div class="col-span-2 text-right" id="lbl-col-qty">JML</div>
-                  <div class="col-span-3 text-right" id="lbl-col-rate">KURS</div>
-                  <div class="col-span-4 text-right" id="lbl-col-sub">SUBTOTAL</div>
-                </div>
-                <div id="rcpt-items-body" class="divide-y divide-gray-200 text-[10px] sm:text-[11px]">
-                  <div class="text-center py-2 text-gray-400 italic" id="lbl-empty-rcpt">Belum ada item</div>
-                </div>
-                <div class="my-1 text-center text-gray-800 font-bold font-mono rcpt-div-double">================================================</div>
-
-                <!-- Financial Calculations -->
-                <div class="space-y-0.5 text-[10px] sm:text-[11px]">
-                  <div class="flex justify-between font-bold text-xs sm:text-sm text-black">
-                    <span id="lbl-rcpt-total">TOTAL IDR</span>
-                    <span id="rcpt-total">Rp 0</span>
-                  </div>
-                  <div class="flex justify-between text-gray-700">
-                    <span id="lbl-rcpt-payment">PEMBAYARAN</span>
-                    <span id="rcpt-payment">Rp 0</span>
-                  </div>
-                  <div class="flex justify-between text-gray-700">
-                    <span id="lbl-rcpt-change">KEMBALIAN</span>
-                    <span id="rcpt-change">Rp 0</span>
-                  </div>
-                </div>
-
-                <div class="my-1.5 text-center text-gray-400 font-mono rcpt-div-dash">------------------------------------------------</div>
-
-                <!-- Signatures Area (Editable Customer Name) -->
-                <div class="pt-1 pb-1">
-                  <div class="flex justify-between text-[10px] text-gray-700 px-2">
-                    <div class="text-center" id="lbl-sign-teller">Teller</div>
-                    <div class="text-center" id="lbl-sign-customer">Customer</div>
-                  </div>
-                  <div class="h-8"></div>
-                  <div class="flex justify-between text-[9px] font-bold text-black px-1">
-                    <div class="text-center" id="rcpt-sign-teller">( TELLER 01 )</div>
-                    <div class="text-center" id="rcpt-sign-customer">( CUSTOMER )</div>
-                  </div>
-                </div>
-
-                <!-- Editable Customer Signature Name Trigger in UI -->
-                <div class="mt-1 pt-1 border-t border-gray-200 text-[9px] text-gray-500 flex items-center justify-between no-print">
-                  <span id="lbl-sign-prompt">Nama TTD Customer:</span>
-                  <input type="text" id="input-signature-customer" class="bg-gray-100 border border-gray-300 rounded px-1 text-right uppercase text-[9px] font-bold text-black w-28 focus:outline-none focus:border-brand" placeholder="NAMA TTD">
-                </div>
-
-                <div class="my-1 text-center text-gray-400">--------------------------------</div>
-
-                <!-- Footer Disclaimers -->
-                <div class="text-center text-[9px] text-gray-600 leading-tight space-y-0.5 pb-3">
-                  <p id="lbl-disclaimer-1">* Periksa fisik uang sebelum meninggalkan kasir.</p>
-                  <p id="lbl-disclaimer-2">* Uang yang sudah ditukar tidak dapat dikembalikan.</p>
-                  <p class="font-bold text-gray-800 mt-1" id="lbl-disclaimer-thanks">TERIMA KASIH ATAS KUNJUNGAN ANDA</p>
-                </div>
+          <!-- Receipt preview, collapsed by default so it no longer dominates the screen -->
+          <div class="bg-navy-800 border border-navy-700 rounded-xl">
+            <div class="flex items-center justify-between gap-2 px-4 pt-3">
+              <button type="button" id="btn-toggle-receipt" aria-expanded="false" aria-controls="receipt-panel-body" class="flex items-center gap-2 py-1 text-[14px] font-semibold text-slate-200 hover:text-white">
+                <svg class="receipt-chevron w-4 h-4 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="9 6 15 12 9 18"/></svg>
+                <span id="lbl-receipt-preview-title">Pratinjau struk</span>
+                <span id="receipt-col-badge" class="num text-[12px] font-normal text-slate-400">80mm</span>
+              </button>
+              <div class="flex items-center gap-1 rounded-lg p-0.5 bg-navy-900 border border-navy-700 text-[12px]">
+                <span class="text-slate-400 px-1" id="lbl-receipt-lang-tag">Struk:</span>
+                <button type="button" id="btn-rcpt-lang-id" class="px-2 py-0.5 rounded bg-brand text-navy-950 font-bold">ID</button>
+                <button type="button" id="btn-rcpt-lang-en" class="px-2 py-0.5 rounded text-slate-400 hover:text-white">EN</button>
               </div>
             </div>
 
-            <!-- Print Actions Button Bar -->
-            <div class="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-2 shrink-0">
-              <button type="button" id="btn-direct-bt-print" class="py-2.5 px-2 rounded-lg bg-brand hover:bg-brand-hover text-navy-950 font-bold text-xs flex items-center justify-center gap-1.5 shadow transition-all">
-                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6.5 6.5l11 11L12 23V1l5.5 5.5-11 11"/></svg>
+            <div class="grid grid-cols-3 gap-2 px-4 py-3 receipt-actions">
+              <button type="button" id="btn-direct-bt-print" class="h-10 px-2 rounded-lg bg-navy-700 hover:bg-navy-600 text-slate-200 font-semibold text-[13px] flex items-center justify-center gap-1.5 transition-colors">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6.5 6.5l11 11L12 23V1l5.5 5.5-11 11"/></svg>
                 <span id="lbl-btn-print-bt">Cetak BT</span>
               </button>
-              <button type="button" id="btn-browser-print" class="py-2.5 px-2 rounded-lg bg-navy-700 hover:bg-navy-600 text-slate-200 font-semibold text-xs flex items-center justify-center gap-1.5 border border-navy-600 transition-colors" title="Cetak ke Printer USB via WebUSB atau Windows Driver">
-                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-                <span id="lbl-btn-print-browser">Cetak USB / Driver</span>
+              <button type="button" id="btn-browser-print" title="Cetak ke printer USB via WebUSB atau driver Windows" class="h-10 px-2 rounded-lg bg-navy-700 hover:bg-navy-600 text-slate-200 font-semibold text-[13px] flex items-center justify-center gap-1.5 transition-colors">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                <span id="lbl-btn-print-browser">Cetak USB</span>
               </button>
-              <button type="button" id="btn-share-wa" class="col-span-2 sm:col-span-1 py-2.5 px-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors">
-                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+              <button type="button" id="btn-share-wa" class="h-10 px-2 rounded-lg bg-navy-700 hover:bg-navy-600 text-slate-200 font-semibold text-[13px] flex items-center justify-center gap-1.5 transition-colors">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
                 <span id="lbl-btn-share-wa">Kirim WA</span>
               </button>
             </div>
+
+            <div id="receipt-panel-body" class="hidden px-4 pb-4 space-y-3">
+              <div id="receipt-container-wrapper" class="flex justify-center bg-navy-950 p-3 rounded-lg border border-navy-700 overflow-y-auto max-h-[70vh] receipt-scroll-container">
+                <div id="printable-receipt" class="receipt-paper w-full max-w-[380px] p-4 pb-8 text-[12px] select-text transition-all">
+                  <!-- Header -->
+                  <div id="rcpt-logo-wrapper" class="flex justify-center mb-1.5 text-center">
+                    <img id="rcpt-logo-img" src="/assets/logo.svg" alt="Logo Struk" class="max-h-12 max-w-[140px] mx-auto object-contain filter grayscale contrast-200">
+                  </div>
+                  <div class="text-center font-bold text-sm tracking-tight text-black" id="rcpt-store-name">
+                    SKYLINE EXCHANGE
+                  </div>
+                  <div class="text-center text-[10px] text-gray-700 leading-tight mt-0.5" id="rcpt-store-address">
+                    Jl. Bypass Ngurah Rai No. 4X, Kuta, Bali
+                  </div>
+                  <div class="text-center text-[10px] text-gray-700 leading-tight" id="rcpt-store-phone">
+                    WA: +6285-122-777-970
+                  </div>
+                  <!-- Permit (Hidden by default) -->
+                  <div id="rcpt-store-permit" class="hidden text-center text-[9px] text-gray-600"></div>
+
+                  <div class="my-1.5 text-center text-gray-400 font-mono rcpt-div-dash">------------------------------------------------</div>
+
+                  <!-- Meta Details -->
+                  <div class="space-y-0.5 text-[10px]">
+                    <div class="flex justify-between">
+                      <span class="text-gray-600" id="lbl-rcpt-no">No. Struk</span>
+                      <span class="font-bold text-black" id="rcpt-no">SE-PREVIEW</span>
+                    </div>
+                    <div class="flex justify-between">
+                      <span class="text-gray-600" id="lbl-rcpt-datetime">Tgl & Jam</span>
+                      <span class="text-black" id="rcpt-datetime">--/--/---- --:--</span>
+                    </div>
+                    <div class="flex justify-between">
+                      <span class="text-gray-600" id="lbl-rcpt-type">Tipe</span>
+                      <span class="font-bold text-black" id="rcpt-type">BELI VALAS (BUY)</span>
+                    </div>
+                    <div class="flex justify-between">
+                      <span class="text-gray-600" id="lbl-rcpt-teller">Teller</span>
+                      <span class="text-black" id="rcpt-teller">TELLER 01</span>
+                    </div>
+                  </div>
+
+                  <div class="my-1 text-center text-gray-400 font-mono rcpt-div-dash">------------------------------------------------</div>
+
+                  <!-- Customer Details -->
+                  <div class="space-y-0.5 text-[10px]">
+                    <div class="flex justify-between">
+                      <span class="text-gray-600" id="lbl-rcpt-cust">Customer</span>
+                      <span class="font-bold text-black uppercase" id="rcpt-cust-name">-</span>
+                    </div>
+                    <div id="rcpt-phone-row" class="hidden flex justify-between">
+                      <span class="text-gray-600" id="lbl-rcpt-phone">No. Telp</span>
+                      <span class="text-black" id="rcpt-cust-phone">-</span>
+                    </div>
+                    <div id="rcpt-id-row" class="hidden flex justify-between">
+                      <span class="text-gray-600" id="lbl-rcpt-id">No. ID</span>
+                      <span class="text-black font-mono uppercase" id="rcpt-cust-id">-</span>
+                    </div>
+                    <div id="rcpt-nationality-row" class="hidden flex justify-between">
+                      <span class="text-gray-600" id="lbl-rcpt-nationality">Kewarganegaraan</span>
+                      <span class="text-black uppercase" id="rcpt-cust-nationality">-</span>
+                    </div>
+                    <div id="rcpt-npwp-row" class="hidden flex justify-between">
+                      <span class="text-gray-600" id="lbl-rcpt-npwp">NPWP</span>
+                      <span class="text-black font-mono uppercase" id="rcpt-cust-npwp">-</span>
+                    </div>
+                    <div id="rcpt-job-row" class="hidden flex justify-between">
+                      <span class="text-gray-600" id="lbl-rcpt-job">Pekerjaan</span>
+                      <span class="text-black uppercase" id="rcpt-cust-job">-</span>
+                    </div>
+                    <div id="rcpt-gender-row" class="hidden flex justify-between">
+                      <span class="text-gray-600" id="lbl-rcpt-gender">Jenis Kelamin</span>
+                      <span class="text-black uppercase" id="rcpt-cust-gender">-</span>
+                    </div>
+                    <div id="rcpt-address-row" class="hidden flex justify-between">
+                      <span class="text-gray-600" id="lbl-rcpt-address">Alamat</span>
+                      <span class="text-black text-right max-w-[180px] break-words uppercase" id="rcpt-cust-address">-</span>
+                    </div>
+                    <div id="rcpt-pep-row" class="hidden flex justify-between text-amber-800 font-semibold">
+                      <span id="lbl-rcpt-pep">Status PEP</span>
+                      <span id="rcpt-cust-pep">YA (HIGH RISK)</span>
+                    </div>
+                    <div id="rcpt-underlying-row" class="hidden flex justify-between text-blue-900 font-semibold">
+                      <span id="lbl-rcpt-underlying">Underlying</span>
+                      <span class="text-right max-w-[170px] break-words uppercase text-[9px]" id="rcpt-cust-underlying">-</span>
+                    </div>
+                    <div id="rcpt-delivery-row" class="hidden flex justify-between text-indigo-700">
+                      <span id="lbl-rcpt-delivery">Layanan</span>
+                      <span class="font-bold" id="rcpt-delivery-val">DELIVERY (ANTAR)</span>
+                    </div>
+                  </div>
+
+                  <!-- 4 Columns Table -->
+                  <div class="my-1 text-center text-gray-800 font-bold font-mono rcpt-div-double">================================================</div>
+                  <div class="grid grid-cols-12 text-[10px] sm:text-[11px] font-bold text-black border-b border-gray-400 pb-0.5">
+                    <div class="col-span-3 text-left" id="lbl-col-curr">VALAS</div>
+                    <div class="col-span-2 text-right" id="lbl-col-qty">JML</div>
+                    <div class="col-span-3 text-right" id="lbl-col-rate">KURS</div>
+                    <div class="col-span-4 text-right" id="lbl-col-sub">SUBTOTAL</div>
+                  </div>
+                  <div id="rcpt-items-body" class="divide-y divide-gray-200 text-[10px] sm:text-[11px]">
+                    <div class="text-center py-2 text-gray-400 italic" id="lbl-empty-rcpt">Belum ada item</div>
+                  </div>
+                  <div class="my-1 text-center text-gray-800 font-bold font-mono rcpt-div-double">================================================</div>
+
+                  <!-- Financial Calculations -->
+                  <div class="space-y-0.5 text-[10px] sm:text-[11px]">
+                    <div class="flex justify-between font-bold text-xs sm:text-sm text-black">
+                      <span id="lbl-rcpt-total">TOTAL IDR</span>
+                      <span id="rcpt-total">Rp 0</span>
+                    </div>
+                    <div id="rcpt-payment-row" class="flex justify-between text-gray-700">
+                      <span id="lbl-rcpt-payment">PEMBAYARAN</span>
+                      <span id="rcpt-payment">Rp 0</span>
+                    </div>
+                    <div id="rcpt-change-row" class="flex justify-between text-gray-700">
+                      <span id="lbl-rcpt-change">KEMBALIAN</span>
+                      <span id="rcpt-change">Rp 0</span>
+                    </div>
+                  </div>
+
+                  <div class="my-1.5 text-center text-gray-400 font-mono rcpt-div-dash">------------------------------------------------</div>
+
+                  <!-- Signatures Area (Editable Customer Name) -->
+                  <div class="pt-1 pb-1">
+                    <div class="flex justify-between text-[10px] text-gray-700 px-2">
+                      <div class="text-center" id="lbl-sign-teller">Teller</div>
+                      <div class="text-center" id="lbl-sign-customer">Customer</div>
+                    </div>
+                    <div class="h-8"></div>
+                    <div class="flex justify-between text-[9px] font-bold text-black px-1">
+                      <div class="text-center" id="rcpt-sign-teller">( TELLER 01 )</div>
+                      <div class="text-center" id="rcpt-sign-customer">( CUSTOMER )</div>
+                    </div>
+                  </div>
+
+                  <div class="my-1 text-center text-gray-400 font-mono rcpt-div-dash">------------------------------------------------</div>
+
+                  <!-- Footer Disclaimers -->
+                  <div class="text-center text-[9px] text-gray-600 leading-tight space-y-0.5 pb-3">
+                    <p id="lbl-disclaimer-1">* Periksa fisik uang sebelum meninggalkan kasir.</p>
+                    <p id="lbl-disclaimer-2">* Uang yang sudah ditukar tidak dapat dikembalikan.</p>
+                    <p class="font-bold text-gray-800 mt-1" id="lbl-disclaimer-thanks">TERIMA KASIH ATAS KUNJUNGAN ANDA</p>
+                  </div>
+                </div>
+              </div>
+              <div class="flex items-center justify-between gap-3 no-print">
+                <label for="input-signature-customer" class="text-[13px] text-slate-400" id="lbl-sign-prompt">Nama TTD customer</label>
+                <input type="text" id="input-signature-customer" placeholder="Sama dengan nama" class="pos-input w-44 uppercase text-right bg-navy-900 border border-navy-600 rounded-lg text-slate-100 placeholder-slate-500 text-[13px]">
+              </div>
+            </div>
           </div>
         </div>
 
+      </div>
+
+      <!-- Mobile: total and process button always within thumb reach -->
+      <div id="mobile-checkout-bar" class="lg:hidden no-print fixed bottom-0 inset-x-0 z-30 bg-navy-850 border-t border-navy-700 px-4 py-3 flex items-center gap-3">
+        <div class="min-w-0">
+          <span id="mobile-mode-label" class="block text-[12px] font-semibold mode-ink">Beli valas</span>
+          <span id="mobile-total-idr" class="num block text-[20px] font-extrabold text-slate-100 truncate">Rp 0</span>
+        </div>
+        <button type="button" id="btn-submit-mobile" class="ml-auto h-12 px-6 rounded-xl bg-brand hover:bg-brand-hover text-navy-950 font-extrabold text-[15px]">
+          <span id="lbl-btn-submit-mobile">Proses</span>
+        </button>
       </div>
 
       <!-- PANEL 4: Database & Cadangan Data (Database & Backup) -->

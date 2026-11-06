@@ -433,8 +433,11 @@ class BluetoothPrinter {
     addBytes(0x1B, 0x21, 0x08); // Emphasized (bold)
     addLine(BluetoothPrinter.padLine('TOTAL IDR', 'Rp ' + data.total_idr.toLocaleString('id-ID'), width));
     addBytes(0x1B, 0x21, 0x00); // Normal
-    addLine(BluetoothPrinter.padLine(isEn ? 'PAYMENT' : 'PEMBAYARAN', 'Rp ' + data.paid_amount.toLocaleString('id-ID'), width));
-    addLine(BluetoothPrinter.padLine(isEn ? 'CHANGE' : 'KEMBALIAN', 'Rp ' + data.change_amount.toLocaleString('id-ID'), width));
+    // BELI: the cashier pays the customer, so payment / change lines do not apply
+    if (data.type !== 'BELI') {
+      addLine(BluetoothPrinter.padLine(isEn ? 'PAYMENT' : 'PEMBAYARAN', 'Rp ' + data.paid_amount.toLocaleString('id-ID'), width));
+      addLine(BluetoothPrinter.padLine(isEn ? 'CHANGE' : 'KEMBALIAN', 'Rp ' + data.change_amount.toLocaleString('id-ID'), width));
+    }
     addLine(dividerDash);
 
     // Signatures (Teller & Customer)

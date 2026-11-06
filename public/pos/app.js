@@ -29,14 +29,14 @@ const i18n = {
     subtabSheets: 'Integrasi Google Sheets',
     subtabStore: 'Profil Toko',
     subtabCompliance: 'Kepatuhan BI',
-    lblCustPep: 'Nasabah Merupakan PEP (Politically Exposed Person)',
+    lblCustPep: 'Customer adalah PEP (pejabat publik)',
     badgePepNotice: 'High Risk Customer',
     txtEddMandate: 'PBI APU PPT: Nasabah PEP wajib menjalani Enhanced Due Diligence (EDD) dan Persetujuan Direksi.',
     lblPepInstitution: 'Institusi / Jabatan PEP',
     lblPepSource: 'Sumber Dana (Source of Funds)',
     lblPepPurpose: 'Tujuan Transaksi (Purpose)',
     lblPepApproval: 'Saya mengonfirmasi bahwa transaksi nasabah PEP ini telah mendapatkan Persetujuan Direksi / Senior Management sesuai standar kepatuhan Bank Indonesia.',
-    lblUnderlyingTitle: 'Regulasi BI: Kewajiban Dokumen Underlying (≥ USD 10.000)',
+    lblUnderlyingTitle: 'Wajib dokumen underlying (≥ USD 10.000)',
     txtUnderlyingDesc: 'Sesuai Peraturan Bank Indonesia (PBI Transaksi Valas), pembelian valuta asing terhadap Rupiah mencapai atau melebihi USD 10.000 (atau ekuivalennya) wajib melampirkan Dokumen Underlying Transaksi yang sah.',
     lblUnderlyingType: 'Jenis Dokumen Underlying',
     lblUnderlyingNo: 'Nomor Dokumen / Keterangan',
@@ -48,71 +48,75 @@ const i18n = {
     legendMandatory: 'Border Tebal = Wajib Diisi',
     legendOptional: 'Border Tipis = Opsional',
     legendAuto: 'Otomatis / Kurs Papan',
-    btnBeli: 'BELI VALAS (BUY)',
-    btnJual: 'JUAL VALAS (SELL)',
-    modeDelivery: 'Mode Delivery',
+    btnBeli: 'Beli valas',
+    btnJual: 'Jual valas',
+    modeDelivery: 'Antar ke customer',
     expBeli: 'Kasir membeli valas dari customer. Customer menyerahkan Valas dan menerima Rupiah (IDR).',
     expJual: 'Kasir menjual valas ke customer. Customer membeli Valas dan menyerahkan Rupiah (IDR).',
-    deliveryAddrLabel: 'Alamat Pengantaran / Hotel / Villa *',
-    deliveryAddrPlaceholder: 'Contoh: Hotel Grand Bali Villa No. 12, Kuta',
-    deliveryTimeLabel: 'Jadwal Pengantaran',
-    deliveryTimePlaceholder: 'Contoh: Hari ini, Pukul 15:30 WITA',
-    deliveryCourierLabel: 'Nama Kurir / Petugas',
-    deliveryCourierPlaceholder: 'Nama petugas pengantar',
-    custTitle: 'Data Pelanggan (Customer)',
-    custNameLabel: 'Nama Customer *',
-    custNamePlaceholder: 'Nama Lengkap Customer',
-    custPhoneLabel: 'No. Telepon / WhatsApp',
-    custIdLabel: 'No. ID KTP / Paspor',
-    custIdPlaceholder: 'Nomor KTP atau Paspor',
+    deliveryAddrLabel: 'Alamat antar / hotel / villa *',
+    deliveryAddrPlaceholder: 'Hotel Grand Bali, villa no. 12, Kuta',
+    deliveryTimeLabel: 'Jadwal antar',
+    deliveryTimePlaceholder: 'Hari ini, 15:30 WITA',
+    deliveryCourierLabel: 'Kurir',
+    deliveryCourierPlaceholder: 'Nama kurir',
+    custTitle: 'Customer',
+    custNameLabel: 'Nama *',
+    custNamePlaceholder: 'Nama lengkap',
+    custPhoneLabel: 'Telepon / WhatsApp',
+    custIdLabel: 'No. KTP / paspor',
+    custIdPlaceholder: 'Nomor identitas',
     custNpwpLabel: 'NPWP',
-    custNpwpPlaceholder: 'Nomor Pokok Wajib Pajak',
+    custNpwpPlaceholder: 'Nomor NPWP',
     custNationalityLabel: 'Kewarganegaraan',
-    custNationalityPlaceholder: 'Contoh: INDONESIA, AUSTRALIA',
+    custNationalityPlaceholder: 'Indonesia, Australia',
     custJobLabel: 'Pekerjaan',
-    custJobPlaceholder: 'Profesi / Pekerjaan Customer',
-    custGenderLabel: 'Jenis Kelamin',
+    custExtraLabel: 'Data tambahan (NPWP, kewarganegaraan, pekerjaan, alamat)',
+    custJobPlaceholder: 'Pekerjaan',
+    custGenderLabel: 'Jenis kelamin',
     optGenderNone: '- Pilih Gender -',
     optGenderMale: 'Laki-Laki',
     optGenderFemale: 'Perempuan',
-    custAddressLabel: 'Alamat Tempat Tinggal',
-    custAddressPlaceholder: 'Alamat lengkap domisili / tempat tinggal / hotel customer',
+    custAddressLabel: 'Alamat tinggal',
+    custAddressPlaceholder: 'Alamat domisili atau hotel',
     rcptNationalityLabel: 'Kewarganegaraan',
     rcptNpwpLabel: 'NPWP',
     rcptJobLabel: 'Pekerjaan',
     rcptGenderLabel: 'Jenis Kelamin',
     rcptAddressLabel: 'Alamat',
-    addValasTitle: 'Tambah Rincian Valas',
+    addValasTitle: 'Valas',
     addValasSub: 'Pilih mata uang & isi nominal',
-    currLabel: 'Mata Uang (Valas)',
-    amountLabel: 'Jumlah Valas',
-    amountPlaceholder: 'Contoh: 100',
-    rateLabel: 'Kurs (Rate)',
+    currLabel: 'Mata uang',
+    amountLabel: 'Jumlah *',
+    amountPlaceholder: '100',
+    rateLabel: 'Kurs',
     btnAdd: 'Tambah',
     quickPick: 'Pilihan cepat:',
-    customCurrencyTitle: 'Mata Uang Kustom (Custom Currency)',
+    customCurrencyTitle: 'Mata uang lain',
     saveCustomRateLabel: 'Simpan ke Papan Kurs',
-    customCodeLabel: 'Kode Valas (contoh: VND, AED, CHF, NZD)',
-    customNameLabel: 'Nama Mata Uang',
+    customCodeLabel: 'Kode (VND, AED, CHF) *',
+    customNameLabel: 'Nama mata uang *',
     customOptionLabel: '+ Kustom / Valas Lain (+ Custom)',
 
     // Cart 4 Columns Table
-    cartTitle: 'Tabel Rincian Valas (4 Kolom Struk)',
+    cartTitle: 'Rincian',
     cartItemsCount: 'Item',
     cartItemsEmpty: 'Belum ada valas yang ditambahkan.<br>Silakan pilih mata uang dan klik tombol Tambah.',
     colValas: 'Valas',
     colAmount: 'Jumlah',
     colRate: 'Kurs',
-    colSubtotal: 'Sub Total',
-    colAction: 'Aksi',
+    colSubtotal: 'Subtotal',
+    colAction: 'Hapus',
 
     // Financial Totals
-    totalIdr: 'TOTAL (IDR)',
-    paymentIdr: 'PEMBAYARAN (IDR)',
-    changeIdr: 'KEMBALIAN (IDR)',
-    exactCash: 'Uang Pas',
-    btnSubmitTx: 'Proses Transaksi & Cetak Struk',
-    btnReset: 'Reset',
+    totalIdr: 'Total',
+    paymentIdr: 'Uang diterima',
+    changeIdr: 'Kembalian',
+    exactCash: 'Uang pas',
+    btnSubmitTx: 'Proses & cetak struk',
+    btnSubmitShort: 'Proses',
+    btnReset: 'Kosongkan',
+    explainBeli: 'Customer menyerahkan valas, kasir membayar Rupiah.',
+    explainJual: 'Customer membayar Rupiah, kasir menyerahkan valas.',
 
     // Thermal Receipt Preview
     receiptPreviewTitle: 'Pratinjau Struk 80mm',
@@ -136,15 +140,17 @@ const i18n = {
     rcptTotal: 'TOTAL IDR',
     rcptPayment: 'PEMBAYARAN',
     rcptChange: 'KEMBALIAN',
+    payoutLabel: 'Dibayarkan ke customer',
+    payoutHint: 'Serahkan Rupiah sejumlah total ke customer.',
     rcptSignTeller: 'Teller',
     rcptSignCustomer: 'Customer',
-    rcptSignNamePrompt: 'Nama TTD Customer:',
-    rcptSignPlaceholder: 'NAMA TTD',
+    rcptSignNamePrompt: 'Nama TTD customer',
+    rcptSignPlaceholder: 'Sama dengan nama',
     rcptDisclaimer1: '* Periksa fisik uang sebelum meninggalkan kasir.',
     rcptDisclaimer2: '* Uang yang sudah ditukar tidak dapat dikembalikan.',
     rcptThanks: 'TERIMA KASIH ATAS KUNJUNGAN ANDA',
     btnPrintBt: 'Cetak BT',
-    btnPrintBrowser: 'Cetak USB / Driver',
+    btnPrintBrowser: 'Cetak USB',
     btnShareWa: 'Kirim WA',
 
     // Tab Rates
@@ -288,14 +294,14 @@ const i18n = {
     subtabSheets: 'Google Sheets Integration',
     subtabStore: 'Store Profile',
     subtabCompliance: 'BI Compliance',
-    lblCustPep: 'Customer is a PEP (Politically Exposed Person)',
+    lblCustPep: 'Customer is a PEP (politically exposed person)',
     badgePepNotice: 'High Risk Customer',
     txtEddMandate: 'BI APU PPT: PEP customers require Enhanced Due Diligence (EDD) and Senior Management / Director approval.',
     lblPepInstitution: 'PEP Institution / Position',
     lblPepSource: 'Source of Funds',
     lblPepPurpose: 'Purpose of Transaction',
     lblPepApproval: 'I confirm that this PEP transaction has been formally approved by Senior Management / Board of Directors in compliance with Bank Indonesia regulations.',
-    lblUnderlyingTitle: 'BI Regulation: Mandatory Underlying Document (≥ USD 10,000)',
+    lblUnderlyingTitle: 'Underlying document required (≥ USD 10,000)',
     txtUnderlyingDesc: 'Under Bank Indonesia Foreign Exchange Regulations (PBI Transaksi Valas), foreign currency transactions reaching or exceeding USD 10,000 (or equivalent) require valid Underlying Documents.',
     lblUnderlyingType: 'Underlying Document Type',
     lblUnderlyingNo: 'Document Number / Reference',
@@ -307,71 +313,75 @@ const i18n = {
     legendMandatory: 'Thick Border = Required',
     legendOptional: 'Thin Border = Optional',
     legendAuto: 'System Automated',
-    btnBeli: 'BUY CURRENCY (WE BUY)',
-    btnJual: 'SELL CURRENCY (WE SELL)',
-    modeDelivery: 'Delivery Mode',
+    btnBeli: 'We buy',
+    btnJual: 'We sell',
+    modeDelivery: 'Deliver to customer',
     expBeli: 'We buy foreign currency from customer. Customer receives Rupiah (IDR).',
     expJual: 'We sell foreign currency to customer. Customer pays Rupiah (IDR).',
-    deliveryAddrLabel: 'Delivery Address / Hotel / Villa *',
-    deliveryAddrPlaceholder: 'e.g. Grand Bali Villa Room 12, Kuta',
-    deliveryTimeLabel: 'Delivery Schedule',
-    deliveryTimePlaceholder: 'e.g. Today at 15:30 WITA',
-    deliveryCourierLabel: 'Courier / Staff Name',
-    deliveryCourierPlaceholder: 'Staff in charge',
-    custTitle: 'Customer Information (KYC)',
-    custNameLabel: 'Customer Name *',
-    custNamePlaceholder: 'Full Customer Name',
+    deliveryAddrLabel: 'Delivery address / hotel / villa *',
+    deliveryAddrPlaceholder: 'Grand Bali Hotel, villa 12, Kuta',
+    deliveryTimeLabel: 'Delivery time',
+    deliveryTimePlaceholder: 'Today, 15:30 WITA',
+    deliveryCourierLabel: 'Courier',
+    deliveryCourierPlaceholder: 'Courier name',
+    custTitle: 'Customer',
+    custNameLabel: 'Name *',
+    custNamePlaceholder: 'Full name',
     custPhoneLabel: 'Phone / WhatsApp',
-    custIdLabel: 'Passport / ID No.',
-    custIdPlaceholder: 'Passport or National ID',
+    custIdLabel: 'ID / passport no.',
+    custIdPlaceholder: 'ID number',
     custNpwpLabel: 'Tax ID (NPWP)',
-    custNpwpPlaceholder: 'Tax Identification Number',
+    custNpwpPlaceholder: 'Tax ID (NPWP)',
     custNationalityLabel: 'Nationality',
-    custNationalityPlaceholder: 'e.g. INDONESIA, AUSTRALIA, USA',
+    custNationalityPlaceholder: 'Indonesia, Australia',
     custJobLabel: 'Occupation',
-    custJobPlaceholder: 'Customer Occupation / Profession',
+    custExtraLabel: 'Additional details (tax ID, nationality, occupation, address)',
+    custJobPlaceholder: 'Occupation',
     custGenderLabel: 'Gender',
     optGenderNone: '- Select Gender -',
     optGenderMale: 'Male',
     optGenderFemale: 'Female',
-    custAddressLabel: 'Customer Address',
-    custAddressPlaceholder: 'Customer residence or hotel address',
+    custAddressLabel: 'Home address',
+    custAddressPlaceholder: 'Home or hotel address',
     rcptNationalityLabel: 'Nationality',
     rcptNpwpLabel: 'Tax ID (NPWP)',
     rcptJobLabel: 'Occupation',
     rcptGenderLabel: 'Gender',
     rcptAddressLabel: 'Address',
-    addValasTitle: 'Add Currency Item',
+    addValasTitle: 'Currency',
     addValasSub: 'Select currency & enter amount',
-    currLabel: 'Currency (Forex)',
-    amountLabel: 'Amount',
-    amountPlaceholder: 'e.g. 100',
-    rateLabel: 'Rate (IDR)',
-    btnAdd: 'Add Item',
+    currLabel: 'Currency',
+    amountLabel: 'Amount *',
+    amountPlaceholder: '100',
+    rateLabel: 'Rate',
+    btnAdd: 'Add',
     quickPick: 'Quick select:',
-    customCurrencyTitle: 'Custom Currency (Valas Kustom)',
+    customCurrencyTitle: 'Other currency',
     saveCustomRateLabel: 'Save to Rates Board',
-    customCodeLabel: 'Currency Code (e.g. VND, AED, CHF, NZD)',
-    customNameLabel: 'Currency Name',
+    customCodeLabel: 'Code (VND, AED, CHF) *',
+    customNameLabel: 'Currency name *',
     customOptionLabel: '+ Custom Currency (+ Valas Kustom)',
 
     // Cart 4 Columns Table
-    cartTitle: 'Exchange Items Table (4 Columns)',
+    cartTitle: 'Items',
     cartItemsCount: 'Items',
     cartItemsEmpty: 'No currency added yet.<br>Select a currency and click Add Item.',
     colValas: 'Currency',
     colAmount: 'Amount',
     colRate: 'Rate',
-    colSubtotal: 'Sub Total',
-    colAction: 'Action',
+    colSubtotal: 'Subtotal',
+    colAction: 'Remove',
 
     // Financial Totals
-    totalIdr: 'TOTAL (IDR)',
-    paymentIdr: 'PAYMENT (IDR)',
-    changeIdr: 'CHANGE (IDR)',
-    exactCash: 'Exact Cash',
-    btnSubmitTx: 'Process Transaction & Print Receipt',
-    btnReset: 'Reset Form',
+    totalIdr: 'Total',
+    paymentIdr: 'Cash received',
+    changeIdr: 'Change',
+    exactCash: 'Exact cash',
+    btnSubmitTx: 'Process & print receipt',
+    btnSubmitShort: 'Process',
+    btnReset: 'Clear',
+    explainBeli: 'Customer hands over foreign currency, you pay Rupiah.',
+    explainJual: 'Customer pays Rupiah, you hand over foreign currency.',
 
     // Thermal Receipt Preview
     receiptPreviewTitle: '80mm Receipt Preview',
@@ -395,15 +405,17 @@ const i18n = {
     rcptTotal: 'TOTAL IDR',
     rcptPayment: 'PAYMENT',
     rcptChange: 'CHANGE',
+    payoutLabel: 'Pay out to customer',
+    payoutHint: 'Hand the customer Rupiah equal to the total.',
     rcptSignTeller: 'Teller',
     rcptSignCustomer: 'Customer',
-    rcptSignNamePrompt: 'Customer Sign Name:',
-    rcptSignPlaceholder: 'SIGN NAME',
+    rcptSignNamePrompt: 'Name under signature',
+    rcptSignPlaceholder: 'Same as name',
     rcptDisclaimer1: '* Please check your banknotes before leaving the counter.',
     rcptDisclaimer2: '* Exchanged currency cannot be returned or refunded.',
     rcptThanks: 'THANK YOU FOR YOUR VISIT',
     btnPrintBt: 'Print BT',
-    btnPrintBrowser: 'Print USB / Driver',
+    btnPrintBrowser: 'Print USB',
     btnShareWa: 'Share WA',
 
     // Tab Rates
@@ -634,8 +646,116 @@ const printer = new window.BluetoothPrinter();
 const usbPrinter = typeof window.UsbPrinter !== 'undefined' ? new window.UsbPrinter() : null;
 const serialPrinter = typeof window.SerialPrinter !== 'undefined' ? new window.SerialPrinter() : null;
 
+// ==================== NUMERIC INPUT FORMATTING (id-ID) ====================
+// Money inputs are type="text" so they can show thousand separators while typing:
+// "." groups thousands, "," is the decimal mark. A typed "." in a decimal field is
+// taken as the decimal mark, since grouping dots are inserted automatically.
+function parseNumInput(raw) {
+  let str = String(raw == null ? '' : raw).replace(/[^\d.,-]/g, '');
+  if (!str) return NaN;
+  if (str.includes(',')) {
+    str = str.replace(/\./g, '').replace(',', '.');
+  } else if (str.includes('.')) {
+    const groups = str.split('.');
+    const looksGrouped = groups[0] !== '' && groups[0] !== '0' && groups.slice(1).every(g => g.length === 3);
+    str = looksGrouped ? groups.join('') : groups[0] + '.' + groups.slice(1).join('');
+  }
+  return parseFloat(str);
+}
+
+function getNumInput(el) {
+  return parseNumInput(el ? el.value : '');
+}
+
+function formatNumForInput(num, allowDecimal) {
+  if (num === '' || num == null || isNaN(num)) return '';
+  return Number(num).toLocaleString('id-ID', { maximumFractionDigits: allowDecimal ? 6 : 0 });
+}
+
+function setNumInput(el, num) {
+  if (!el) return;
+  el.value = formatNumForInput(num, el.dataset.decimal === 'true');
+}
+
+function attachNumFormatter(el) {
+  if (!el) return;
+  const allowDecimal = el.dataset.decimal === 'true';
+
+  // A typed "." or "," becomes the decimal mark (or is ignored in whole-number fields),
+  // so any "." left in the value is always a grouping dot we inserted ourselves.
+  el.addEventListener('beforeinput', (e) => {
+    if (e.inputType !== 'insertText' || !e.data) return;
+    // Multi-character insertions (IME commit, virtual keyboard suggestions) are parsed as a whole
+    if (e.data.length > 1 && /[.,]/.test(e.data)) {
+      const num = parseNumInput(e.data);
+      e.preventDefault();
+      if (isNaN(num)) return;
+      el.setRangeText(formatNumForInput(num, allowDecimal), el.selectionStart, el.selectionEnd, 'end');
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+      return;
+    }
+    if (e.data !== '.' && e.data !== ',') return;
+    e.preventDefault();
+    if (!allowDecimal || el.value.includes(',')) return;
+    el.setRangeText(',', el.selectionStart, el.selectionEnd, 'end');
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+
+  // Pasted values may use either convention ("16,250.50" / "16.250,50" / "107.5")
+  el.addEventListener('paste', (e) => {
+    const text = (e.clipboardData || window.clipboardData)?.getData('text');
+    if (!text) return;
+    e.preventDefault();
+    const num = parseNumInput(text.includes(',') && text.includes('.') && text.lastIndexOf('.') > text.lastIndexOf(',')
+      ? text.replace(/,/g, '') : text);
+    setNumInput(el, num);
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+
+  el.addEventListener('input', (e) => {
+    let before = el.value;
+    let caret = el.selectionStart ?? before.length;
+    // Fallback when beforeinput didn't fire (some IMEs / virtual keyboards):
+    // a "." the user just typed is a decimal mark, never a grouping dot.
+    if (e.data === '.' && before[caret - 1] === '.') {
+      const replacement = allowDecimal && !before.includes(',') ? ',' : '';
+      before = before.slice(0, caret - 1) + replacement + before.slice(caret);
+      if (!replacement) caret -= 1;
+    }
+    const significantLeft = before.slice(0, caret).replace(/[^\d,]/g, '').length;
+
+    let cleaned = before.replace(allowDecimal ? /[^\d,]/g : /\D/g, '');
+    const firstComma = cleaned.indexOf(',');
+    if (firstComma !== -1) {
+      cleaned = cleaned.slice(0, firstComma + 1) + cleaned.slice(firstComma + 1).replace(/,/g, '');
+    }
+    const [intPart, decPart] = cleaned.split(',');
+    const grouped = intPart.replace(/^0+(?=\d)/, '').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    const next = decPart !== undefined ? `${grouped || '0'},${decPart}` : grouped;
+    if (next === el.value) return;
+    el.value = next;
+
+    // Restore the caret after the same number of digits / decimal marks
+    let seen = 0, pos = 0;
+    while (pos < next.length && seen < significantLeft) {
+      if (/[\d,]/.test(next[pos])) seen++;
+      pos++;
+    }
+    el.setSelectionRange(pos, pos);
+  });
+}
+
+// Random [0-9A-Z] token. Uses getRandomValues (not randomUUID), which also works
+// on plain-http LAN addresses that are not a secure context.
+function randomToken(length) {
+  const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const bytes = new Uint8Array(length);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, b => chars[b % chars.length]).join('');
+}
+
 // ==================== TOAST NOTIFICATION ====================
-function showToast(message, type = 'info') {
+function showToast(message, type = 'info', duration = 3500) {
   const container = document.getElementById('toast-container');
   if (!container) return;
 
@@ -658,7 +778,7 @@ function showToast(message, type = 'info') {
   setTimeout(() => {
     toast.classList.add('opacity-0', 'translate-y-2');
     setTimeout(() => toast.remove(), 300);
-  }, 3500);
+  }, duration);
 }
 
 // ==================== INDEXEDDB LOCAL STORAGE ====================
@@ -782,7 +902,7 @@ function setOnlineStatus(online) {
 
   if (online) {
     if (badge) badge.className = 'flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30';
-    if (dot) dot.className = 'w-2 h-2 rounded-full bg-emerald-400 animate-pulse';
+    if (dot) dot.className = 'w-2 h-2 rounded-full bg-emerald-400';
     if (text) text.textContent = t.online;
   } else {
     if (badge) badge.className = 'flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30';
@@ -810,6 +930,17 @@ async function syncOfflineTransactions() {
       }
       await updateOfflineQueueBadge();
       showToast(state.appLang === 'en' ? `${result.synced} transactions synced!` : `${result.synced} transaksi berhasil tersinkron!`, 'success');
+      if (Array.isArray(result.renamed) && result.renamed.length) {
+        const list = result.renamed.map(r => `${r.from} → ${r.to}`).join(', ');
+        showToast(state.appLang === 'en'
+          ? `Receipt number already used, renumbered on server: ${list}`
+          : `Nomor struk sudah dipakai, diganti di server: ${list}`, 'warning', 15000);
+      }
+      if (Array.isArray(result.flagged) && result.flagged.length) {
+        showToast(state.appLang === 'en'
+          ? `DTTOT MATCH on synced offline transaction(s): ${result.flagged.join(', ')}. Report to compliance.`
+          : `TERINDIKASI DTTOT pada transaksi offline: ${result.flagged.join(', ')}. Segera laporkan ke kepatuhan.`, 'error', 15000);
+      }
       loadHistory();
       loadReportsSummary();
     }
@@ -821,7 +952,7 @@ async function syncOfflineTransactions() {
 
 // ==================== THEME SYSTEM (LIGHT / DARK) ====================
 function initTheme() {
-  const saved = localStorage.getItem('skyline_pos_theme') || 'light';
+  const saved = localStorage.getItem('skyline_pos_theme') || 'dark';
   applyTheme(saved);
 }
 
@@ -853,7 +984,11 @@ function updateThemeToggleUI() {
   const icon = document.getElementById('theme-toggle-icon');
   const text = document.getElementById('theme-toggle-text');
   const t = i18n[state.appLang] || i18n.id;
-  if (icon) icon.textContent = isLight ? '☀️' : '🌙';
+  if (icon) {
+    icon.innerHTML = isLight
+      ? '<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>'
+      : '<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+  }
   if (text) text.textContent = isLight ? (t.themeLight || 'Terang') : (t.themeDark || 'Gelap');
 }
 
@@ -944,6 +1079,7 @@ function setAppLanguage(lang) {
   safeSet('badge-opt-cust-nationality', t.badgeOptional);
   safePlaceholder('cust-nationality', t.custNationalityPlaceholder);
 
+  safeSet('lbl-cust-extra', t.custExtraLabel);
   safeSet('lbl-cust-job', t.custJobLabel);
   safeSet('badge-opt-cust-job', t.badgeOptional);
   safePlaceholder('cust-job', t.custJobPlaceholder);
@@ -996,6 +1132,7 @@ function setAppLanguage(lang) {
   safeSet('badge-auto-change', t.badgeAutoCalc);
   safeSet('lbl-btn-submit-tx', t.btnSubmitTx);
   safeSet('lbl-btn-reset', t.btnReset);
+  safeSet('lbl-btn-submit-mobile', t.btnSubmitShort);
 
   updateThemeToggleUI();
 
@@ -1196,6 +1333,8 @@ function setReceiptLanguage(lang, showToastNotification = true) {
   safeSet('lbl-rcpt-total', t.rcptTotal);
   safeSet('lbl-rcpt-payment', t.rcptPayment);
   safeSet('lbl-rcpt-change', t.rcptChange);
+  safeSet('lbl-payout-idr', t.payoutLabel);
+  safeSet('lbl-payout-hint', t.payoutHint);
 
   // Signatures
   safeSet('lbl-sign-teller', t.rcptSignTeller);
@@ -1511,11 +1650,11 @@ function applyPaperSize(size) {
   const isEn = state.appLang === 'en';
   const titleEl = document.getElementById('lbl-receipt-preview-title');
   if (titleEl) {
-    titleEl.textContent = isEn ? `${is80 ? '80mm' : '58mm'} Receipt Preview` : `Pratinjau Struk ${is80 ? '80mm' : '58mm'}`;
+    titleEl.textContent = isEn ? 'Receipt preview' : 'Pratinjau struk';
   }
   const badgeEl = document.getElementById('receipt-col-badge');
   if (badgeEl) {
-    badgeEl.textContent = is80 ? (isEn ? '80mm (48 Cols)' : '80mm (48 Kolom)') : (isEn ? '58mm (32 Cols)' : '58mm (32 Kolom)');
+    badgeEl.textContent = is80 ? '80mm' : '58mm';
   }
   const settingsTitle = document.getElementById('lbl-settings-title');
   if (settingsTitle) {
@@ -1578,10 +1717,15 @@ function renderRatesSelect() {
     : '+ Kustom / Valas Lain (+ Custom)';
   select.appendChild(customOpt);
 
-  if (currentVal && (state.rates.some(r => r.code === currentVal) || currentVal === '__CUSTOM__')) {
+  // Keep the cashier's choice; "Custom" is only kept if they picked it on purpose
+  // (before rates load it is the sole option, so it gets auto-selected).
+  const keepCurrent = state.rates.some(r => r.code === currentVal)
+    || (currentVal === '__CUSTOM__' && state.customPickedByUser);
+  if (keepCurrent) {
     select.value = currentVal;
   } else if (state.rates.length > 0) {
-    select.value = state.rates[0].code;
+    const usd = state.rates.find(r => r.code === 'USD');
+    select.value = usd ? usd.code : state.rates[0].code;
   }
 
   handleCurrencyChange();
@@ -1607,6 +1751,7 @@ function handleCurrencyChange() {
     if (customBox) customBox.classList.add('hidden');
     updateItemRateInput();
   }
+  renderCurrencyTiles();
 }
 
 function updateItemRateInput() {
@@ -1620,7 +1765,7 @@ function updateItemRateInput() {
   const rateObj = state.rates.find(r => r.code === code);
   if (rateObj) {
     const activeRate = state.txType === 'BELI' ? rateObj.buy_rate : rateObj.sell_rate;
-    rateInput.value = activeRate;
+    setNumInput(rateInput, activeRate);
   }
 }
 
@@ -1715,26 +1860,24 @@ function setTransactionType(type) {
   const btnJual = document.getElementById('btn-type-jual');
   const expText = document.getElementById('type-explanation-text');
   const rcptType = document.getElementById('rcpt-type');
-  const isAppEn = state.appLang === 'en';
+  const t = i18n[state.appLang] || i18n.id;
   const isRcptEn = state.receiptLang === 'en';
+  const isBeli = type === 'BELI';
 
-  if (type === 'BELI') {
-    btnBeli.className = 'type-btn py-2 px-3 rounded-md transition-all text-center flex items-center justify-center gap-1.5 bg-emerald-600 text-white shadow font-bold';
-    btnJual.className = 'type-btn py-2 px-3 rounded-md transition-all text-center flex items-center justify-center gap-1.5 text-slate-400 hover:text-white font-medium';
-    expText.textContent = isAppEn 
-      ? 'We buy foreign currency from customer. Customer receives Rupiah (IDR).' 
-      : 'Kasir membeli valas dari customer. Customer menyerahkan Valas dan menerima Rupiah (IDR).';
-    rcptType.textContent = isRcptEn ? 'BUY CURRENCY (BUY)' : 'BELI VALAS (BUY)';
-    rcptType.className = 'font-bold text-black';
-  } else {
-    btnJual.className = 'type-btn py-2 px-3 rounded-md transition-all text-center flex items-center justify-center gap-1.5 bg-amber-600 text-white shadow font-bold';
-    btnBeli.className = 'type-btn py-2 px-3 rounded-md transition-all text-center flex items-center justify-center gap-1.5 text-slate-400 hover:text-white font-medium';
-    expText.textContent = isAppEn 
-      ? 'We sell foreign currency to customer. Customer pays Rupiah (IDR).' 
-      : 'Kasir menjual valas ke customer. Customer membeli Valas dan menyerahkan Rupiah (IDR).';
-    rcptType.textContent = isRcptEn ? 'SELL CURRENCY (SELL)' : 'JUAL VALAS (SELL)';
-    rcptType.className = 'font-bold text-black';
-  }
+  // The whole workspace (edge, summary panel, tiles) picks up the mode colour from this attribute
+  document.getElementById('tab-pos').dataset.mode = type;
+  btnBeli.setAttribute('aria-pressed', String(isBeli));
+  btnJual.setAttribute('aria-pressed', String(!isBeli));
+  expText.textContent = isBeli ? t.explainBeli : t.explainJual;
+  const modeLabel = isBeli ? t.btnBeli : t.btnJual;
+  ['summary-mode-label', 'mobile-mode-label'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = modeLabel;
+  });
+  rcptType.textContent = isBeli
+    ? (isRcptEn ? 'BUY CURRENCY (BUY)' : 'BELI VALAS (BUY)')
+    : (isRcptEn ? 'SELL CURRENCY (SELL)' : 'JUAL VALAS (SELL)');
+  rcptType.className = 'font-bold text-black';
 
   updateItemRateInput();
   state.cart.forEach(item => {
@@ -1742,11 +1885,37 @@ function setTransactionType(type) {
       const rateObj = state.rates.find(r => r.code === item.currency_code);
       if (rateObj) {
         item.rate = state.txType === 'BELI' ? rateObj.buy_rate : rateObj.sell_rate;
-        item.subtotal_idr = item.amount * item.rate;
+        item.subtotal_idr = Math.round(item.amount * item.rate);
       }
     }
   });
+  renderCurrencyTiles();
   renderCart();
+}
+
+// ==================== CURRENCY TILES ====================
+// Popular currencies as large tiles showing the rate for the active mode.
+const QUICK_CURRENCIES = ['USD', 'USD 20, 10, 5', 'USD 2, 1', 'AUD', 'SGD', 'EUR', 'GBP', 'JPY', 'MYR', 'HKD', 'THB', 'NTD', 'PHP', 'INR', 'CNY'];
+
+function renderCurrencyTiles() {
+  const wrap = document.getElementById('currency-tiles');
+  if (!wrap) return;
+  const selected = document.getElementById('item-currency')?.value;
+  const isEn = state.appLang === 'en';
+
+  const tiles = QUICK_CURRENCIES
+    .map(code => state.rates.find(r => r.code === code))
+    .filter(Boolean)
+    .map(r => {
+      const rate = state.txType === 'BELI' ? r.buy_rate : r.sell_rate;
+      const label = r.code.replace(/,\s*/g, '/');
+      return `<button type="button" class="cur-tile" data-code="${escapeHtml(r.code)}" aria-pressed="${r.code === selected}">
+        <span class="cur-tile__code">${escapeHtml(label)}</span>
+        <span class="cur-tile__rate num">${formatNumForInput(rate, true)}</span>
+      </button>`;
+    });
+  tiles.push(`<button type="button" id="chip-custom-curr" class="cur-tile cur-tile--other" aria-pressed="${selected === '__CUSTOM__'}">${isEn ? '+ Custom' : '+ Kustom'}</button>`);
+  wrap.innerHTML = tiles.join('');
 }
 
 function addItemToCart() {
@@ -1776,8 +1945,8 @@ function addItemToCart() {
     name = rateObj ? rateObj.name : code;
   }
 
-  const amount = parseFloat(amountInput.value);
-  const rate = parseFloat(rateInput.value);
+  const amount = getNumInput(amountInput);
+  const rate = getNumInput(rateInput);
 
   if (!code) {
     showToast(isEn ? 'Please select a currency first' : 'Pilih mata uang terlebih dahulu', 'warning');
@@ -1866,10 +2035,14 @@ function calculateUsdEquivalent(totalIdr) {
 function calculateTotals() {
   const total = state.cart.reduce((sum, item) => sum + item.subtotal_idr, 0);
   const paymentInput = document.getElementById('input-payment');
-  let payment = parseFloat(paymentInput.value);
+  let payment = getNumInput(paymentInput);
 
   if (isNaN(payment)) {
     payment = 0;
+  }
+  // BELI: the cashier pays the customer exactly the total; there is no change
+  if (state.txType === 'BELI') {
+    return { total, payment: total, change: 0 };
   }
 
   const change = Math.max(0, payment - total);
@@ -1884,15 +2057,14 @@ function renderCart() {
   const isAppEn = state.appLang === 'en';
   const isRcptEn = state.receiptLang === 'en';
 
-  badge.textContent = `${state.cart.length} ${isAppEn ? 'Items' : 'Item'}`;
+  badge.textContent = `${state.cart.length} ${isAppEn ? (state.cart.length === 1 ? 'item' : 'items') : 'item'}`;
 
   // 1. Screen Cart Table
   if (state.cart.length === 0) {
     tbody.innerHTML = `
       <tr id="empty-cart-row">
-        <td colspan="5" class="py-8 text-center text-slate-500 font-sans">
-          <svg class="w-8 h-8 mx-auto mb-2 text-slate-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-          ${isAppEn ? 'No currency added yet.<br>Select a currency and click Add Item.' : 'Belum ada valas yang ditambahkan.<br>Silakan pilih mata uang dan klik tombol Tambah.'}
+        <td colspan="5" class="py-8 px-4 text-center text-[13px] text-slate-400">
+          ${isAppEn ? 'Pick a currency above, enter the amount, then press Add.' : 'Pilih valas di atas, isi jumlah, lalu tekan Tambah.'}
         </td>
       </tr>
     `;
@@ -1906,15 +2078,15 @@ function renderCart() {
       const tr = document.createElement('tr');
       tr.className = 'hover:bg-navy-700/30 transition-colors';
       tr.innerHTML = `
-        <td class="py-2.5 px-3 font-bold text-white">
-          <span class="text-brand">${item.currency_code}</span>
-          ${item.is_custom ? `<span class="ml-1 text-[10px] px-1.5 py-0.5 rounded bg-brand/10 text-brand font-sans font-normal border border-brand/20">${isAppEn ? 'Custom' : 'Kustom'}</span>` : ''}
+        <td class="py-3 px-4 font-semibold text-slate-100">
+          ${escapeHtml(item.currency_code)}
+          ${item.is_custom ? `<span class="ml-1 text-[12px] font-normal text-slate-400">${isAppEn ? 'custom' : 'kustom'}</span>` : ''}
         </td>
-        <td class="py-2.5 px-3 text-right text-slate-200">${item.amount.toLocaleString(isAppEn ? 'en-US' : 'id-ID')}</td>
-        <td class="py-2.5 px-3 text-right text-slate-300">Rp ${item.rate.toLocaleString('id-ID')}</td>
-        <td class="py-2.5 px-3 text-right text-brand font-bold">Rp ${item.subtotal_idr.toLocaleString('id-ID')}</td>
-        <td class="py-2.5 px-2 text-center">
-          <button type="button" class="btn-remove-item text-rose-400 hover:text-rose-300 p-1" data-idx="${idx}" title="${isAppEn ? 'Remove' : 'Hapus'}">
+        <td class="py-3 px-3 text-right text-slate-200">${item.amount.toLocaleString(isAppEn ? 'en-US' : 'id-ID')}</td>
+        <td class="py-3 px-3 text-right text-slate-400">${item.rate.toLocaleString('id-ID')}</td>
+        <td class="py-3 px-3 text-right font-semibold text-slate-100">${item.subtotal_idr.toLocaleString('id-ID')}</td>
+        <td class="py-1 px-2 text-center">
+          <button type="button" class="btn-remove-item inline-flex items-center justify-center w-10 h-10 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10" data-idx="${idx}" title="${isAppEn ? 'Remove' : 'Hapus'}" aria-label="${isAppEn ? 'Remove' : 'Hapus'} ${escapeHtml(item.currency_code)}">
             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
           </button>
         </td>
@@ -1957,7 +2129,15 @@ function renderCart() {
 
   // Update Calculations
   document.getElementById('calc-total-idr').textContent = 'Rp ' + total.toLocaleString('id-ID');
+  document.getElementById('mobile-total-idr').textContent = 'Rp ' + total.toLocaleString('id-ID');
   document.getElementById('calc-change-idr').textContent = 'Rp ' + change.toLocaleString('id-ID');
+
+  const isBeli = state.txType === 'BELI';
+  document.getElementById('payment-cash-grid').classList.toggle('hidden', isBeli);
+  document.getElementById('box-payout-display').classList.toggle('hidden', !isBeli);
+  document.getElementById('calc-payout-idr').textContent = 'Rp ' + total.toLocaleString('id-ID');
+  document.getElementById('rcpt-payment-row').classList.toggle('hidden', isBeli);
+  document.getElementById('rcpt-change-row').classList.toggle('hidden', isBeli);
 
   const effectivePayment = payment > 0 ? payment : total;
   document.getElementById('rcpt-total').textContent = 'Rp ' + total.toLocaleString('id-ID');
@@ -2127,22 +2307,34 @@ function checkDttotRealtime(name) {
   }
   
   dttotCheckTimeout = setTimeout(async () => {
-    try {
-      const res = await authFetch('/api/dttot/check', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: name.trim() })
-      });
-      const data = await res.json();
-      if (data.success && data.match) {
-        showDttotAlert(data.data);
-      } else {
-        clearDttotAlert();
-      }
-    } catch (e) {
-      console.warn('DTTOT screening check failed:', e);
+    const result = await screenDttot(name);
+    // Ignore stale responses if the cashier kept typing
+    if (document.getElementById('cust-name').value.trim() !== name.trim()) return;
+    if (result.status === 'MATCH') {
+      showDttotAlert(result.match);
+    } else if (result.status === 'CLEAR') {
+      clearDttotAlert();
     }
   }, 300);
+}
+
+// Returns { status: 'CLEAR' | 'MATCH' | 'UNAVAILABLE', match? }.
+// UNAVAILABLE (offline / server error) must never be treated as CLEAR.
+async function screenDttot(name) {
+  if (!state.isOnline) return { status: 'UNAVAILABLE' };
+  try {
+    const res = await authFetch('/api/dttot/check', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: name.trim() })
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) return { status: 'UNAVAILABLE' };
+    return data.match ? { status: 'MATCH', match: data.data } : { status: 'CLEAR' };
+  } catch (e) {
+    console.warn('DTTOT screening check failed:', e);
+    return { status: 'UNAVAILABLE' };
+  }
 }
 
 function showDttotAlert(matchData) {
@@ -2157,11 +2349,11 @@ function showDttotAlert(matchData) {
   if (alertBox) {
     alertBox.classList.remove('hidden');
   }
-  if (btnSubmit) {
-    btnSubmit.disabled = true;
-    btnSubmit.classList.add('opacity-50', 'cursor-not-allowed', 'bg-red-800');
-    btnSubmit.classList.remove('bg-brand', 'hover:bg-brand-hover');
-  }
+  [btnSubmit, document.getElementById('btn-submit-mobile')].forEach(btn => {
+    if (!btn) return;
+    btn.disabled = true;
+    btn.classList.add('opacity-50', 'cursor-not-allowed');
+  });
 }
 
 function clearDttotAlert() {
@@ -2172,15 +2364,39 @@ function clearDttotAlert() {
   if (alertBox) {
     alertBox.classList.add('hidden');
   }
-  if (btnSubmit) {
-    btnSubmit.disabled = false;
-    btnSubmit.classList.remove('opacity-50', 'cursor-not-allowed', 'bg-red-800');
-    btnSubmit.classList.add('bg-brand', 'hover:bg-brand-hover');
-  }
+  [btnSubmit, document.getElementById('btn-submit-mobile')].forEach(btn => {
+    if (!btn) return;
+    btn.disabled = false;
+    btn.classList.remove('opacity-50', 'cursor-not-allowed');
+  });
 }
 
 // ==================== PROCESS TRANSACTION ====================
+// Guards against double-submit: the button stays locked until the save + print attempt finishes.
 async function processTransaction() {
+  if (state.isSubmitting) return;
+  const btnSubmit = document.getElementById('btn-submit-tx');
+  const lbl = document.getElementById('lbl-btn-submit-tx');
+  const originalLabel = lbl.textContent;
+  const btnMobile = document.getElementById('btn-submit-mobile');
+  state.isSubmitting = true;
+  btnSubmit.disabled = true;
+  btnMobile.disabled = true;
+  btnSubmit.classList.add('opacity-60', 'cursor-wait');
+  lbl.textContent = state.appLang === 'en' ? 'Processing...' : 'Memproses...';
+  try {
+    await processTransactionInner();
+  } finally {
+    state.isSubmitting = false;
+    lbl.textContent = originalLabel;
+    btnSubmit.classList.remove('opacity-60', 'cursor-wait');
+    // Keep the buttons locked if a DTTOT match is on screen
+    btnSubmit.disabled = !!currentDttotMatch;
+    btnMobile.disabled = !!currentDttotMatch;
+  }
+}
+
+async function processTransactionInner() {
   const custName = document.getElementById('cust-name').value.trim();
   const custPhone = document.getElementById('cust-phone').value.trim();
   const custId = document.getElementById('cust-id').value.trim();
@@ -2202,10 +2418,18 @@ async function processTransaction() {
     return;
   }
 
-  // Compliance Check 1: DTTOT Real-Time Match
-  if (currentDttotMatch) {
+  // Compliance Check 1: DTTOT screening, run fresh at submit (never rely on the debounced live check)
+  clearTimeout(dttotCheckTimeout);
+  const screening = await screenDttot(custName);
+  if (screening.status === 'MATCH') showDttotAlert(screening.match);
+  if (currentDttotMatch || screening.status === 'MATCH') {
     showToast(isEn ? 'TRANSACTION FROZEN: Customer name matches DTTOT list (PBI APU PPT)' : 'TRANSAKSI DIBEKUKAN: Nama nasabah terindikasi dalam Daftar DTTOT Bank Indonesia', 'error');
     return;
+  }
+  // Offline / server unreachable: recorded as PENDING and re-screened by the server on sync
+  const dttotStatus = screening.status === 'CLEAR' ? 'CLEARED' : 'PENDING';
+  if (dttotStatus === 'PENDING') {
+    showToast(isEn ? 'DTTOT screening unavailable (offline). Transaction will be re-screened on sync.' : 'Screening DTTOT tidak tersedia (offline). Transaksi akan di-screening ulang saat sinkronisasi.', 'warning');
   }
 
   // Compliance Check 2: USD 10,000 Threshold Detection (Underlying)
@@ -2268,11 +2492,13 @@ async function processTransaction() {
   const yyyy = now.getFullYear();
   const mm = String(now.getMonth() + 1).padStart(2, '0');
   const dd = String(now.getDate()).padStart(2, '0');
-  const randSeq = String(Math.floor(Math.random() * 9000) + 1000);
-  const tempReceiptNo = `SE-${yyyy}${mm}${dd}-${randSeq}`;
+  // Offline-format number (SE-YYYYMMDD-Oxxxxxx), unique across devices. When online the
+  // server replaces it with the next sequential number (SE-YYYYMMDD-NNNN).
+  const tempReceiptNo = `SE-${yyyy}${mm}${dd}-O${randomToken(6)}`;
 
   const payload = {
     receipt_no: tempReceiptNo,
+    client_tx_id: randomToken(24),
     type: state.txType,
     customer_name: custName.toUpperCase(),
     customer_phone: custPhone,
@@ -2289,7 +2515,7 @@ async function processTransaction() {
     is_underlying: isUnderlying ? 1 : 0,
     underlying_type: underlyingType,
     underlying_doc_no: underlyingDocNo,
-    dttot_check_status: 'CLEARED',
+    dttot_check_status: dttotStatus,
     customer_signature_name: signatureName.toUpperCase() || custName.toUpperCase(),
     teller_name: getActiveTellerName(),
     total_idr: total,
@@ -2311,10 +2537,11 @@ async function processTransaction() {
   let savedOnline = false;
   if (state.isOnline) {
     try {
+      const { receipt_no: _offlineNo, ...onlinePayload } = payload;
       const res = await authFetch('/api/transactions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(onlinePayload)
       });
       if (res.status === 403) {
         const errData = await res.json();
@@ -2385,6 +2612,7 @@ function resetForm() {
   const jobInp = document.getElementById('cust-job'); if (jobInp) jobInp.value = '';
   const genInp = document.getElementById('cust-gender'); if (genInp) genInp.value = '';
   const addrInp = document.getElementById('cust-address'); if (addrInp) addrInp.value = '';
+  const extraDetails = document.getElementById('cust-extra-details'); if (extraDetails) extraDetails.open = false;
   const pepToggle = document.getElementById('cust-pep-toggle'); if (pepToggle) pepToggle.checked = false;
   const pepFields = document.getElementById('pep-edd-fields'); if (pepFields) pepFields.classList.add('hidden');
   const pepInst = document.getElementById('pep-institution'); if (pepInst) pepInst.value = '';
@@ -2406,7 +2634,7 @@ function resetForm() {
   document.getElementById('input-signature-customer').removeAttribute('data-customized');
   state.isDelivery = false;
   renderCart();
-  showToast(state.appLang === 'en' ? 'Cashier form reset' : 'Formulir kasir telah di-reset', 'info');
+  showToast(state.appLang === 'en' ? 'Form cleared' : 'Form dikosongkan', 'info');
 }
 
 // ==================== PRINT ACTIONS & RECEIPT RENDERING ====================
@@ -2569,6 +2797,10 @@ function renderReceiptData(tx) {
 
   const rcptChgEl = document.getElementById('rcpt-change');
   if (rcptChgEl) rcptChgEl.textContent = 'Rp ' + (tx.change_amount || 0).toLocaleString('id-ID');
+
+  const isBeliTx = tx.type === 'BELI';
+  document.getElementById('rcpt-payment-row')?.classList.toggle('hidden', isBeliTx);
+  document.getElementById('rcpt-change-row')?.classList.toggle('hidden', isBeliTx);
 }
 
 async function handleDirectBtPrint() {
@@ -2837,8 +3069,10 @@ function handleShareWhatsApp() {
 
   text += `--------------------------------\n`;
   text += `*TOTAL IDR   : Rp ${currentData.total_idr.toLocaleString('id-ID')}*\n`;
-  text += `${isEn ? 'PAYMENT' : 'PEMBAYARAN'}  : Rp ${currentData.paid_amount.toLocaleString('id-ID')}\n`;
-  text += `${isEn ? 'CHANGE' : 'KEMBALIAN'}   : Rp ${currentData.change_amount.toLocaleString('id-ID')}\n`;
+  if (currentData.type !== 'BELI') {
+    text += `${isEn ? 'PAYMENT' : 'PEMBAYARAN'}  : Rp ${currentData.paid_amount.toLocaleString('id-ID')}\n`;
+    text += `${isEn ? 'CHANGE' : 'KEMBALIAN'}   : Rp ${currentData.change_amount.toLocaleString('id-ID')}\n`;
+  }
   text += `--------------------------------\n`;
   text += isEn 
     ? `_Thank you for visiting Skyline Exchange._` 
@@ -3867,32 +4101,46 @@ function initEventListeners() {
   });
 
   // Currency select change
-  document.getElementById('item-currency').addEventListener('change', handleCurrencyChange);
-
-  // Quick Currency Chips
-  document.querySelectorAll('.chip-curr').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const code = btn.getAttribute('data-code');
-      const select = document.getElementById('item-currency');
-      if (select && state.rates.some(r => r.code === code)) {
-        select.value = code;
-        handleCurrencyChange();
-        document.getElementById('item-amount').focus();
-      }
-    });
+  document.getElementById('item-currency').addEventListener('change', (e) => {
+    state.customPickedByUser = e.target.value === '__CUSTOM__';
+    handleCurrencyChange();
   });
 
-  // Custom Currency Quick Chip
-  const chipCustom = document.getElementById('chip-custom-curr');
-  if (chipCustom) {
-    chipCustom.addEventListener('click', () => {
-      const select = document.getElementById('item-currency');
-      if (select) {
-        select.value = '__CUSTOM__';
-        handleCurrencyChange();
-      }
-    });
-  }
+  // Currency tiles (rendered by renderCurrencyTiles)
+  document.getElementById('currency-tiles').addEventListener('click', (e) => {
+    const tile = e.target.closest('.cur-tile');
+    const select = document.getElementById('item-currency');
+    if (!tile || !select) return;
+    if (tile.id === 'chip-custom-curr') {
+      state.customPickedByUser = true;
+      select.value = '__CUSTOM__';
+      handleCurrencyChange();
+      return;
+    }
+    const code = tile.dataset.code;
+    if (state.rates.some(r => r.code === code)) {
+      state.customPickedByUser = false;
+      select.value = code;
+      handleCurrencyChange();
+      document.getElementById('item-amount').focus();
+    }
+  });
+
+  // Mobile checkout bar mirrors the main process button
+  document.getElementById('btn-submit-mobile').addEventListener('click', processTransaction);
+
+  // Receipt preview: collapsed by default, state remembered per device
+  const receiptToggle = document.getElementById('btn-toggle-receipt');
+  const receiptBody = document.getElementById('receipt-panel-body');
+  const setReceiptOpen = (open) => {
+    receiptToggle.setAttribute('aria-expanded', String(open));
+    receiptBody.classList.toggle('hidden', !open);
+    try { localStorage.setItem('skyline_pos_receipt_open', open ? '1' : '0'); } catch (e) {}
+  };
+  let receiptOpen = false;
+  try { receiptOpen = localStorage.getItem('skyline_pos_receipt_open') === '1'; } catch (e) {}
+  setReceiptOpen(receiptOpen);
+  receiptToggle.addEventListener('click', () => setReceiptOpen(receiptToggle.getAttribute('aria-expanded') !== 'true'));
 
   // Add Item to Cart
   document.getElementById('btn-add-item').addEventListener('click', addItemToCart);
@@ -3923,12 +4171,13 @@ function initEventListeners() {
   });
 
   // Payment Input Live Update
+  ['item-amount', 'item-rate', 'input-payment'].forEach(id => attachNumFormatter(document.getElementById(id)));
   document.getElementById('input-payment').addEventListener('input', renderCart);
 
   // Exact Cash Button
   document.getElementById('btn-exact-cash').addEventListener('click', () => {
     const { total } = calculateTotals();
-    document.getElementById('input-payment').value = total;
+    setNumInput(document.getElementById('input-payment'), total);
     renderCart();
   });
 
@@ -3937,8 +4186,8 @@ function initEventListeners() {
     btn.addEventListener('click', () => {
       const val = parseFloat(btn.getAttribute('data-val'));
       const paymentInput = document.getElementById('input-payment');
-      const current = parseFloat(paymentInput.value) || 0;
-      paymentInput.value = current + val;
+      const current = getNumInput(paymentInput) || 0;
+      setNumInput(paymentInput, current + val);
       renderCart();
     });
   });
