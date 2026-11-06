@@ -1795,7 +1795,9 @@ function renderRatesTable() {
         </div>
       </td>
       <td class="py-3 px-3 text-slate-300 font-mono text-xs">${r.denomination || 'All'}</td>
-      <td class="py-3 px-4 text-right text-emerald-400 font-bold">Rp ${r.buy_rate.toLocaleString('id-ID')}</td>
+      <td class="py-3 px-4 text-right text-emerald-400 font-bold">${state.bulkBuyEdit
+        ? `<input type="text" inputmode="decimal" data-decimal="true" data-id="${r.id}" aria-label="${isEn ? 'Buy rate' : 'Kurs beli'} ${escapeHtml(r.code)}" class="rate-bulk-input w-32 text-right font-mono font-bold text-[15px] bg-navy-900 border border-navy-600 rounded-lg px-2.5 py-2 text-emerald-300 focus:outline-none focus:border-brand">`
+        : `Rp ${r.buy_rate.toLocaleString('id-ID')}`}</td>
       <td class="py-3 px-4 text-right text-amber-400 font-bold">Rp ${r.sell_rate.toLocaleString('id-ID')}</td>
       <td class="py-3 px-4 text-right text-slate-400 text-xs">Rp ${spread.toLocaleString('id-ID')}</td>
       <td class="py-3 px-4 text-center">
@@ -1814,6 +1816,73 @@ function renderRatesTable() {
       if (item) openEditRateModal(item);
     });
   });
+
+  // Bulk buy-rate mode: header buttons + one input per row
+  const bulk = !!state.bulkBuyEdit;
+  document.getElementById('rates-bulk-actions')?.classList.toggle('hidden', !bulk);
+  document.getElementById('btn-bulk-buy-edit')?.classList.toggle('hidden', bulk);
+  document.getElementById('btn-modal-add-rate')?.classList.toggle('hidden', bulk);
+  const setText = (sel, text) => { const el = document.querySelector(sel); if (el) el.textContent = text; };
+  setText('#btn-bulk-buy-cancel', isEn ? 'Cancel' : 'Batal');
+  setText('#btn-bulk-buy-save', isEn ? 'Save all buy rates' : 'Simpan semua kurs beli');
+  setText('#btn-bulk-buy-edit span', isEn ? 'Edit all buy rates' : 'Edit kurs beli sekaligus');
+  if (!bulk) return;
+  const inputs = [...tbody.querySelectorAll('.rate-bulk-input')];
+  inputs.forEach((inp, i) => {
+    const rate = state.rates.find(r => String(r.id) === inp.dataset.id);
+    attachNumFormatter(inp);
+    setNumInput(inp, rate.buy_rate);
+    inp.addEventListener('input', () => inp.classList.toggle('is-changed', getNumInput(inp) !== rate.buy_rate));
+    inp.addEventListener('focus', () => inp.select());
+    // Enter jumps to the next currency so the whole board can be typed in one pass
+    inp.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter') return;
+      e.preventDefault();
+      if (inputs[i + 1]) inputs[i + 1].focus(); else saveBulkBuyRates();
+    });
+  });
+  inputs[0]?.focus();
+}
+
+function setBulkBuyMode(on) {
+  state.bulkBuyEdit = on;
+  renderRatesTable();
+}
+
+async function saveBulkBuyRates() {
+  const isEn = state.appLang === 'en';
+  const changes = [];
+  for (const inp of document.querySelectorAll('#rates-table-body .rate-bulk-input')) {
+    const rate = state.rates.find(r => String(r.id) === inp.dataset.id);
+    const val = getNumInput(inp);
+    if (!(val > 0)) {
+      inp.focus();
+      return showToast(isEn ? `Buy rate for ${rate.code} must be more than 0` : `Kurs beli ${rate.code} harus lebih dari 0`, 'error');
+    }
+    if (val !== rate.buy_rate) changes.push({ id: rate.id, buy_rate: val });
+  }
+  if (changes.length === 0) {
+    showToast(isEn ? 'No buy rate changed' : 'Tidak ada kurs beli yang berubah', 'info');
+    return setBulkBuyMode(false);
+  }
+  const btn = document.getElementById('btn-bulk-buy-save');
+  btn.disabled = true;
+  try {
+    const res = await authFetch('/api/rates/bulk-buy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rates: changes })
+    });
+    const data = await res.json();
+    if (!data.success) return showToast(data.message || (isEn ? 'Failed to save buy rates' : 'Gagal menyimpan kurs beli'), 'error');
+    showToast(isEn ? `${data.updated} buy rates saved` : `${data.updated} kurs beli disimpan`, 'success');
+    state.bulkBuyEdit = false;
+    await loadRates();
+  } catch {
+    showToast(isEn ? 'Failed to connect to server' : 'Gagal menghubungi server', 'error');
+  } finally {
+    btn.disabled = false;
+  }
 }
 
 function openEditRateModal(rate = null) {
@@ -4206,6 +4275,9 @@ function initEventListeners() {
 
   // Edit Rate Modal Events
   document.getElementById('btn-modal-add-rate').addEventListener('click', () => openEditRateModal(null));
+  document.getElementById('btn-bulk-buy-edit').addEventListener('click', () => setBulkBuyMode(true));
+  document.getElementById('btn-bulk-buy-cancel').addEventListener('click', () => setBulkBuyMode(false));
+  document.getElementById('btn-bulk-buy-save').addEventListener('click', saveBulkBuyRates);
   document.getElementById('btn-close-modal-rate').addEventListener('click', closeEditRateModal);
   document.getElementById('btn-cancel-modal-rate').addEventListener('click', closeEditRateModal);
 

@@ -408,6 +408,31 @@ router.post('/api/rates', requireAuth, (req, res) => {
   }
 });
 
+// Update many buy rates at once (owner edits the whole board each morning).
+router.post('/api/rates/bulk-buy', requireAuth, (req, res) => {
+  const items = Array.isArray(req.body && req.body.rates) ? req.body.rates : null;
+  if (!items || items.length === 0) {
+    return res.status(400).json({ success: false, message: 'Tidak ada kurs yang diubah' });
+  }
+  const bad = items.find(it => !it || !it.id || !Number.isFinite(Number(it.buy_rate)) || Number(it.buy_rate) <= 0);
+  if (bad) {
+    return res.status(400).json({ success: false, message: 'Kurs beli harus angka lebih dari 0' });
+  }
+  const now = new Date().toISOString();
+  const stmt = db.prepare('UPDATE rates SET buy_rate = ?, updated_at = ? WHERE id = ?');
+  db.exec('BEGIN');
+  try {
+    let updated = 0;
+    for (const it of items) updated += stmt.run(Number(it.buy_rate), now, it.id).changes;
+    db.exec('COMMIT');
+    if (db.backupRatesToFile) db.backupRatesToFile();
+    res.json({ success: true, updated });
+  } catch (err) {
+    db.exec('ROLLBACK');
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 router.put('/api/rates/:id', requireAuth, (req, res) => {
   try {
     const { id } = req.params;

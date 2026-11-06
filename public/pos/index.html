@@ -812,6 +812,8 @@
       color: #475569 !important;
       font-weight: 600 !important;
     }
+    html.light .rate-bulk-input { background: #ffffff !important; border-color: #cbd5e1 !important; color: #047857 !important; }
+    html.light .rate-bulk-input.is-changed { border-color: #0f766e !important; background: #f0fdfa !important; }
     html.light #rates-table-body span.w-7.h-7 {
       background-color: #f0fdfa !important;
       border-color: #99f6e4 !important;
@@ -1214,6 +1216,7 @@
     .set-table tbody tr:hover { background: rgba(255, 255, 255, .03); }
     .set-table tbody tr.set-row--self { background: rgba(0, 226, 222, .06); }
     .set-btn--sm { min-height: 36px; padding: 0 12px; font-size: 13px; }
+    .rate-bulk-input.is-changed { border-color: #00E2DE; background: rgba(0, 226, 222, .08); }
     .set-btn--danger { background: rgba(239, 68, 68, .12); border-color: rgba(239, 68, 68, .45); color: #fca5a5; }
     .set-btn--danger:hover { background: rgba(239, 68, 68, .22); }
     .set-status--brand { background: rgba(0, 226, 222, .12); color: #00E2DE; }
@@ -1981,7 +1984,15 @@
           </h2>
           <p class="text-xs text-slate-400" id="lbl-rates-sub">Atur harga Kurs Beli (We Buy) dan Kurs Jual (We Sell). Perubahan langsung berlaku di kasir.</p>
         </div>
-        <div class="flex items-center gap-2">
+        <div class="flex flex-wrap items-center gap-2">
+          <div id="rates-bulk-actions" class="hidden flex items-center gap-2">
+            <button type="button" id="btn-bulk-buy-cancel" class="set-btn set-btn--ghost set-btn--sm">Batal</button>
+            <button type="button" id="btn-bulk-buy-save" class="set-btn set-btn--primary set-btn--sm">Simpan semua kurs beli</button>
+          </div>
+          <button type="button" id="btn-bulk-buy-edit" class="set-btn set-btn--secondary set-btn--sm">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+            <span>Edit kurs beli sekaligus</span>
+          </button>
           <button type="button" id="btn-modal-add-rate" class="py-2 px-3.5 rounded-lg bg-brand hover:bg-brand-hover text-navy-950 font-bold text-xs flex items-center gap-1.5 transition-all shadow">
             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             <span id="lbl-btn-add-rate">Tambah Mata Uang</span>
@@ -2937,10 +2948,10 @@
   <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col space-y-2 pointer-events-none"></div>
 
   <!-- Scripts -->
-  <script src="/pos/bluetooth-print.js?v=3.5"></script>
-  <script src="/pos/usb-print.js?v=3.5"></script>
-  <script src="/pos/serial-print.js?v=3.5"></script>
-  <script src="/pos/app.js?v=3.5"></script>
+  <script src="/pos/bluetooth-print.js?v=3.6"></script>
+  <script src="/pos/usb-print.js?v=3.6"></script>
+  <script src="/pos/serial-print.js?v=3.6"></script>
+  <script src="/pos/app.js?v=3.6"></script>
 
   <!-- Modal Tambah Data DTTOT -->
   <div id="modal-add-dttot" class="fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-3 hidden">
