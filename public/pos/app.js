@@ -184,6 +184,8 @@ const i18n = {
     // Tab Settings
     settingsTitle: 'Pengaturan Toko & Struk',
     settingStoreName: 'Nama Money Changer',
+    settingStoreCompany: 'Nama PT (badan usaha)',
+    settingStoreCompanyHint: 'Dicetak di bawah nama money changer. Kosongkan jika tidak ingin ditampilkan.',
     settingStoreAddr: 'Alamat Outlet / Counter',
     settingStorePhone: 'No. WhatsApp & Telepon',
     settingPaperSize: 'Ukuran Kertas Thermal Printer',
@@ -428,6 +430,8 @@ const i18n = {
     // Tab Settings
     settingsTitle: 'Store & Receipt Settings',
     settingStoreName: 'Money Changer Name',
+    settingStoreCompany: 'Company (PT) name',
+    settingStoreCompanyHint: 'Printed under the money changer name. Leave empty to hide it.',
     settingStoreAddr: 'Outlet / Counter Address',
     settingStorePhone: 'WhatsApp & Phone Number',
     settingPaperSize: 'Thermal Receipt Paper Size',
@@ -507,6 +511,7 @@ const state = {
   txType: 'BELI',
   settings: {
     store_name: 'Skyline Exchange',
+    store_company: 'PT. Skyline Indonesia',
     store_address: 'Jl. Bypass Ngurah Rai No. 4X, Kuta, Bali',
     store_phone: '+6285-122-777-970',
     store_permit: '',
@@ -1121,6 +1126,8 @@ function setAppLanguage(lang) {
   safeSet('lbl-logo-file-help', t.logoFileHelp);
   safeSet('lbl-show-rcpt-logo', t.showRcptLogo);
   safeSet('lbl-set-store-name', t.settingStoreName);
+  safeSet('lbl-set-store-company', t.settingStoreCompany);
+  safeSet('hint-set-store-company', t.settingStoreCompanyHint);
   safeSet('lbl-set-store-addr', t.settingStoreAddr);
   safeSet('lbl-set-store-phone', t.settingStorePhone);
   safeSet('lbl-set-paper-size', t.settingPaperSize);
@@ -1382,6 +1389,11 @@ function applySettingsToUI() {
   const s = state.settings;
   const storeNameEl = document.getElementById('rcpt-store-name');
   if (storeNameEl) storeNameEl.textContent = s.store_name || 'SKYLINE EXCHANGE';
+  const storeCompanyEl = document.getElementById('rcpt-store-company');
+  if (storeCompanyEl) {
+    storeCompanyEl.textContent = s.store_company || '';
+    storeCompanyEl.classList.toggle('hidden', !s.store_company);
+  }
   const storeAddressEl = document.getElementById('rcpt-store-address');
   if (storeAddressEl) storeAddressEl.textContent = s.store_address || 'Jl. Bypass Ngurah Rai No. 4X, Kuta, Bali';
   const storePhoneEl = document.getElementById('rcpt-store-phone');
@@ -1412,6 +1424,8 @@ function applySettingsToUI() {
 
   const sName = document.getElementById('setting-store-name');
   if (sName) sName.value = s.store_name || '';
+  const sCompany = document.getElementById('setting-store-company');
+  if (sCompany) sCompany.value = s.store_company || '';
   const sAddr = document.getElementById('setting-store-address');
   if (sAddr) sAddr.value = s.store_address || '';
   const sPhone = document.getElementById('setting-store-phone');
@@ -3027,6 +3041,7 @@ function handleShareWhatsApp() {
   const s = state.settings;
 
   let text = `*${s.store_name || 'SKYLINE EXCHANGE'}*\n`;
+  if (s.store_company) text += `${s.store_company}\n`;
   text += `${s.store_address || 'Kuta, Bali'}\n`;
   text += `WA: ${s.store_phone || '+6285-122-777-970'}\n`;
   text += `--------------------------------\n`;
@@ -4060,6 +4075,7 @@ function initEventListeners() {
     const isEn = state.appLang === 'en';
     const payload = {
       store_name: document.getElementById('setting-store-name').value.trim(),
+      store_company: document.getElementById('setting-store-company').value.trim(),
       store_address: document.getElementById('setting-store-address').value.trim(),
       store_phone: document.getElementById('setting-store-phone').value.trim(),
       paper_size: document.querySelector('input[name="setting-paper-size"]:checked')?.value || '80',

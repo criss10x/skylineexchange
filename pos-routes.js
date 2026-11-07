@@ -4,6 +4,7 @@
 const express = require('express');
 const { dttotRowMatches } = require('./dttot-match');
 const path = require('node:path');
+const crypto = require('node:crypto');
 const fs = require('node:fs');
 const db = require('./pos-db.js');
 
@@ -390,11 +391,32 @@ router.get('/api/rates', requireAuth, (req, res) => {
 
 // Public, read-only buy rates for the TV board (public/pos/display.html).
 // No login: the same numbers are shown on the shop TV anyway.
+function displayBrand() {
+  const get = key => (db.prepare('SELECT value FROM settings WHERE key = ?').get(key) || {}).value || '';
+  const logo = get('store_logo');
+  return {
+    name: get('store_name'),
+    company: get('store_company'),
+    // The logo can be a large data URL: the TV only downloads it again when this changes
+    logo_version: logo ? crypto.createHash('sha1').update(logo).digest('hex').slice(0, 12) : ''
+  };
+}
+
 router.get('/api/display/rates', (req, res) => {
   try {
     const rates = db.prepare('SELECT code, buy_rate, updated_at FROM rates').all();
     res.set('Cache-Control', 'no-store');
-    res.json({ success: true, data: rates });
+    res.json({ success: true, data: rates, brand: displayBrand() });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+router.get('/api/display/logo', (req, res) => {
+  try {
+    const row = db.prepare("SELECT value FROM settings WHERE key = 'store_logo'").get();
+    res.set('Cache-Control', 'no-store');
+    res.json({ success: true, logo: (row && row.value) || '' });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }

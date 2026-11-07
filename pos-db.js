@@ -246,6 +246,7 @@ try { syncOfficialDttot(); } catch (e) { console.error('DTTOT sync failed, keepi
 // Seed Default Settings
 const defaultSettings = [
   { key: 'store_name', value: 'Skyline Exchange' },
+  { key: 'store_company', value: 'PT. Skyline Indonesia' },
   { key: 'store_address', value: 'Jl. Bypass Ngurah Rai No. 4X, Kuta, Bali' },
   { key: 'store_phone', value: '+6285-122-777-970' },
   { key: 'store_permit', value: '' },

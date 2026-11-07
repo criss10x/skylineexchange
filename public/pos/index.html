@@ -629,137 +629,16 @@
       outline: none !important;
     }
 
-    /* ==================== INPUT CONTRAST SYSTEM (LIGHT THEME) ==================== */
-    /* 1. Mandatory Input Fields (Wajib Diisi) in Light Theme */
-    html.light .input-mandatory,
-    html.light input.input-mandatory,
-    html.light select.input-mandatory {
-      background-color: #ffffff !important;
-      border: 2px solid #009688 !important;
-      border-left: 6px solid #009688 !important;
-      color: #042f2e !important;
-      font-weight: 700 !important;
-      box-shadow: 0 2px 6px rgba(0, 150, 136, 0.2), 0 1px 2px rgba(0, 0, 0, 0.06) !important;
-      transition: all 0.15s ease-in-out !important;
-    }
-    html.light .input-mandatory:hover,
-    html.light input.input-mandatory:hover,
-    html.light select.input-mandatory:hover {
-      border-color: #00796b !important;
-      border-left-color: #00796b !important;
-      box-shadow: 0 3px 10px rgba(0, 150, 136, 0.28), 0 1px 2px rgba(0, 0, 0, 0.06) !important;
-    }
-    html.light .input-mandatory:focus,
-    html.light input.input-mandatory:focus,
-    html.light select.input-mandatory:focus {
-      border-color: #00796b !important;
-      border-left-color: #042f2e !important;
-      box-shadow: 0 0 0 3px rgba(0, 150, 136, 0.25), 0 3px 10px rgba(0, 150, 136, 0.2) !important;
-      outline: none !important;
-      background-color: #f0fdfa !important;
-    }
-
-    /* 2. Optional Input Fields (Opsional) in Light Theme */
-    html.light .input-optional,
-    html.light input.input-optional {
-      background-color: #ffffff !important;
-      border: 1px solid #cbd5e1 !important;
-      border-left: 1px solid #cbd5e1 !important;
-      color: #1e293b !important;
-      box-shadow: none !important;
-    }
-    html.light .input-optional:focus,
-    html.light input.input-optional:focus {
-      background-color: #ffffff !important;
-      border-color: #009688 !important;
-      color: #0f172a !important;
-      box-shadow: 0 0 0 2px rgba(0, 150, 136, 0.18) !important;
-      outline: none !important;
-    }
-
-    /* 3. Automated / Read-Only Fields (Kurs Papan) in Light Theme */
-    html.light .input-auto-calculated,
-    html.light input.input-auto-calculated {
-      background-color: #f1f5f9 !important;
-      border: 1px solid #cbd5e1 !important;
-      border-left: 4px solid #94a3b8 !important;
-      color: #0f766e !important;
-      font-weight: 700 !important;
-      box-shadow: none !important;
-    }
-
-    /* Badges in Light Theme */
-    html.light .badge-mandatory {
-      background-color: #ef4444 !important;
-      color: #ffffff !important;
-      border: 1px solid #dc2626 !important;
-      box-shadow: 0 1px 3px rgba(239, 68, 68, 0.35) !important;
-      font-weight: 800;
-    }
-    html.light .badge-optional {
-      background-color: #f1f5f9 !important;
-      color: #475569 !important;
-      border: 1px solid #cbd5e1 !important;
-      font-weight: 600;
-    }
-    html.light .badge-calculated {
-      background-color: #ccfbf1 !important;
-      color: #0f766e !important;
-      border: 1px solid #5eead4 !important;
-      font-weight: 700;
-    }
-
-    /* Kembalian & Total in Light Theme */
-    html.light #box-change-display {
-      background-color: #f0fdf4 !important;
-      border: 2px solid #4ade80 !important;
-      box-shadow: 0 2px 6px rgba(34, 197, 94, 0.18) !important;
-    }
-    html.light #lbl-change-idr {
-      color: #166534 !important;
-      font-weight: 700 !important;
-    }
-    html.light #calc-change-idr {
-      color: #15803d !important;
-      font-weight: 900 !important;
-    }
-    html.light #box-total-display {
-      background-color: #f0fdfa !important;
-      border: 2px solid #0d9488 !important;
-      box-shadow: 0 2px 6px rgba(13, 148, 136, 0.15) !important;
-    }
-    html.light #lbl-total-idr {
-      color: #0f766e !important;
-      font-weight: 800 !important;
-    }
-    html.light #calc-total-idr {
-      color: #0f766e !important;
-      font-weight: 900 !important;
-    }
-
-    /* Currency Quick Chips in Light Mode */
-    html.light .chip-curr {
-      background-color: #f1f5f9 !important;
-      color: #1e293b !important;
-      border: 1px solid #cbd5e1 !important;
-      font-weight: 600 !important;
-    }
-    html.light .chip-curr:hover {
-      background-color: #e2e8f0 !important;
-      color: #0f172a !important;
-    }
-
     /* Tables across all tabs in Light Mode */
     html.light table thead,
     html.light thead {
       background-color: #f1f5f9 !important;
       color: #1e293b !important;
-      border-bottom: 2px solid #cbd5e1 !important;
+      border-bottom-color: #cbd5e1 !important;
     }
     html.light table th,
     html.light th {
       color: #1e293b !important;
-      font-weight: 700 !important;
     }
     html.light th#lbl-th-buy {
       color: #047857 !important;
@@ -788,25 +667,22 @@
     html.light .btn-edit-rate,
     html.light .btn-history-reprint {
       background-color: #f1f5f9 !important;
-      border: 1px solid #cbd5e1 !important;
+      box-shadow: inset 0 0 0 1px #cbd5e1 !important;
       color: #0f766e !important;
-      font-weight: 700 !important;
     }
     html.light .btn-edit-rate:hover,
     html.light .btn-history-reprint:hover {
       background-color: #0d9488 !important;
       color: #ffffff !important;
-      border-color: #0d9488 !important;
+      box-shadow: inset 0 0 0 1px #0d9488 !important;
     }
 
     /* Papan Kurs Specifics */
     html.light #rates-table-body td.text-slate-300 {
       color: #1e293b !important;
-      font-weight: 600 !important;
     }
     html.light #rates-table-body td.text-slate-400 {
       color: #475569 !important;
-      font-weight: 600 !important;
     }
     html.light .rate-bulk-input { background: #ffffff !important; border-color: #cbd5e1 !important; color: #047857 !important; }
     html.light .rate-bulk-input.is-changed { border-color: #0f766e !important; background: #f0fdfa !important; }
@@ -814,29 +690,14 @@
       background-color: #f0fdfa !important;
       border-color: #99f6e4 !important;
       color: #0f766e !important;
-      font-weight: 700 !important;
     }
 
-
-    /* Quick Cash Add Buttons */
-    html.light #btn-exact-cash,
-    html.light .btn-quick-add {
-      background-color: #f1f5f9 !important;
-      color: #1e293b !important;
-      border: 1px solid #cbd5e1 !important;
-      font-weight: 600 !important;
-    }
-    html.light #btn-exact-cash:hover,
-    html.light .btn-quick-add:hover {
-      background-color: #e2e8f0 !important;
-      color: #0f172a !important;
-    }
 
     /* Reset Button in Light Mode */
     html.light #btn-reset-form {
       background-color: #f1f5f9 !important;
       color: #475569 !important;
-      border: 1px solid #cbd5e1 !important;
+      box-shadow: inset 0 0 0 1px #cbd5e1 !important;
     }
     html.light #btn-reset-form:hover {
       background-color: #e2e8f0 !important;
@@ -858,9 +719,9 @@
     }
 
     /* Tab 4 Summary Figures in Light Mode */
-    html.light #sum-buy-idr { color: #047857 !important; font-weight: 900 !important; }
-    html.light #sum-sell-idr { color: #b45309 !important; font-weight: 900 !important; }
-    html.light #sum-turnover-idr { color: #0f766e !important; font-weight: 900 !important; }
+    html.light #sum-buy-idr { color: #047857 !important; }
+    html.light #sum-sell-idr { color: #b45309 !important; }
+    html.light #sum-turnover-idr { color: #0f766e !important; }
 
     /* Tab 5 Settings Panels in Light Mode */
     html.light #card-underlying-warning {
@@ -910,9 +771,8 @@
     html.light #btn-cancel-modal-reset-pwd,
     html.light #btn-cancel-modal-add-dttot {
       background-color: #f1f5f9 !important;
-      border: 1px solid #cbd5e1 !important;
+      box-shadow: inset 0 0 0 1px #cbd5e1 !important;
       color: #334155 !important;
-      font-weight: 600 !important;
     }
 
     /* Login Screen in Light Mode */
@@ -1321,9 +1181,9 @@
 
   <!-- TOP HEADER & STATUS BAR -->
   <header class="bg-navy-850 border-b border-navy-700/80 sticky top-0 z-30 shadow-md">
-    <div class="max-w-7xl mx-auto px-3 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-3">
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 py-2.5 flex flex-wrap lg:flex-nowrap items-center justify-between gap-3">
       <!-- Brand & Title -->
-      <div class="flex items-center space-x-3">
+      <div class="flex items-center space-x-3 shrink-0">
         <div id="app-header-logo-box" class="w-10 h-10 rounded-xl bg-gradient-to-br from-brand/20 to-brand/5 border border-brand/40 flex items-center justify-center p-1.5 overflow-hidden shadow-sm">
           <img id="app-header-logo" src="/assets/logo.svg" alt="Skyline Logo" class="w-full h-full object-contain">
         </div>
@@ -1339,7 +1199,7 @@
       </div>
 
       <!-- Center Status Badges -->
-      <div class="flex items-center flex-wrap gap-2 text-xs">
+      <div class="flex items-center flex-wrap lg:justify-end gap-x-1.5 gap-y-2 text-xs min-w-0">
         <!-- Online/Offline Badge -->
         <div id="connection-badge" class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
           <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
@@ -1382,9 +1242,9 @@
         </div>
 
         <!-- Theme Toggle: Light / Dark -->
-        <button type="button" id="btn-theme-toggle" class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-navy-800 hover:bg-navy-700 text-slate-200 border border-navy-700 transition-all text-xs font-semibold cursor-pointer shadow-sm select-none" title="Ganti Tema (Light / Dark)">
+        <button type="button" id="btn-theme-toggle" class="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-navy-800 hover:bg-navy-700 text-slate-200 border border-navy-700 transition-all text-xs font-semibold cursor-pointer shadow-sm select-none" title="Ganti Tema (Light / Dark)">
           <span id="theme-toggle-icon" class="inline-flex"></span>
-          <span id="theme-toggle-text" class="hidden sm:inline">Terang</span>
+          <span id="theme-toggle-text" class="hidden sm:inline-block w-10 text-left">Terang</span>
         </button>
 
         <!-- Live Clock -->
@@ -1766,6 +1626,7 @@
                   <div class="text-center font-bold text-sm tracking-tight text-black" id="rcpt-store-name">
                     SKYLINE EXCHANGE
                   </div>
+                  <div class="text-center text-[10px] font-semibold text-gray-800 leading-tight" id="rcpt-store-company">PT. Skyline Indonesia</div>
                   <div class="text-center text-[10px] text-gray-700 leading-tight mt-0.5" id="rcpt-store-address">
                     Jl. Bypass Ngurah Rai No. 4X, Kuta, Bali
                   </div>
@@ -2137,6 +1998,11 @@
               <div class="sm:col-span-2">
                 <label for="setting-store-name" class="pos-label" id="lbl-set-store-name">Nama Money Changer</label>
                 <input type="text" id="setting-store-name" value="Skyline Exchange" class="pos-input w-full bg-navy-900 border border-navy-600 rounded-lg text-slate-100 font-medium">
+              </div>
+              <div class="sm:col-span-2">
+                <label for="setting-store-company" class="pos-label" id="lbl-set-store-company">Nama PT (badan usaha)</label>
+                <input type="text" id="setting-store-company" value="PT. Skyline Indonesia" placeholder="PT. ..." class="pos-input w-full bg-navy-900 border border-navy-600 rounded-lg text-slate-100">
+                <p class="set-hint" id="hint-set-store-company">Dicetak di bawah nama money changer. Kosongkan jika tidak ingin ditampilkan.</p>
               </div>
               <div class="sm:col-span-2">
                 <label for="setting-store-address" class="pos-label" id="lbl-set-store-addr">Alamat Outlet / Counter</label>
@@ -2871,10 +2737,10 @@
   <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col space-y-2 pointer-events-none"></div>
 
   <!-- Scripts -->
-  <script src="/pos/bluetooth-print.js?v=3.9"></script>
-  <script src="/pos/usb-print.js?v=3.9"></script>
-  <script src="/pos/serial-print.js?v=3.9"></script>
-  <script src="/pos/app.js?v=3.9"></script>
+  <script src="/pos/bluetooth-print.js?v=3.11"></script>
+  <script src="/pos/usb-print.js?v=3.11"></script>
+  <script src="/pos/serial-print.js?v=3.11"></script>
+  <script src="/pos/app.js?v=3.11"></script>
 
   <!-- Modal Tambah Data DTTOT -->
   <div id="modal-add-dttot" class="fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-3 hidden">
