@@ -338,6 +338,10 @@ class BluetoothPrinter {
     addBytes(0x1B, 0x61, 0x01); // Center
     addBytes(0x1B, 0x21, 0x30); // Double height + double width
     addLine(settings.store_name || 'SKYLINE EXCHANGE');
+    if (settings.store_company) {
+      addBytes(0x1B, 0x21, 0x00); // Normal size
+      addLine(settings.store_company);
+    }
     addBytes(0x1B, 0x21, 0x00); // Normal size
 
     // Subheader Address & Contact
@@ -526,6 +530,10 @@ class BluetoothPrinter {
     addBytes(0x1B, 0x61, 0x01); // Center
     addBytes(0x1B, 0x21, 0x30); // Double height & width
     addLine(settings.store_name || 'SKYLINE EXCHANGE');
+    if (settings.store_company) {
+      addBytes(0x1B, 0x21, 0x00); // Normal size
+      addLine(settings.store_company);
+    }
     addBytes(0x1B, 0x21, 0x00);
     addLine(settings.store_address || 'Jl. Bypass Ngurah Rai No. 4X, Kuta, Bali');
     addLine(`WA: ${settings.store_phone || '+6285-122-777-970'}`);

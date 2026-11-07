@@ -567,13 +567,15 @@
   <script>
     // ===== DEFAULT STATE =====
     // Order: USD AUD EUR GBP CHF JPY SGD CAD MYR NZD  |  HKD CNY BND SAR AED THB PHP KRW INR NTD
-    // Split into 4 cols of 5
+    // Split into 4 cols of 5; col 1 also carries the small-note USD rates (7 rows)
     const defaults = {
       company: 'SKYLINE EXCHANGE',
       pt: 'PT. Skyline Indonesia',
       logo: '',
       col1: [
         { flag: 'us', code: 'USD', name: 'US Dollar',           rate: '17.250' },
+        { flag: 'us', code: 'USD 20, 10, 5', name: 'US Dollar', rate: '17.000' },
+        { flag: 'us', code: 'USD 2, 1', name: 'US Dollar',      rate: '16.800' },
         { flag: 'au', code: 'AUD', name: 'Australian Dollar',   rate: '12.425' },
         { flag: 'eu', code: 'EUR', name: 'Euro',                rate: '20.275' },
         { flag: 'gb', code: 'GBP', name: 'British Pound',       rate: '23.375' },
@@ -605,6 +607,16 @@
     let state = JSON.parse(JSON.stringify(defaults));
     const saved = localStorage.getItem('mcDisplayData_v3');
     if (saved) { try { state = { ...defaults, ...JSON.parse(saved) }; } catch(e) {} }
+    // One-time: TVs saved before the small-note USD rows existed get them right under USD
+    if (!state.usdSmallAdded) {
+      const smalls = defaults.col1.filter(c => c.code.startsWith('USD '));
+      const missing = smalls.filter(m => !colIdsAll(state).some(c => c.code === m.code));
+      const at = state.col1.findIndex(c => c.code === 'USD') + 1;
+      state.col1.splice(at, 0, ...missing.map(m => ({ ...m })));
+      state.usdSmallAdded = true;
+      localStorage.setItem('mcDisplayData_v3', JSON.stringify(state));
+    }
+    function colIdsAll(s) { return [...s.col1, ...s.col2, ...s.col3, ...s.col4]; }
 
     // ===== DOM =====
     const displayMode  = document.getElementById('display-mode');
@@ -634,11 +646,44 @@
         : v.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 
+    // Logo, money changer name and PT name come from POS Pengaturan > Profil Toko
+    let posBrand = null;
+    try { posBrand = JSON.parse(localStorage.getItem('mcDisplayPosBrand') || 'null'); } catch(e) {}
+
+    async function syncBrand(brand) {
+      if (!brand) return;
+      const prev = posBrand || {};
+      let logo = prev.logo || '';
+      if (brand.logo_version !== prev.logo_version) {
+        logo = '';
+        if (brand.logo_version) {
+          const r = await (await fetch('/api/display/logo', { cache: 'no-store' })).json();
+          if (!r.success) return;
+          logo = r.logo;
+        }
+      }
+      const next = { name: brand.name || '', company: brand.company || '', logo_version: brand.logo_version || '', logo };
+      if (JSON.stringify(next) === JSON.stringify(posBrand)) return;
+      posBrand = next;
+      try { localStorage.setItem('mcDisplayPosBrand', JSON.stringify(posBrand)); } catch(e) { /* quota: still shown this session */ }
+      applyBrand();
+    }
+
+    function applyBrand() {
+      const synced = !!(posBrand && posBrand.name);
+      const pt = synced ? posBrand.company : state.pt;
+      displayCompany.textContent = synced ? posBrand.name.toUpperCase() : state.company;
+      displayPt.textContent = pt;
+      displayPt.style.display = pt ? '' : 'none';
+      updateLogoDisplay();
+    }
+
     async function syncFromPos() {
       try {
         const res = await fetch('/api/display/rates', { cache: 'no-store' });
         const data = await res.json();
         if (!data.success) return;
+        await syncBrand(data.brand);
         const next = {};
         data.data.forEach(r => { if (r.buy_rate > 0) next[r.code.trim()] = Number(r.buy_rate); });
         if (JSON.stringify(next) === JSON.stringify(posRates)) return;
@@ -741,10 +786,12 @@
 
     // ===== LOGO =====
     function updateLogoDisplay() {
-      if (state.logo) {
-        displayLogo.src = state.logo; displayLogo.style.display = 'block';
+      // Synced: the POS logo, or the POS default logo when none is uploaded there
+      const logo = (posBrand && posBrand.name) ? (posBrand.logo || '/assets/logo.svg') : state.logo;
+      if (logo) {
+        displayLogo.src = logo; displayLogo.style.display = 'block';
         displayLogoPlaceholder.style.display = 'none';
-        adminLogoPreview.src = state.logo; adminLogoPreview.style.display = 'block';
+        adminLogoPreview.src = logo; adminLogoPreview.style.display = 'block';
         adminLogoPlaceholder.style.display = 'none';
       } else {
         displayLogo.style.display = 'none'; displayLogoPlaceholder.style.display = 'block';
@@ -765,19 +812,28 @@
     function openAdmin() {
       displayMode.classList.remove('mode-active');
       adminMode.classList.add('admin-active');
-      adminCompany.value = state.company;
-      adminPt.value = state.pt;
+      // Identity is managed in POS once synced; these fields then only show it
+      const synced = !!(posBrand && posBrand.name);
+      adminCompany.value = synced ? posBrand.name.toUpperCase() : state.company;
+      adminPt.value = synced ? posBrand.company : state.pt;
+      [adminCompany, adminPt].forEach(el => {
+        el.readOnly = synced;
+        el.title = synced ? 'Synced from POS: Pengaturan > Profil Toko' : '';
+      });
+      logoInput.disabled = synced;
+      logoInput.parentElement.style.opacity = synced ? '0.5' : '';
+      logoInput.parentElement.title = synced ? 'Synced from POS: Pengaturan > Profil Toko' : '';
       updateLogoDisplay();
       renderAllAdmin();
     }
 
     function closeAdminMode() {
-      state.company = adminCompany.value || defaults.company;
-      state.pt = adminPt.value || defaults.pt;
+      if (!adminCompany.readOnly) {
+        state.company = adminCompany.value || defaults.company;
+        state.pt = adminPt.value || defaults.pt;
+      }
       saveState();
-      displayCompany.textContent = state.company;
-      displayPt.textContent = state.pt;
-      updateLogoDisplay();
+      applyBrand();
       renderAllDisplay();
       adminMode.classList.remove('admin-active');
       displayMode.classList.add('mode-active');
@@ -822,9 +878,7 @@
     });
 
     // ===== INIT =====
-    displayCompany.textContent = state.company;
-    displayPt.textContent = state.pt;
-    updateLogoDisplay();
+    applyBrand();
     renderAllDisplay();
     syncFromPos();
     setInterval(syncFromPos, 30000);
