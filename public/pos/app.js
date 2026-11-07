@@ -26,7 +26,7 @@ const i18n = {
     tabHistory: 'Riwayat & Laporan',
     tabSettings: 'Pengaturan',
     tabSheets: 'Google Sheets',
-    subtabSheets: 'Integrasi Google Sheets',
+    subtabSheets: 'Google Sheets',
     subtabStore: 'Profil Toko',
     subtabCompliance: 'Kepatuhan BI',
     lblCustPep: 'Customer adalah PEP (pejabat publik)',
@@ -233,16 +233,16 @@ const i18n = {
     showRcptLogo: 'Tampilkan logo di struk thermal',
 
     // Integrasi Google Sheets
-    sheetsCardTitle: 'Integrasi Google Sheets (Pencatatan Cloud Otomatis)',
+    sheetsCardTitle: 'Google Sheets',
     sheetsCardSubtitle: 'Mencatat data transaksi langsung ke tab tanggal pada spreadsheet Anda',
-    sheetsTargetDoc: 'Spreadsheet Target:',
-    sheetsRuleMapping: 'Sistem Tab:',
+    sheetsTargetDoc: 'Spreadsheet',
+    sheetsRuleMapping: 'Tab',
     setSheetsUrl: 'URL Web App Google Apps Script',
     setSheetsAutoSync: 'Otomatis kirim transaksi ke Google Sheets setiap kali transaksi disimpan atau dicetak',
     btnSheetsSave: 'Simpan URL & Pengaturan',
-    sheetsPersistedNote: 'Tersimpan permanen: Cukup simpan sekali, URL tidak perlu dimasukkan lagi setiap login.',
-    btnSheetsTest: 'Tes Koneksi Google Sheets',
-    btnSheetsSyncToday: 'Backup Hari Ini ke Google Sheets',
+    sheetsPersistedNote: 'Cukup disimpan sekali; tidak perlu diisi ulang saat login.',
+    btnSheetsTest: 'Tes koneksi',
+    btnSheetsSyncToday: 'Kirim transaksi hari ini',
     btnSheetsGuide: 'Panduan 1 Menit & Salin Script',
     btnHistSync: 'Sync Sheets',
     btnHistCsv: 'Export CSV',
@@ -250,8 +250,8 @@ const i18n = {
     btnCopyScript: 'Salin Kode Script (1-Click)',
 
     // Pengujian & Status Printer
-    printerDiagTitle: 'Pengujian & Status Printer Thermal (Bluetooth, USB & Serial COM)',
-    printerDiagSub: 'Periksa koneksi printer Bluetooth, kabel USB, atau Serial COM yang sudah Paired di Windows',
+    printerDiagTitle: 'Printer thermal',
+    printerDiagSub: 'Hubungkan dan tes printer Bluetooth, USB, atau Serial COM.',
     btnSettingsConnect: 'Hubungkan BT',
     btnSettingsDisconnect: 'Putuskan BT',
     btnSettingsConnectUsb: 'Hubungkan USB',
@@ -291,7 +291,7 @@ const i18n = {
     tabHistory: 'History & Reports',
     tabSettings: 'Settings',
     tabSheets: 'Google Sheets',
-    subtabSheets: 'Google Sheets Integration',
+    subtabSheets: 'Google Sheets',
     subtabStore: 'Store Profile',
     subtabCompliance: 'BI Compliance',
     lblCustPep: 'Customer is a PEP (politically exposed person)',
@@ -498,16 +498,16 @@ const i18n = {
     showRcptLogo: 'Show logo on thermal receipt',
 
     // Google Sheets Integration
-    sheetsCardTitle: 'Google Sheets Integration (Auto Cloud Backup)',
+    sheetsCardTitle: 'Google Sheets',
     sheetsCardSubtitle: 'Automatically logs transactions into date-based tabs in your spreadsheet',
-    sheetsTargetDoc: 'Target Spreadsheet:',
-    sheetsRuleMapping: 'Tab System:',
+    sheetsTargetDoc: 'Spreadsheet',
+    sheetsRuleMapping: 'Tabs',
     setSheetsUrl: 'Google Apps Script Web App URL',
     setSheetsAutoSync: 'Auto-sync transaction to Google Sheets whenever transaction is saved or printed',
     btnSheetsSave: 'Save URL & Settings',
-    sheetsPersistedNote: 'Permanently saved: Save once, the URL does not need to be re-entered on login.',
-    btnSheetsTest: 'Test Google Sheets Connection',
-    btnSheetsSyncToday: 'Backup Today to Google Sheets',
+    sheetsPersistedNote: 'Save once; no need to re-enter it at login.',
+    btnSheetsTest: 'Test connection',
+    btnSheetsSyncToday: "Send today's transactions",
     btnSheetsGuide: '1-Minute Guide & Copy Script',
     btnHistSync: 'Sync Sheets',
     btnHistCsv: 'Export CSV',
@@ -515,8 +515,8 @@ const i18n = {
     btnCopyScript: 'Copy Script Code (1-Click)',
 
     // Printer Diagnostic & Testing
-    printerDiagTitle: 'Thermal Printer Status & Testing (Bluetooth, USB & Serial COM)',
-    printerDiagSub: 'Verify Bluetooth, USB cable, or paired Windows Bluetooth COM port printer and print a sample receipt',
+    printerDiagTitle: 'Thermal printer',
+    printerDiagSub: 'Connect and test a Bluetooth, USB or Serial COM printer.',
     btnSettingsConnect: 'Connect BT',
     btnSettingsDisconnect: 'Disconnect BT',
     btnSettingsConnectUsb: 'Connect USB',
@@ -1241,6 +1241,7 @@ function setAppLanguage(lang) {
   safeSet('lbl-btn-sheets-test', t.btnSheetsTest);
   safeSet('lbl-btn-sheets-sync-today', t.btnSheetsSyncToday);
   safeSet('lbl-btn-sheets-guide', t.btnSheetsGuide);
+  renderSheetsStatus();
   safeSet('lbl-btn-hist-sync', t.btnHistSync);
   safeSet('lbl-btn-hist-csv', t.btnHistCsv);
   safeSet('lbl-modal-guide-title', t.modalGuideTitle);
@@ -1495,6 +1496,7 @@ function applySettingsToUI() {
   if (sheetsUrlInput) sheetsUrlInput.value = s.google_sheets_url || '';
   const sheetsAutoSyncCheck = document.getElementById('setting-sheets-auto-sync');
   if (sheetsAutoSyncCheck) sheetsAutoSyncCheck.checked = s.google_sheets_auto_sync !== '0';
+  renderSheetsStatus();
 
   const paperSize = s.paper_size || '80';
   const r80 = document.getElementById('setting-paper-80');
@@ -1606,10 +1608,10 @@ function applyStoreLogo(logoUrl, showOnReceipt, logoSize) {
   if (rcptStatus) {
     if (isShowRcpt) {
       rcptStatus.textContent = isEn ? 'Printed on Thermal Receipt (Active)' : 'Tampil di Kertas Struk (Aktif)';
-      rcptStatus.className = 'text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-semibold border border-emerald-500/30';
+      rcptStatus.className = 'set-status set-status--ok';
     } else {
       rcptStatus.textContent = isEn ? 'Hidden from Receipt' : 'Disembunyikan dari Struk';
-      rcptStatus.className = 'text-[10px] px-2 py-0.5 rounded-full bg-slate-500/20 text-slate-400 font-semibold border border-slate-500/30';
+      rcptStatus.className = 'set-status';
     }
   }
 
@@ -1622,10 +1624,10 @@ function applyStoreLogo(logoUrl, showOnReceipt, logoSize) {
   if (statusTag) {
     if (isCustom) {
       statusTag.textContent = isEn ? 'Custom Logo Active' : 'Logo Kustom Aktif';
-      statusTag.className = 'text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-semibold border border-emerald-500/30';
+      statusTag.className = 'set-status set-status--ok';
     } else {
       statusTag.textContent = isEn ? 'Skyline Default' : 'Logo Default Skyline';
-      statusTag.className = 'text-[10px] px-2 py-0.5 rounded-full bg-brand/20 text-brand font-semibold border border-brand/30';
+      statusTag.className = 'set-status';
     }
   }
 }
@@ -1793,7 +1795,9 @@ function renderRatesTable() {
         </div>
       </td>
       <td class="py-3 px-3 text-slate-300 font-mono text-xs">${r.denomination || 'All'}</td>
-      <td class="py-3 px-4 text-right text-emerald-400 font-bold">Rp ${r.buy_rate.toLocaleString('id-ID')}</td>
+      <td class="py-3 px-4 text-right text-emerald-400 font-bold">${state.bulkBuyEdit
+        ? `<input type="text" inputmode="decimal" data-decimal="true" data-id="${r.id}" aria-label="${isEn ? 'Buy rate' : 'Kurs beli'} ${escapeHtml(r.code)}" class="rate-bulk-input w-32 text-right font-mono font-bold text-[15px] bg-navy-900 border border-navy-600 rounded-lg px-2.5 py-2 text-emerald-300 focus:outline-none focus:border-brand">`
+        : `Rp ${r.buy_rate.toLocaleString('id-ID')}`}</td>
       <td class="py-3 px-4 text-right text-amber-400 font-bold">Rp ${r.sell_rate.toLocaleString('id-ID')}</td>
       <td class="py-3 px-4 text-right text-slate-400 text-xs">Rp ${spread.toLocaleString('id-ID')}</td>
       <td class="py-3 px-4 text-center">
@@ -1812,6 +1816,74 @@ function renderRatesTable() {
       if (item) openEditRateModal(item);
     });
   });
+
+  // Bulk buy-rate mode: header buttons + one input per row
+  const bulk = !!state.bulkBuyEdit;
+  document.getElementById('rates-bulk-actions')?.classList.toggle('hidden', !bulk);
+  document.getElementById('btn-bulk-buy-edit')?.classList.toggle('hidden', bulk);
+  document.getElementById('btn-modal-add-rate')?.classList.toggle('hidden', bulk);
+  const setText = (sel, text) => { const el = document.querySelector(sel); if (el) el.textContent = text; };
+  setText('#btn-bulk-buy-cancel', isEn ? 'Cancel' : 'Batal');
+  setText('#btn-bulk-buy-save', isEn ? 'Save all buy rates' : 'Simpan semua kurs beli');
+  setText('#btn-bulk-buy-edit span', isEn ? 'Edit all buy rates' : 'Edit kurs beli sekaligus');
+  setText('#btn-open-tv-display span', isEn ? 'TV display' : 'Tampilan TV');
+  if (!bulk) return;
+  const inputs = [...tbody.querySelectorAll('.rate-bulk-input')];
+  inputs.forEach((inp, i) => {
+    const rate = state.rates.find(r => String(r.id) === inp.dataset.id);
+    attachNumFormatter(inp);
+    setNumInput(inp, rate.buy_rate);
+    inp.addEventListener('input', () => inp.classList.toggle('is-changed', getNumInput(inp) !== rate.buy_rate));
+    inp.addEventListener('focus', () => inp.select());
+    // Enter jumps to the next currency so the whole board can be typed in one pass
+    inp.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter') return;
+      e.preventDefault();
+      if (inputs[i + 1]) inputs[i + 1].focus(); else saveBulkBuyRates();
+    });
+  });
+  inputs[0]?.focus();
+}
+
+function setBulkBuyMode(on) {
+  state.bulkBuyEdit = on;
+  renderRatesTable();
+}
+
+async function saveBulkBuyRates() {
+  const isEn = state.appLang === 'en';
+  const changes = [];
+  for (const inp of document.querySelectorAll('#rates-table-body .rate-bulk-input')) {
+    const rate = state.rates.find(r => String(r.id) === inp.dataset.id);
+    const val = getNumInput(inp);
+    if (!(val > 0)) {
+      inp.focus();
+      return showToast(isEn ? `Buy rate for ${rate.code} must be more than 0` : `Kurs beli ${rate.code} harus lebih dari 0`, 'error');
+    }
+    if (val !== rate.buy_rate) changes.push({ id: rate.id, buy_rate: val });
+  }
+  if (changes.length === 0) {
+    showToast(isEn ? 'No buy rate changed' : 'Tidak ada kurs beli yang berubah', 'info');
+    return setBulkBuyMode(false);
+  }
+  const btn = document.getElementById('btn-bulk-buy-save');
+  btn.disabled = true;
+  try {
+    const res = await authFetch('/api/rates/bulk-buy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rates: changes })
+    });
+    const data = await res.json();
+    if (!data.success) return showToast(data.message || (isEn ? 'Failed to save buy rates' : 'Gagal menyimpan kurs beli'), 'error');
+    showToast(isEn ? `${data.updated} buy rates saved` : `${data.updated} kurs beli disimpan`, 'success');
+    state.bulkBuyEdit = false;
+    await loadRates();
+  } catch {
+    showToast(isEn ? 'Failed to connect to server' : 'Gagal menghubungi server', 'error');
+  } finally {
+    btn.disabled = false;
+  }
 }
 
 function openEditRateModal(rate = null) {
@@ -3364,7 +3436,7 @@ async function loadReportsSummary() {
 // ==================== DATABASE & BACKUP SYSTEM ====================
 async function loadDatabaseInfo() {
   try {
-    const res = await apiFetch('/api/system/db-info');
+    const res = await authFetch('/api/system/db-info').then(r => r.json());
     if (res && res.success && res.data) {
       const d = res.data;
       const elPath = document.getElementById('db-info-path');
@@ -3506,34 +3578,40 @@ function switchSubtab(subtabName) {
   if (panelDatabase) panelDatabase.classList.add('hidden');
   if (panelCompliance) panelCompliance.classList.add('hidden');
 
-  const inactiveBtnClass = 'flex-1 py-2 px-2 rounded-lg text-xs font-bold transition-all text-center flex items-center justify-center gap-1 text-slate-400 hover:text-white';
-  if (btnSheets) btnSheets.className = inactiveBtnClass;
-  if (btnStore) btnStore.className = inactiveBtnClass;
-  if (btnUsers) btnUsers.className = inactiveBtnClass;
-  if (btnDatabase) btnDatabase.className = inactiveBtnClass;
-  if (btnCompliance) btnCompliance.className = inactiveBtnClass;
+  // Active look comes from .set-tab[aria-selected="true"] in index.html
+  [btnSheets, btnStore, btnUsers, btnDatabase, btnCompliance].forEach(b => b?.setAttribute('aria-selected', 'false'));
 
   if (subtabName === 'sheets') {
     if (panelSheets) panelSheets.classList.remove('hidden');
-    if (btnSheets) btnSheets.className = 'flex-1 py-2 px-2 rounded-lg text-xs font-bold transition-all text-center flex items-center justify-center gap-1 bg-emerald-600 text-white shadow';
+    btnSheets?.setAttribute('aria-selected', 'true');
+    renderSheetsStatus();
   } else if (subtabName === 'users') {
     if (panelUsers) panelUsers.classList.remove('hidden');
-    if (btnUsers) btnUsers.className = 'flex-1 py-2 px-2 rounded-lg text-xs font-bold transition-all text-center flex items-center justify-center gap-1 bg-brand text-navy-950 font-bold shadow';
+    btnUsers?.setAttribute('aria-selected', 'true');
     if (state.user && state.user.role === 'ADMIN') {
       loadUsersList();
     }
   } else if (subtabName === 'database') {
     if (panelDatabase) panelDatabase.classList.remove('hidden');
-    if (btnDatabase) btnDatabase.className = 'flex-1 py-2 px-2 rounded-lg text-xs font-bold transition-all text-center flex items-center justify-center gap-1 bg-cyan-600 text-white shadow';
+    btnDatabase?.setAttribute('aria-selected', 'true');
     loadDatabaseInfo();
   } else if (subtabName === 'compliance') {
     if (panelCompliance) panelCompliance.classList.remove('hidden');
-    if (btnCompliance) btnCompliance.className = 'flex-1 py-2 px-2 rounded-lg text-xs font-bold transition-all text-center flex items-center justify-center gap-1 bg-amber-600 text-white shadow';
+    btnCompliance?.setAttribute('aria-selected', 'true');
     loadDttotList();
   } else {
     if (panelStore) panelStore.classList.remove('hidden');
-    if (btnStore) btnStore.className = 'flex-1 py-2 px-2 rounded-lg text-xs font-bold transition-all text-center flex items-center justify-center gap-1 bg-brand text-navy-950 font-bold shadow';
+    btnStore?.setAttribute('aria-selected', 'true');
   }
+
+  // Top nav has both "Google Sheets" and "Pengaturan": light up the one matching this subtab
+  if (document.getElementById('tab-settings')?.classList.contains('hidden')) return;
+  const navOn = subtabName === 'sheets' ? 'tab-sheets' : 'tab-settings';
+  document.querySelectorAll('.nav-tab[data-target="tab-sheets"], .nav-tab[data-target="tab-settings"]').forEach(el => {
+    el.className = el.dataset.target === navOn
+      ? 'nav-tab active-tab px-3 sm:px-4 py-2.5 font-semibold text-brand border-b-2 border-brand flex items-center gap-1.5 whitespace-nowrap'
+      : 'nav-tab px-3 sm:px-4 py-2.5 font-medium text-slate-400 hover:text-slate-200 border-b-2 border-transparent flex items-center gap-1.5 whitespace-nowrap';
+  });
 }
 
 
@@ -3548,46 +3626,47 @@ async function loadDttotList() {
   const listType = document.getElementById('dttot-filter-type')?.value || 'ALL';
 
   try {
-    const res = await authFetch(`/api/dttot?q=${encodeURIComponent(q)}&list_type=${encodeURIComponent(listType)}&limit=100`);
+    const res = await authFetch(`/api/dttot?q=${encodeURIComponent(q)}&list_type=${encodeURIComponent(listType)}&limit=2000`);
     const data = await res.json();
     if (!data.success) throw new Error(data.message);
 
     const entries = data.data || [];
-    if (countBadge) countBadge.textContent = `${entries.length} Data`;
+    const filtered = q || listType !== 'ALL';
+    if (countBadge) countBadge.textContent = filtered ? `${entries.length} dari ${data.total} data` : `${data.total} data`;
 
     if (entries.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="6" class="py-6 text-center text-slate-500 font-sans">Tidak ada data DTTOT yang cocok.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="6" class="text-center text-slate-400 font-sans !py-6">Tidak ada data DTTOT yang cocok.</td></tr>';
       return;
     }
 
-    tbody.innerHTML = '';
     const isAdmin = state.user && state.user.role === 'ADMIN';
+    const typeClass = { DTTOT: 'set-status--danger', DPPSPM: 'set-status--warn', INTERNAL: '' };
 
-    entries.forEach(row => {
-      const tr = document.createElement('tr');
-      tr.className = 'hover:bg-navy-700/40 transition-colors';
-
-      let typeBadge = '<span class="px-1.5 py-0.5 rounded text-[10px] bg-rose-500/20 text-rose-300 font-bold border border-rose-500/30">DTTOT</span>';
-      if (row.list_type === 'DPPSPM') {
-        typeBadge = '<span class="px-1.5 py-0.5 rounded text-[10px] bg-purple-500/20 text-purple-300 font-bold border border-purple-500/30">DPPSPM</span>';
-      } else if (row.list_type === 'INTERNAL') {
-        typeBadge = '<span class="px-1.5 py-0.5 rounded text-[10px] bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">INTERNAL</span>';
-      }
-
-      const actionBtn = isAdmin
-        ? `<button type="button" class="btn-delete-dttot px-2 py-0.5 rounded bg-rose-500/20 hover:bg-rose-500/40 text-rose-300 text-[10px] font-bold transition-all" data-id="${row.id}" data-name="${row.name}">Hapus</button>`
-        : '<span class="text-slate-600 text-[10px]">-</span>';
-
-      tr.innerHTML = `
-        <td class="py-2.5 px-3 font-semibold text-white uppercase">${row.name}</td>
-        <td class="py-2.5 px-3 text-slate-300">${row.aliases || '-'}</td>
-        <td class="py-2.5 px-2 text-slate-400 uppercase text-[11px]">${row.nationality || 'INDONESIA'}</td>
-        <td class="py-2.5 px-2">${typeBadge}</td>
-        <td class="py-2.5 px-3 text-slate-400 text-[11px] max-w-xs truncate" title="${row.notes || ''}">${row.notes || '-'}</td>
-        <td class="py-2.5 px-2 text-center">${actionBtn}</td>
-      `;
-      tbody.appendChild(tr);
-    });
+    // All fields come from the official list or admin input: escape before inserting
+    tbody.innerHTML = entries.map(row => {
+      const notes = (row.notes || '').split('\n');
+      const kind = notes[0].startsWith('Terduga: ') ? notes.shift().slice(9) : '';
+      const action = !isAdmin
+        ? ''
+        : row.ref_code
+          ? '<span class="text-[13px] text-slate-400" title="Data resmi, diperbarui lewat file DTTOT terbaru">Resmi</span>'
+          : `<button type="button" class="btn-delete-dttot set-btn set-btn--danger set-btn--sm" data-id="${row.id}" data-name="${escapeHtml(row.name)}">Hapus</button>`;
+      return `
+        <tr>
+          <td class="min-w-[12rem]">
+            <div class="font-semibold text-slate-100">${escapeHtml(row.name)}</div>
+            ${row.ref_code ? `<div class="font-mono text-xs text-slate-400">${escapeHtml(row.ref_code)}</div>` : ''}
+          </td>
+          <td class="text-slate-300 text-[13px] min-w-[12rem] max-w-xs"><div class="line-clamp-3" title="${escapeHtml(row.aliases)}">${escapeHtml(row.aliases) || '-'}</div></td>
+          <td class="text-slate-300 text-[13px]">${escapeHtml(row.nationality) || '-'}</td>
+          <td>
+            <span class="set-status ${typeClass[row.list_type] ?? ''}">${escapeHtml(row.list_type)}</span>
+            ${kind ? `<div class="mt-1 text-xs text-slate-400">${escapeHtml(kind)}</div>` : ''}
+          </td>
+          <td class="text-[13px] text-slate-300 min-w-[16rem] max-w-md"><div class="line-clamp-2" title="${escapeHtml(notes.join('\n'))}">${escapeHtml(notes.join(' · ')) || '-'}</div></td>
+          <td class="text-center">${action}</td>
+        </tr>`;
+    }).join('');
 
     tbody.querySelectorAll('.btn-delete-dttot').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -3597,7 +3676,7 @@ async function loadDttotList() {
       });
     });
   } catch (err) {
-    tbody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-rose-400">Gagal memuat daftar DTTOT: ${err.message}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" class="text-center text-rose-400 !py-6">Gagal memuat daftar DTTOT: ${escapeHtml(err.message)}</td></tr>`;
   }
 }
 
@@ -3612,7 +3691,7 @@ async function testDttotScreening() {
     return;
   }
 
-  resultBox.className = 'p-2.5 rounded-lg text-xs font-medium bg-navy-950 text-slate-300 border border-navy-700 block';
+  resultBox.className = 'p-3 rounded-lg text-[13px] font-medium bg-navy-950 text-slate-300 border border-navy-700 block';
   resultBox.textContent = 'Memeriksa database DTTOT / DPPSPM...';
 
   try {
@@ -3631,9 +3710,10 @@ async function testDttotScreening() {
           <svg class="w-4 h-4 text-rose-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
           HASIL: TERINDIKASI MATCH (${match.list_type})
         </div>
-        <div>Nama Cocok: <b>${match.name}</b> (Alias: ${match.aliases || '-'})</div>
-        <div class="text-[11px] text-rose-300/80">Keterangan: ${match.notes || '-'} | Kewarganegaraan: ${match.nationality || '-'}</div>
-        <div class="text-[10px] text-rose-400 font-semibold mt-1">Status Sistem: Transaksi Kasir Wajib Ditolak / Dibekukan Serta-merta.</div>
+        <div>Nama Cocok: <b>${escapeHtml(match.name)}</b> (Alias: ${escapeHtml(match.aliases) || '-'})</div>
+        <div class="text-rose-200/90 whitespace-pre-line">Keterangan: ${escapeHtml(match.notes) || '-'}
+Kewarganegaraan: ${escapeHtml(match.nationality) || '-'}</div>
+        <div class="text-rose-300 font-semibold mt-1">Status Sistem: Transaksi Kasir Wajib Ditolak / Dibekukan Serta-merta.</div>
       `;
     } else {
       resultBox.className = 'p-3 rounded-lg text-xs font-medium bg-emerald-950/60 border border-emerald-500/60 text-emerald-200 block';
@@ -3646,7 +3726,7 @@ async function testDttotScreening() {
       `;
     }
   } catch (err) {
-    resultBox.className = 'p-2.5 rounded-lg text-xs font-medium bg-rose-950/60 text-rose-300 border border-rose-700 block';
+    resultBox.className = 'p-3 rounded-lg text-[13px] font-medium bg-rose-950/60 text-rose-300 border border-rose-700 block';
     resultBox.textContent = 'Error koneksi server saat skrining: ' + err.message;
   }
 }
@@ -3714,7 +3794,7 @@ function switchTab(tabId) {
     switchSubtab('sheets');
     const tabBtn = document.querySelector('.nav-tab[data-target="tab-sheets"]');
     if (tabBtn) {
-      tabBtn.className = 'nav-tab active-tab px-3 sm:px-4 py-2.5 font-semibold text-emerald-400 border-b-2 border-emerald-400 flex items-center gap-1.5 whitespace-nowrap';
+      tabBtn.className = 'nav-tab active-tab px-3 sm:px-4 py-2.5 font-semibold text-brand border-b-2 border-brand flex items-center gap-1.5 whitespace-nowrap';
     }
     setTimeout(() => {
       const urlInput = document.getElementById('setting-sheets-url');
@@ -3738,14 +3818,8 @@ function switchTab(tabId) {
   if (tabId === 'tab-rates') loadRates();
   if (tabId === 'tab-delivery') loadDeliveryOrders();
   if (tabId === 'tab-history') { loadHistory(); loadReportsSummary(); }
-  if (tabId === 'tab-settings') {
-    const panelStore = document.getElementById('subtab-panel-store');
-    if (panelStore && !panelStore.classList.contains('hidden')) {
-      switchSubtab('store');
-    } else {
-      switchSubtab('sheets');
-    }
-  }
+  // "Google Sheets" has its own nav tab, so Pengaturan opens on the store profile
+  if (tabId === 'tab-settings') switchSubtab('store');
 }
 
 // ==================== BLUETOOTH PRINTER UI ====================
@@ -3769,7 +3843,7 @@ function initBluetoothUI() {
       if (btnConnect) btnConnect.classList.add('border-brand/60', 'text-brand');
 
       if (settingsStatusBadge) {
-        settingsStatusBadge.className = 'px-2.5 py-1 rounded-full text-[11px] font-bold bg-brand/20 text-brand border border-brand/40 flex items-center gap-1.5';
+        settingsStatusBadge.className = 'px-2.5 py-1 rounded-full text-xs font-semibold bg-brand/20 text-brand border border-brand/40 flex items-center gap-1.5';
       }
       if (settingsStatusText) {
         const cleanName = (text || '').replace(/^Terhubung:\s*/i, '');
@@ -3789,7 +3863,7 @@ function initBluetoothUI() {
       if (btnConnect) btnConnect.classList.remove('border-brand/60', 'text-brand');
 
       if (settingsStatusBadge) {
-        settingsStatusBadge.className = 'px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-700/60 text-slate-300 border border-slate-600 flex items-center gap-1.5';
+        settingsStatusBadge.className = 'px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-700/60 text-slate-300 border border-slate-600 flex items-center gap-1.5';
       }
       if (settingsStatusText) {
         settingsStatusText.textContent = isEn ? 'BT: Not Connected' : 'BT: Belum Terhubung';
@@ -3871,7 +3945,7 @@ function initUsbUI() {
       if (btnConnect) btnConnect.classList.add('border-brand/60', 'text-brand');
 
       if (settingsStatusBadge) {
-        settingsStatusBadge.className = 'px-2.5 py-1 rounded-full text-[11px] font-bold bg-brand/20 text-brand border border-brand/40 flex items-center gap-1.5';
+        settingsStatusBadge.className = 'px-2.5 py-1 rounded-full text-xs font-semibold bg-brand/20 text-brand border border-brand/40 flex items-center gap-1.5';
       }
       if (settingsStatusText) {
         const cleanName = (text || '').replace(/^Terhubung:\s*/i, '');
@@ -3891,7 +3965,7 @@ function initUsbUI() {
       if (btnConnect) btnConnect.classList.remove('border-brand/60', 'text-brand');
 
       if (settingsStatusBadge) {
-        settingsStatusBadge.className = 'px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-700/60 text-slate-300 border border-slate-600 flex items-center gap-1.5';
+        settingsStatusBadge.className = 'px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-700/60 text-slate-300 border border-slate-600 flex items-center gap-1.5';
       }
       if (settingsStatusText) {
         settingsStatusText.textContent = isEn ? 'USB: Not Connected' : 'USB: Belum Terhubung';
@@ -3955,7 +4029,7 @@ function initSerialUI() {
     const isEn = state.appLang === 'en';
     if (connected) {
       if (settingsStatusBadge) {
-        settingsStatusBadge.className = 'px-2.5 py-1 rounded-full text-[11px] font-bold bg-brand/20 text-brand border border-brand/40 flex items-center gap-1.5';
+        settingsStatusBadge.className = 'px-2.5 py-1 rounded-full text-xs font-semibold bg-brand/20 text-brand border border-brand/40 flex items-center gap-1.5';
       }
       if (settingsStatusText) {
         const cleanName = (text || '').replace(/^Terhubung:\s*/i, '');
@@ -3971,7 +4045,7 @@ function initSerialUI() {
       }
     } else {
       if (settingsStatusBadge) {
-        settingsStatusBadge.className = 'px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-700/60 text-slate-300 border border-slate-600 flex items-center gap-1.5';
+        settingsStatusBadge.className = 'px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-700/60 text-slate-300 border border-slate-600 flex items-center gap-1.5';
       }
       if (settingsStatusText) {
         settingsStatusText.textContent = isEn ? 'Serial COM: Not Connected' : 'Serial COM: Belum Terhubung';
@@ -4202,6 +4276,9 @@ function initEventListeners() {
 
   // Edit Rate Modal Events
   document.getElementById('btn-modal-add-rate').addEventListener('click', () => openEditRateModal(null));
+  document.getElementById('btn-bulk-buy-edit').addEventListener('click', () => setBulkBuyMode(true));
+  document.getElementById('btn-bulk-buy-cancel').addEventListener('click', () => setBulkBuyMode(false));
+  document.getElementById('btn-bulk-buy-save').addEventListener('click', saveBulkBuyRates);
   document.getElementById('btn-close-modal-rate').addEventListener('click', closeEditRateModal);
   document.getElementById('btn-cancel-modal-rate').addEventListener('click', closeEditRateModal);
 
@@ -4535,7 +4612,7 @@ async function testGoogleSheetsConnection() {
 
     if (data.success) {
       showToast(isEn ? 'Connected to Google Sheets successfully!' : 'Berhasil terhubung ke Google Sheets!', 'success');
-      alertBox.className = 'p-3 rounded-lg text-xs border bg-emerald-950/60 border-emerald-500/40 text-emerald-200 block';
+      alertBox.className = 'p-3 rounded-lg text-[13px] border bg-emerald-950/60 border-emerald-500/40 text-emerald-200 block';
       alertBox.innerHTML = `
         <div class="font-bold flex items-center gap-1.5 text-emerald-300">
           <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
@@ -4549,7 +4626,7 @@ async function testGoogleSheetsConnection() {
       await saveGoogleSheetsSettings(url);
     } else {
       showToast(data.message || (isEn ? 'Failed to connect to Google Sheets' : 'Gagal terhubung ke Google Sheets'), 'error');
-      alertBox.className = 'p-3 rounded-lg text-xs border bg-rose-950/60 border-rose-500/40 text-rose-200 block';
+      alertBox.className = 'p-3 rounded-lg text-[13px] border bg-rose-950/60 border-rose-500/40 text-rose-200 block';
       alertBox.innerHTML = `
         <div class="font-bold text-rose-300">⚠️ ${isEn ? 'Connection Failed' : 'Koneksi Gagal'}:</div>
         <div class="mt-0.5 text-slate-300">${data.message || (isEn ? 'Unknown error' : 'Terjadi kesalahan')}</div>
@@ -4557,7 +4634,7 @@ async function testGoogleSheetsConnection() {
     }
   } catch (err) {
     showToast(isEn ? 'Network error while testing connection.' : 'Gagal menghubungi server untuk tes koneksi.', 'error');
-    alertBox.className = 'p-3 rounded-lg text-xs border bg-rose-950/60 border-rose-500/40 text-rose-200 block';
+    alertBox.className = 'p-3 rounded-lg text-[13px] border bg-rose-950/60 border-rose-500/40 text-rose-200 block';
     alertBox.textContent = `Error: ${err.message}`;
   } finally {
     btn.innerHTML = origHtml;
@@ -4583,7 +4660,7 @@ async function handleSaveSheetsConfig() {
   if (rawUrl.includes('docs.google.com/spreadsheets')) {
     showToast(isEn ? 'This is a spreadsheet link, not Apps Script Web App URL.' : 'Tautan ini adalah link Google Sheets biasa, bukan URL Web App Apps Script.', 'error');
     if (alertBox) {
-      alertBox.className = 'p-3 rounded-lg text-xs border bg-amber-950/60 border-amber-500/40 text-amber-200 block';
+      alertBox.className = 'p-3 rounded-lg text-[13px] border bg-amber-950/60 border-amber-500/40 text-amber-200 block';
       alertBox.innerHTML = `
         <div class="font-bold text-amber-300">⚠️ ${isEn ? 'Incorrect URL Type' : 'Format URL Keliru'}:</div>
         <div class="mt-1 text-slate-300">${isEn ? 'Please copy the Web App URL from Extensions -> Apps Script -> Deploy -> New deployment (ends in /exec).' : 'Buka menu Extensions -> Apps Script -> Deploy -> New deployment -> Web app untuk mendapatkan URL Web App (berakhiran /exec).'}</div>
@@ -4615,7 +4692,7 @@ async function handleSaveSheetsConfig() {
 
       showToast(isEn ? 'Google Sheets URL saved permanently!' : 'URL Google Sheets berhasil disimpan secara permanen!', 'success');
       if (alertBox) {
-        alertBox.className = 'p-3 rounded-lg text-xs border bg-emerald-950/60 border-emerald-500/40 text-emerald-200 block';
+        alertBox.className = 'p-3 rounded-lg text-[13px] border bg-emerald-950/60 border-emerald-500/40 text-emerald-200 block';
         alertBox.innerHTML = `
           <div class="font-bold text-emerald-300">✓ ${isEn ? 'Settings Saved Permanently' : 'Pengaturan Tersimpan Permanen'}</div>
           <div class="mt-1 text-slate-300">${isEn ? 'The Google Apps Script URL has been saved. You do not need to re-enter it when logging in.' : 'URL Apps Script telah tersimpan aman di database server & browser. Anda tidak perlu memasukkannya lagi setiap kali login.'}</div>
@@ -4631,11 +4708,27 @@ async function handleSaveSheetsConfig() {
     state.settings.google_sheets_auto_sync = autoSync;
     showToast(isEn ? 'Saved to local browser cache.' : 'Tersimpan di cache browser.', 'warning');
   } finally {
+    renderSheetsStatus();
     if (btn) {
       btn.innerHTML = origHtml;
       btn.disabled = false;
     }
   }
+}
+
+// Badge states the saved config, not a live connection (that is what "Tes koneksi" checks)
+function renderSheetsStatus() {
+  const el = document.getElementById('sheets-config-status');
+  if (!el) return;
+  const isEn = state.appLang === 'en';
+  const url = (state.settings.google_sheets_url || '').trim();
+  const [mod, text] = !url
+    ? ['', isEn ? 'Not set up' : 'Belum diatur']
+    : state.settings.google_sheets_auto_sync !== '0'
+      ? ['set-status--ok', isEn ? 'Auto-sync on' : 'Auto-sync aktif']
+      : ['set-status--warn', isEn ? 'Auto-sync off' : 'Auto-sync mati'];
+  el.className = `set-status ${mod}`;
+  el.textContent = text;
 }
 
 async function saveGoogleSheetsSettings(url) {
@@ -4644,6 +4737,7 @@ async function saveGoogleSheetsSettings(url) {
 
   state.settings.google_sheets_url = cleanUrl;
   state.settings.google_sheets_auto_sync = autoSync;
+  renderSheetsStatus();
   if (cleanUrl) {
     localStorage.setItem('skyline_pos_sheets_url', cleanUrl);
     localStorage.setItem('skyline_pos_sheets_auto_sync', autoSync);
@@ -4687,7 +4781,7 @@ async function syncTransactionsToGoogleSheets(targetDate) {
       showToast(msg, 'success');
       const alertBox = document.getElementById('sheets-status-alert');
       if (alertBox) {
-        alertBox.className = 'p-3 rounded-lg text-xs border bg-emerald-950/60 border-emerald-500/40 text-emerald-200 block';
+        alertBox.className = 'p-3 rounded-lg text-[13px] border bg-emerald-950/60 border-emerald-500/40 text-emerald-200 block';
         alertBox.innerHTML = `
           <div class="font-bold text-emerald-300">✓ ${isEn ? 'Last Sync Succeeded' : 'Sinkronisasi Terakhir Berhasil'} (${new Date().toLocaleTimeString()}):</div>
           <div class="mt-0.5 text-slate-300">${msg}</div>
@@ -4697,7 +4791,7 @@ async function syncTransactionsToGoogleSheets(targetDate) {
       showToast(data.message || (isEn ? 'Failed to sync to Google Sheets' : 'Gagal sinkronisasi ke Google Sheets'), 'error');
       const alertBox = document.getElementById('sheets-status-alert');
       if (alertBox) {
-        alertBox.className = 'p-3 rounded-lg text-xs border bg-rose-950/60 border-rose-500/40 text-rose-200 block';
+        alertBox.className = 'p-3 rounded-lg text-[13px] border bg-rose-950/60 border-rose-500/40 text-rose-200 block';
         alertBox.innerHTML = `
           <div class="font-bold text-rose-300">⚠️ ${isEn ? 'Sync Failed' : 'Sinkronisasi Gagal'}:</div>
           <div class="mt-0.5 text-slate-300">${data.message || (isEn ? 'Unknown error' : 'Terjadi kesalahan')}</div>
@@ -4708,7 +4802,7 @@ async function syncTransactionsToGoogleSheets(targetDate) {
     showToast(isEn ? 'Network error during Google Sheets sync.' : 'Terjadi kesalahan jaringan saat sinkronisasi.', 'error');
     const alertBox = document.getElementById('sheets-status-alert');
     if (alertBox) {
-      alertBox.className = 'p-3 rounded-lg text-xs border bg-rose-950/60 border-rose-500/40 text-rose-200 block';
+      alertBox.className = 'p-3 rounded-lg text-[13px] border bg-rose-950/60 border-rose-500/40 text-rose-200 block';
       alertBox.textContent = `Error: ${err.message}`;
     }
   }
@@ -4934,17 +5028,17 @@ function renderTellerReadonlyUsers(cashiers) {
   tbody.innerHTML = cashiers.map(c => {
     const isSelf = state.user && (state.user.username?.toLowerCase() === c.username?.toLowerCase());
     const roleBadge = c.role === 'ADMIN'
-      ? '<span class="px-2 py-0.5 rounded-full text-[10px] bg-brand/20 text-brand font-bold border border-brand/30">ADMIN</span>'
-      : '<span class="px-2 py-0.5 rounded-full text-[10px] bg-slate-700 text-slate-300 font-bold border border-slate-600">TELLER</span>';
+      ? '<span class="set-status set-status--brand">ADMIN</span>'
+      : '<span class="set-status">TELLER</span>';
     return `
-      <tr class="hover:bg-navy-800 transition-colors ${isSelf ? 'bg-emerald-950/20' : ''}">
-        <td class="py-2.5 px-3 font-mono font-bold text-white">@${escapeHtml(c.username)}</td>
-        <td class="py-2.5 px-3 font-medium text-slate-200">${escapeHtml(c.displayName || c.display_name)}</td>
-        <td class="py-2.5 px-3">${roleBadge}</td>
-        <td class="py-2.5 px-3 text-right">
+      <tr class="${isSelf ? 'set-row--self' : ''}">
+        <td class="font-mono font-semibold text-slate-100">@${escapeHtml(c.username)}</td>
+        <td class="text-slate-200">${escapeHtml(c.displayName || c.display_name)}</td>
+        <td>${roleBadge}</td>
+        <td class="text-right">
           ${isSelf
-            ? '<span class="px-2 py-0.5 rounded-full text-[10px] bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30">Akun Anda (Aktif)</span>'
-            : '<span class="text-[11px] text-emerald-400 font-medium">Tersimpan</span>'}
+            ? '<span class="set-status set-status--ok">Akun Anda</span>'
+            : '<span class="text-[13px] text-slate-400">Terdaftar</span>'}
         </td>
       </tr>
     `;
@@ -5119,33 +5213,33 @@ async function checkAuthSession() {
 
 function renderAdminUsersTable(users, tbody, isEn) {
   if (!users || users.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="4" class="p-3 text-center text-slate-500 font-sans">${isEn ? 'No cashier accounts registered.' : 'Belum ada akun kasir terdaftar.'}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="4" class="p-3 text-center text-slate-400 font-sans">${isEn ? 'No cashier accounts registered.' : 'Belum ada akun kasir terdaftar.'}</td></tr>`;
     return;
   }
   tbody.innerHTML = users.map(u => {
     const isSelf = state.user && (state.user.id === u.id || state.user.userId === u.id || (state.user.username && state.user.username.toLowerCase() === u.username.toLowerCase()));
     const roleBadge = u.role === 'ADMIN'
-      ? '<span class="px-2 py-0.5 rounded-full text-[10px] bg-brand/20 text-brand font-bold border border-brand/30">ADMIN</span>'
-      : '<span class="px-2 py-0.5 rounded-full text-[10px] bg-slate-700 text-slate-300 font-bold border border-slate-600">TELLER</span>';
+      ? '<span class="set-status set-status--brand">ADMIN</span>'
+      : '<span class="set-status">TELLER</span>';
     const dName = u.displayName || u.display_name || '-';
 
     return `
-      <tr class="hover:bg-navy-800 transition-colors ${isSelf ? 'bg-brand/5' : ''}">
-        <td class="py-2.5 px-3 font-bold text-white font-mono">@${escapeHtml(u.username)}</td>
-        <td class="py-2.5 px-3 font-medium text-slate-200">${escapeHtml(dName)}</td>
-        <td class="py-2.5 px-3">${roleBadge}</td>
-        <td class="py-2.5 px-3 text-right space-x-1">
-          <button type="button" onclick="openResetPasswordModal(${u.id}, '${escapeHtml(u.username)}')" class="py-1 px-2.5 rounded bg-navy-700 hover:bg-navy-600 text-slate-200 text-[11px] font-semibold transition-colors">
+      <tr class="${isSelf ? 'set-row--self' : ''}">
+        <td class="font-mono font-semibold text-slate-100">@${escapeHtml(u.username)}</td>
+        <td class="text-slate-200">${escapeHtml(dName)}</td>
+        <td>${roleBadge}</td>
+        <td><div class="flex items-center justify-end gap-2">
+          <button type="button" onclick="openResetPasswordModal(${u.id}, '${escapeHtml(u.username)}')" class="set-btn set-btn--secondary set-btn--sm">
             ${isEn ? 'Reset Pass' : 'Reset Sandi'}
           </button>
           ${!isSelf ? `
-            <button type="button" onclick="handleDeleteUser(${u.id}, '${escapeHtml(u.username)}')" class="py-1 px-2.5 rounded bg-rose-950 hover:bg-rose-900 border border-rose-500/40 text-rose-300 text-[11px] font-semibold transition-colors">
+            <button type="button" onclick="handleDeleteUser(${u.id}, '${escapeHtml(u.username)}')" class="set-btn set-btn--danger set-btn--sm">
               ${isEn ? 'Delete' : 'Hapus'}
             </button>
           ` : `
-            <span class="text-[10px] text-brand font-semibold px-2">${isEn ? '(Active)' : '(Akun ini)'}</span>
+            <span class="set-status set-status--ok">${isEn ? 'You' : 'Akun ini'}</span>
           `}
-        </td>
+        </div></td>
       </tr>
     `;
   }).join('');

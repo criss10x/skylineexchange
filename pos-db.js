@@ -199,36 +199,49 @@ CREATE TABLE IF NOT EXISTS dttot_list (
 );
 `);
 
-// Seed default official DTTOT list if empty
-try {
-  const dttotCount = db.prepare('SELECT COUNT(*) as c FROM dttot_list').get().c;
-  if (dttotCount === 0) {
-    const defaultDttot = [
-      { name: 'SANTOSO', aliases: 'Abu Wardah', nationality: 'INDONESIA', list_type: 'DTTOT', notes: 'Pimpinan MIT Poso' },
-      { name: 'ALI KALORA', aliases: 'Ali Ahmad', nationality: 'INDONESIA', list_type: 'DTTOT', notes: 'MIT Poso' },
-      { name: 'BAHRUN NAIM', aliases: 'Muhammad Bahrun Naim Anggih Tamtomo', nationality: 'INDONESIA', list_type: 'DTTOT', notes: 'Fasilitator ISIS Indonesia' },
-      { name: 'AMAN ABDURRAHMAN', aliases: 'Oman Rochman', nationality: 'INDONESIA', list_type: 'DTTOT', notes: 'Pimpinan JAD' },
-      { name: 'DULMATIN', aliases: 'Joko Pitono, Yahya', nationality: 'INDONESIA', list_type: 'DTTOT', notes: 'Jemaah Islamiyah' },
-      { name: 'HAMBALI', aliases: 'Encep Nurjaman, Riduan Isamuddin', nationality: 'INDONESIA', list_type: 'DTTOT', notes: 'Pimpinan Operasi JI' },
-      { name: 'ABU BAKAR BAASYIR', aliases: 'Abdus Samad', nationality: 'INDONESIA', list_type: 'DTTOT', notes: 'Jemaah Anshorusy Syariah / JI' },
-      { name: 'UMAR PATEK', aliases: 'Hisyam bin Alizein', nationality: 'INDONESIA', list_type: 'DTTOT', notes: 'Jemaah Islamiyah' },
-      { name: 'NOORDIN MOHAMMAD TOP', aliases: 'Noordin M Top', nationality: 'MALAYSIA', list_type: 'DTTOT', notes: 'Pimpinan Tandzim Qoidatul Jihad' },
-      { name: 'AZAHARI HUSIN', aliases: 'Dr. Azahari', nationality: 'MALAYSIA', list_type: 'DTTOT', notes: 'Ahli Bahan Peledak JI' },
-      { name: 'ZULKARNAEN', aliases: 'Aris Sumarsono, Arif Sunarso', nationality: 'INDONESIA', list_type: 'DTTOT', notes: 'Panglima Askar JI' },
-      { name: 'UPIK LAWANGA', aliases: 'Taufik Bulaga', nationality: 'INDONESIA', list_type: 'DTTOT', notes: 'Ahli Senjata & Peledak JI' },
-      { name: 'JAMAAH ISLAMIYAH', aliases: 'JI', nationality: 'INDONESIA', list_type: 'DTTOT', notes: 'Organisasi Teroris Terlarang' },
-      { name: 'JAMAAH ANSHARUT DAULAH', aliases: 'JAD', nationality: 'INDONESIA', list_type: 'DTTOT', notes: 'Organisasi Teroris Terlarang' },
-      { name: 'MUJAHIDIN INDONESIA TIMUR', aliases: 'MIT', nationality: 'INDONESIA', list_type: 'DTTOT', notes: 'Organisasi Teroris Terlarang' },
-      { name: 'AL QAEDA', aliases: 'Al-Qaida', nationality: 'GLOBAL', list_type: 'DTTOT', notes: 'Organisasi Teroris Internasional' },
-      { name: 'ISIS', aliases: 'ISIL, Daesh, Islamic State', nationality: 'GLOBAL', list_type: 'DTTOT', notes: 'Organisasi Teroris Internasional' }
-    ];
-    const insDttot = db.prepare('INSERT INTO dttot_list (name, aliases, nationality, list_type, notes, created_at) VALUES (?, ?, ?, ?, ?, ?)');
-    const nowIso = new Date().toISOString();
-    for (const d of defaultDttot) {
-      insDttot.run(d.name, d.aliases, d.nationality, d.list_type, d.notes, nowIso);
-    }
+try { db.prepare("ALTER TABLE dttot_list ADD COLUMN ref_code TEXT DEFAULT ''").run(); } catch (e) {}
+
+// Official DTTOT list: data/dttot-list.json (built by tools/dttot-xlsx-to-json.py).
+// Re-synced on start whenever the file changes. Only rows with a Kode Densus (ref_code)
+// are replaced, so entries added by hand in the POS stay.
+const LEGACY_DTTOT_SEED = ['SANTOSO', 'ALI KALORA', 'BAHRUN NAIM', 'AMAN ABDURRAHMAN', 'DULMATIN', 'HAMBALI',
+  'ABU BAKAR BAASYIR', 'UMAR PATEK', 'NOORDIN MOHAMMAD TOP', 'AZAHARI HUSIN', 'ZULKARNAEN', 'UPIK LAWANGA',
+  'JAMAAH ISLAMIYAH', 'JAMAAH ANSHARUT DAULAH', 'MUJAHIDIN INDONESIA TIMUR', 'AL QAEDA', 'ISIS'];
+
+function syncOfficialDttot() {
+  const file = path.join(__dirname, 'data', 'dttot-list.json');
+  if (!fs.existsSync(file)) return;
+  const raw = fs.readFileSync(file, 'utf8');
+  const version = require('node:crypto').createHash('sha256').update(raw).digest('hex').slice(0, 16);
+  const current = db.prepare("SELECT value FROM settings WHERE key = 'dttot_dataset_version'").get();
+  if (current && current.value === version) return;
+
+  const { entries } = JSON.parse(raw);
+  if (!Array.isArray(entries) || entries.length === 0 || entries.some(e => !e.name || !e.ref_code)) {
+    throw new Error('data/dttot-list.json is empty or has entries without name/ref_code');
   }
-} catch (e) {}
+  const ins = db.prepare(`
+    INSERT INTO dttot_list (name, aliases, nationality, date_of_birth, list_type, notes, created_at, ref_code)
+    VALUES (?, ?, ?, ?, 'DTTOT', ?, ?, ?)
+  `);
+  const now = new Date().toISOString();
+  db.exec('BEGIN');
+  try {
+    db.prepare("DELETE FROM dttot_list WHERE ref_code <> ''").run();
+    const delLegacy = db.prepare("DELETE FROM dttot_list WHERE ref_code = '' AND list_type = 'DTTOT' AND name = ?");
+    for (const n of LEGACY_DTTOT_SEED) delLegacy.run(n);
+    for (const e of entries) {
+      ins.run(e.name, e.aliases || '', e.nationality || '', e.date_of_birth || '', e.notes || '', now, e.ref_code);
+    }
+    db.prepare("INSERT INTO settings (key, value) VALUES ('dttot_dataset_version', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value").run(version);
+    db.exec('COMMIT');
+    console.log(`DTTOT list synced: ${entries.length} official entries (version ${version}).`);
+  } catch (err) {
+    db.exec('ROLLBACK');
+    throw err;
+  }
+}
+try { syncOfficialDttot(); } catch (e) { console.error('DTTOT sync failed, keeping the existing list:', e.message); }
 
 // Seed Default Settings
 const defaultSettings = [

@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1920, initial-scale=1.0">
+  <title>Money Changer Display</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --brand: #00B4C6;
+      --brand-dark: #008FA0;
+      --brand-deep: #006475;
+      --brand-light: #E0F7FA;
+      --brand-mid: #B2EBF2;
+      --bg: #F0FAFB;
+      --surface: #FFFFFF;
+      --surface-light: #E6F6F8;
+      --text-primary: #00363F;
+      --text-secondary: #2E7D8A;
+      --text-muted: #6EADB5;
+      --danger: #DC2626;
+      --border: rgba(0,150,170,0.12);
+      --shadow: 0 4px 24px rgba(0,100,117,0.10);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body {
+      width: 1920px;
+      height: 960px;
+      overflow: hidden;
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text-primary);
+    }
+
+    /* ===== DISPLAY MODE ===== */
+    #display-mode {
+      display: none;
+      width: 1920px;
+      height: 960px;
+      flex-direction: column;
+      background: linear-gradient(160deg, #E0F7FA 0%, #F0FAFB 40%, #E6F6F8 100%);
+      position: relative;
+      overflow: hidden;
+    }
+
+    #display-mode::before {
+      content: '';
+      position: absolute;
+      top: -40%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(ellipse at 50% -10%, rgba(0,180,198,0.18) 0%, rgba(0,150,170,0.06) 40%, transparent 65%);
+      pointer-events: none;
+    }
+
+    /* ===== HEADER ===== */
+    .mc-header {
+      padding: 14px 36px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 18px;
+      position: relative;
+      z-index: 2;
+      flex-shrink: 0;
+    }
+
+    .mc-logo-wrapper {
+      width: 58px;
+      height: 58px;
+      border-radius: 16px;
+      overflow: hidden;
+      background: linear-gradient(135deg, #E0F7FA, #FFFFFF);
+      border: 2px solid rgba(0,180,198,0.35);
+      box-shadow: 0 0 0 4px rgba(0,180,198,0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .mc-logo-wrapper img { width: 100%; height: 100%; object-fit: cover; }
+
+    .mc-header-text {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .mc-company-name {
+      font-size: 30px;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      color: #00363F;
+      line-height: 1.1;
+    }
+
+    .mc-pt-name {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--brand);
+      text-transform: uppercase;
+      letter-spacing: 2.5px;
+      margin-top: 2px;
+    }
+
+    .no-commission {
+      margin-left: 28px;
+      padding: 6px 22px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      display: inline-block;
+      animation: flashRY 1.2s ease-in-out infinite;
+      border: 2px solid transparent;
+      flex-shrink: 0;
+    }
+
+    @keyframes flashRY {
+      0%,100% { color:#EF4444; border-color:#EF4444; background:rgba(239,68,68,0.1); text-shadow:0 0 20px rgba(239,68,68,0.6); }
+      50%      { color:#F59E0B; border-color:#F59E0B; background:rgba(245,158,11,0.1); text-shadow:0 0 20px rgba(245,158,11,0.6); }
+    }
+
+    .header-divider {
+      height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(0,180,198,0.5), transparent);
+      margin: 0 28px;
+      flex-shrink: 0;
+    }
+
+    /* ===== COLUMN HEADERS ===== */
+    .mc-table-header-bar {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      padding: 10px 28px 8px;
+      position: relative;
+      z-index: 2;
+      flex-shrink: 0;
+    }
+
+    .mc-table-header {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      padding: 10px 18px;
+      border-radius: 12px;
+      background: linear-gradient(90deg, #005F6E, #00A8BC);
+    }
+
+    .mc-table-header span {
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: rgba(255,255,255,0.9);
+    }
+
+    .mc-table-header span:last-child { text-align: right; }
+
+    /* ===== CURRENCY SECTION — fills remaining height ===== */
+    .mc-currency-section {
+      flex: 1;
+      padding: 0 28px 0;
+      position: relative;
+      z-index: 2;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .mc-currency-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .mc-column {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    /* Each row stretches to fill column evenly */
+    .mc-currency-row {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 12px;
+      padding: 0 20px;
+      background: var(--surface);
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      border-left: 3px solid rgba(0,180,198,0.35);
+      box-shadow: 0 2px 12px rgba(0,100,117,0.07);
+      transition: all 0.25s ease;
+      cursor: default;
+      min-height: 0;
+    }
+
+    .mc-currency-row:hover {
+      background: var(--surface-light);
+      border-color: rgba(0,180,198,0.5);
+      border-left-color: #00B4C6;
+      box-shadow: 0 4px 20px rgba(0,100,117,0.14);
+      transform: translateX(3px);
+    }
+
+    .mc-currency-info {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      overflow: hidden;
+    }
+
+    /* Flag — rectangular, larger */
+    .mc-currency-flag {
+      width: 72px;
+      height: 48px;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid rgba(0,0,0,0.12);
+      flex-shrink: 0;
+      background: var(--surface-light);
+    }
+
+    .mc-currency-flag img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .mc-currency-details { overflow: hidden; }
+
+    .mc-currency-details h3 {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--text-primary);
+      letter-spacing: -0.3px;
+      line-height: 1.1;
+    }
+
+    .mc-currency-details p {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-muted);
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Rate */
+    .mc-currency-rate { text-align: right; flex-shrink: 0; }
+
+    .mc-currency-rate .value {
+      font-size: 30px;
+      font-weight: 900;
+      color: #007A8A;
+      letter-spacing: -1px;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .mc-currency-rate .label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-top: 3px;
+    }
+
+    /* ===== FOOTER ===== */
+    .mc-footer {
+      padding: 8px 28px 12px;
+      text-align: center;
+      position: relative;
+      z-index: 2;
+      flex-shrink: 0;
+    }
+
+    .mc-footer .brand-line {
+      width: 60px;
+      height: 3px;
+      border-radius: 2px;
+      background: linear-gradient(90deg, #005F6E, #00B4C6);
+      margin: 0 auto 6px;
+    }
+
+    .mc-footer p {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 500;
+      letter-spacing: 0.5px;
+    }
+
+    /* ===== ADMIN TRIGGER ===== */
+    .admin-trigger {
+      position: fixed; bottom: 8px; right: 8px;
+      width: 36px; height: 36px;
+      border-radius: 50%; background: transparent; border: none;
+      cursor: pointer; z-index: 100; opacity: 0; transition: opacity 0.3s;
+    }
+    .admin-trigger:hover { opacity: 0.3; background: var(--surface); }
+
+    /* ===== ADMIN MODE ===== */
+    #admin-mode {
+      display: none;
+      height: 100vh;
+      overflow-y: auto;
+      background: var(--bg);
+      margin: 0 auto;
+    }
+
+    .admin-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 24px; padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .admin-header h1 { font-size: 22px; font-weight: 700; }
+
+    .admin-header .close-btn {
+      padding: 8px 18px; border-radius: 10px;
+      background: var(--surface); color: var(--text-primary);
+      border: 1px solid var(--border); font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .admin-header .close-btn:hover { background: linear-gradient(90deg, #005F6E, #00A8BC); color: #fff; }
+
+    .admin-section {
+      background: var(--surface); border-radius: 16px;
+      padding: 20px; margin-bottom: 16px; border: 1px solid var(--border);
+    }
+
+    .admin-section h2 {
+      font-size: 13px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 1.5px; color: var(--brand); margin-bottom: 14px;
+    }
+
+    .admin-columns-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+    }
+
+    .admin-column-section {
+      background: var(--surface); border-radius: 14px;
+      padding: 14px; border: 1px solid var(--border);
+    }
+
+    .admin-column-section h2 {
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 1.5px; color: var(--brand); margin-bottom: 10px;
+    }
+
+    .form-group { margin-bottom: 12px; }
+
+    .form-group label {
+      display: block; font-size: 11px; font-weight: 600;
+      color: var(--text-secondary); margin-bottom: 5px;
+      text-transform: uppercase; letter-spacing: 0.5px;
+    }
+
+    .form-group input[type="text"] {
+      width: 100%; padding: 10px 12px; border-radius: 9px;
+      border: 1px solid var(--border); background: var(--bg);
+      color: var(--text-primary); font-size: 14px; font-family: inherit;
+      transition: all 0.2s;
+    }
+
+    .form-group input[type="text"]:focus {
+      outline: none; border-color: var(--brand);
+      box-shadow: 0 0 0 3px rgba(0,180,198,0.18);
+    }
+
+    .form-group input[type="file"] { display: none; }
+
+    .logo-upload { display: flex; align-items: center; gap: 14px; }
+
+    .logo-preview {
+      width: 64px; height: 64px; border-radius: 14px; background: var(--bg);
+      border: 2px dashed var(--border); display: flex; align-items: center;
+      justify-content: center; overflow: hidden; flex-shrink: 0;
+    }
+
+    .logo-preview img { width: 100%; height: 100%; object-fit: cover; }
+
+    .logo-upload-btn {
+      padding: 9px 16px; border-radius: 9px; background: var(--surface-light);
+      color: var(--text-primary); border: 1px solid var(--border);
+      font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+    }
+    .logo-upload-btn:hover { border-color: var(--brand); color: var(--brand); }
+
+    .currency-editor-list { display: flex; flex-direction: column; gap: 7px; }
+
+    .currency-editor-item {
+      display: grid; grid-template-columns: 58px 1fr 80px 30px;
+      gap: 6px; align-items: center; padding: 9px;
+      background: var(--bg); border-radius: 9px; border: 1px solid var(--border);
+    }
+
+    .currency-editor-item input {
+      padding: 7px 9px; border-radius: 7px; border: 1px solid var(--border);
+      background: var(--surface); color: var(--text-primary);
+      font-size: 12px; font-family: inherit; width: 100%;
+    }
+
+    .currency-editor-item input:focus { outline: none; border-color: var(--brand); }
+
+    .currency-editor-item .flag-input {
+      text-align: center; font-size: 13px; padding: 3px;
+    }
+
+    .currency-editor-item .remove-btn {
+      width: 28px; height: 28px; border-radius: 6px;
+      background: rgba(239,68,68,0.15); color: var(--danger);
+      border: none; font-size: 15px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s;
+    }
+    .currency-editor-item .remove-btn:hover { background: rgba(239,68,68,0.3); }
+
+    .add-currency-btn {
+      width: 100%; padding: 9px; border-radius: 9px;
+      background: var(--surface-light); color: var(--text-primary);
+      border: 2px dashed var(--border); font-size: 12px; font-weight: 600;
+      cursor: pointer; transition: all 0.2s; margin-top: 5px;
+    }
+    .add-currency-btn:hover { border-color: var(--brand); color: var(--brand); }
+
+    .save-btn {
+      width: 100%; padding: 15px; border-radius: 14px;
+      background: linear-gradient(90deg, #005F6E, #00A8BC); color: #fff; border: none;
+      font-size: 15px; font-weight: 700; cursor: pointer;
+      transition: all 0.2s; text-transform: uppercase;
+      letter-spacing: 2px; margin-top: 14px;
+    }
+    .save-btn:hover { background: linear-gradient(90deg, #004E5C, #0097AB); transform: translateY(-1px); }
+
+    .reset-btn {
+      width: 100%; padding: 12px; border-radius: 14px;
+      background: transparent; color: var(--text-muted);
+      border: 1px solid var(--border); font-size: 12px;
+      font-weight: 600; cursor: pointer; margin-top: 8px; transition: all 0.2s;
+    }
+    .reset-btn:hover { color: var(--danger); border-color: var(--danger); }
+
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--surface-light); border-radius: 3px; }
+
+    .mode-active  { display: flex !important; }
+    .admin-active { display: block !important; }
+  </style>
+</head>
+<body>
+
+  <!-- ========== DISPLAY MODE ========== -->
+  <div id="display-mode" class="mode-active">
+
+    <div class="mc-header">
+      <div class="mc-logo-wrapper">
+        <img id="display-logo" src="" alt="Logo" style="display:none;">
+        <span id="display-logo-placeholder" style="font-size:28px;">💱</span>
+      </div>
+      <div class="mc-header-text">
+        <div class="mc-company-name" id="display-company">SKYLINE EXCHANGE</div>
+        <div class="mc-pt-name" id="display-pt">PT. Skyline Indonesia</div>
+      </div>
+      <div class="no-commission">NO COMMISSION</div>
+    </div>
+
+    <div class="header-divider"></div>
+
+    <div class="mc-table-header-bar">
+      <div class="mc-table-header"><span>Currency</span><span>Rate (IDR)</span></div>
+      <div class="mc-table-header"><span>Currency</span><span>Rate (IDR)</span></div>
+      <div class="mc-table-header"><span>Currency</span><span>Rate (IDR)</span></div>
+      <div class="mc-table-header"><span>Currency</span><span>Rate (IDR)</span></div>
+    </div>
+
+    <div class="mc-currency-section">
+      <div class="mc-currency-grid">
+        <div class="mc-column"><div class="mc-currency-list" id="display-currency-list-col1"></div></div>
+        <div class="mc-column"><div class="mc-currency-list" id="display-currency-list-col2"></div></div>
+        <div class="mc-column"><div class="mc-currency-list" id="display-currency-list-col3"></div></div>
+        <div class="mc-column"><div class="mc-currency-list" id="display-currency-list-col4"></div></div>
+      </div>
+    </div>
+
+    <div class="mc-footer">
+      <div class="brand-line"></div>
+      <p>Rates subject to change without prior notice</p>
+    </div>
+
+    <button class="admin-trigger" id="admin-trigger"></button>
+  </div>
+
+  <!-- ========== ADMIN MODE ========== -->
+  <div id="admin-mode">
+    <div class="admin-header">
+      <h1>⚙️ Display Settings</h1>
+      <button class="close-btn" id="close-admin">Save & Close</button>
+    </div>
+
+    <div class="admin-section">
+      <h2>Company Identity</h2>
+      <div class="form-group">
+        <label>Company Logo</label>
+        <div class="logo-upload">
+          <div class="logo-preview">
+            <img id="admin-logo-preview" src="" alt="" style="display:none;">
+            <span id="admin-logo-placeholder" style="font-size:26px;">💱</span>
+          </div>
+          <label class="logo-upload-btn">
+            <input type="file" id="logo-input" accept="image/*">
+            Choose Logo
+          </label>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Company Name</label>
+        <input type="text" id="admin-company" value="SKYLINE EXCHANGE">
+      </div>
+      <div class="form-group">
+        <label>Legal Entity / PT Name</label>
+        <input type="text" id="admin-pt" value="PT. Skyline Indonesia">
+      </div>
+    </div>
+
+    <div class="admin-columns-grid">
+      <div class="admin-column-section">
+        <h2>Column 1</h2>
+        <div class="currency-editor-list" id="admin-currency-list-col1"></div>
+        <button class="add-currency-btn" id="add-currency-col1">+ Add</button>
+      </div>
+      <div class="admin-column-section">
+        <h2>Column 2</h2>
+        <div class="currency-editor-list" id="admin-currency-list-col2"></div>
+        <button class="add-currency-btn" id="add-currency-col2">+ Add</button>
+      </div>
+      <div class="admin-column-section">
+        <h2>Column 3</h2>
+        <div class="currency-editor-list" id="admin-currency-list-col3"></div>
+        <button class="add-currency-btn" id="add-currency-col3">+ Add</button>
+      </div>
+      <div class="admin-column-section">
+        <h2>Column 4</h2>
+        <div class="currency-editor-list" id="admin-currency-list-col4"></div>
+        <button class="add-currency-btn" id="add-currency-col4">+ Add</button>
+      </div>
+    </div>
+
+    <button class="save-btn" id="save-settings">Save Changes</button>
+    <button class="reset-btn" id="reset-defaults">Reset to Default</button>
+  </div>
+
+  <script>
+    // ===== DEFAULT STATE =====
+    // Order: USD AUD EUR GBP CHF JPY SGD CAD MYR NZD  |  HKD CNY BND SAR AED THB PHP KRW INR NTD
+    // Split into 4 cols of 5
+    const defaults = {
+      company: 'SKYLINE EXCHANGE',
+      pt: 'PT. Skyline Indonesia',
+      logo: '',
+      col1: [
+        { flag: 'us', code: 'USD', name: 'US Dollar',           rate: '17.250' },
+        { flag: 'au', code: 'AUD', name: 'Australian Dollar',   rate: '12.425' },
+        { flag: 'eu', code: 'EUR', name: 'Euro',                rate: '20.275' },
+        { flag: 'gb', code: 'GBP', name: 'British Pound',       rate: '23.375' },
+        { flag: 'ch', code: 'CHF', name: 'Swiss Franc',         rate: '22.125' },
+      ],
+      col2: [
+        { flag: 'jp', code: 'JPY', name: 'Japanese Yen',        rate: '108,50' },
+        { flag: 'sg', code: 'SGD', name: 'Singapore Dollar',    rate: '13.500' },
+        { flag: 'ca', code: 'CAD', name: 'Canadian Dollar',     rate: '12.475' },
+        { flag: 'my', code: 'MYR', name: 'Malaysian Ringgit',   rate: '4.000'  },
+        { flag: 'nz', code: 'NZD', name: 'New Zealand Dollar',  rate: '10.175' },
+      ],
+      col3: [
+        { flag: 'hk', code: 'HKD', name: 'Hong Kong Dollar',   rate: '2.075'  },
+        { flag: 'cn', code: 'CNY', name: 'Chinese Yuan',        rate: '2.450'  },
+        { flag: 'bn', code: 'BND', name: 'Brunei Dollar',       rate: '12.000' },
+        { flag: 'sa', code: 'SAR', name: 'Saudi Riyal',         rate: '4.200'  },
+        { flag: 'ae', code: 'AED', name: 'UAE Dirham',          rate: '4.200'  },
+      ],
+      col4: [
+        { flag: 'th', code: 'THB', name: 'Thai Baht',           rate: '475'    },
+        { flag: 'ph', code: 'PHP', name: 'Philippine Peso',     rate: '285'    },
+        { flag: 'kr', code: 'KRW', name: 'South Korean Won',    rate: '11,50'  },
+        { flag: 'in', code: 'INR', name: 'Indian Rupee',        rate: '195'    },
+        { flag: 'tw', code: 'NTD', name: 'New Taiwan Dollar',   rate: '515'    },
+      ],
+    };
+
+    let state = JSON.parse(JSON.stringify(defaults));
+    const saved = localStorage.getItem('mcDisplayData_v3');
+    if (saved) { try { state = { ...defaults, ...JSON.parse(saved) }; } catch(e) {} }
+
+    // ===== DOM =====
+    const displayMode  = document.getElementById('display-mode');
+    const adminMode    = document.getElementById('admin-mode');
+    const displayLogo            = document.getElementById('display-logo');
+    const displayLogoPlaceholder = document.getElementById('display-logo-placeholder');
+    const displayCompany         = document.getElementById('display-company');
+    const displayPt              = document.getElementById('display-pt');
+    const adminLogoPreview       = document.getElementById('admin-logo-preview');
+    const adminLogoPlaceholder   = document.getElementById('admin-logo-placeholder');
+    const logoInput              = document.getElementById('logo-input');
+    const adminCompany           = document.getElementById('admin-company');
+    const adminPt                = document.getElementById('admin-pt');
+    const colIds = ['col1','col2','col3','col4'];
+
+    // ===== POS SYNC =====
+    // Buy rates come from the POS rate board (Papan Kurs), matched by exact code
+    // (USD -> "USD", not "USD 20, 10, 5"). Codes the POS lacks keep the manual rate.
+    let posRates = {};
+    try { posRates = JSON.parse(localStorage.getItem('mcDisplayPosRates') || '{}'); } catch(e) {}
+
+    function displayRate(c) {
+      const v = posRates[c.code];
+      if (v == null) return c.rate;
+      return Number.isInteger(v)
+        ? v.toLocaleString('id-ID')
+        : v.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    async function syncFromPos() {
+      try {
+        const res = await fetch('/api/display/rates', { cache: 'no-store' });
+        const data = await res.json();
+        if (!data.success) return;
+        const next = {};
+        data.data.forEach(r => { if (r.buy_rate > 0) next[r.code.trim()] = Number(r.buy_rate); });
+        if (JSON.stringify(next) === JSON.stringify(posRates)) return;
+        posRates = next;
+        localStorage.setItem('mcDisplayPosRates', JSON.stringify(posRates));
+        // Don't re-render the editor while someone is typing in it
+        if (!adminMode.classList.contains('admin-active')) renderAllDisplay();
+      } catch (e) { /* offline: keep showing the last synced rates */ }
+    }
+
+    // ===== RENDER DISPLAY =====
+    function renderDisplayCurrencies(listEl, currencies) {
+      listEl.innerHTML = currencies.map(c => `
+        <div class="mc-currency-row">
+          <div class="mc-currency-info">
+            <div class="mc-currency-flag">
+              <img src="https://flagcdn.com/w80/${c.flag}.png" alt="${c.code}"
+                   onerror="this.style.opacity='0.2'">
+            </div>
+            <div class="mc-currency-details">
+              <h3>${c.code}</h3>
+              <p>${c.name}</p>
+            </div>
+          </div>
+          <div class="mc-currency-rate">
+            <div class="value">${displayRate(c)}</div>
+            <div class="label">IDR</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderAllDisplay() {
+      colIds.forEach(col => {
+        const el = document.getElementById('display-currency-list-' + col);
+        el.style.cssText = 'display:flex;flex-direction:column;gap:8px;height:100%;';
+        renderDisplayCurrencies(el, state[col]);
+      });
+    }
+
+    // ===== RENDER ADMIN =====
+    function renderAdminCurrencies(listEl, currencies, colKey) {
+      listEl.innerHTML = currencies.map((c, i) => `
+        <div class="currency-editor-item">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px;">
+            <img src="https://flagcdn.com/w40/${c.flag}.png"
+                 style="width:38px;height:26px;border-radius:4px;object-fit:cover;border:1px solid rgba(0,0,0,0.12);"
+                 onerror="this.style.opacity='0.2'">
+            <input type="text" class="flag-input" value="${c.flag}"
+                   data-field="flag" data-index="${i}" data-col="${colKey}"
+                   maxlength="2" placeholder="us" title="ISO 2-letter code">
+          </div>
+          <input type="text" value="${c.code} — ${c.name}"
+                 data-field="name" data-index="${i}" data-col="${colKey}" placeholder="CODE — Name">
+          ${posRates[c.code] != null
+            ? `<input type="text" value="${displayRate(c)}" readonly title="Synced from POS rate board (buy rate)" style="background:var(--brand-light);color:var(--brand-deep);font-weight:700;">`
+            : `<input type="text" value="${c.rate}"
+                 data-field="rate" data-index="${i}" data-col="${colKey}" placeholder="Rate">`}
+          <button class="remove-btn" data-index="${i}" data-col="${colKey}">×</button>
+        </div>
+      `).join('');
+
+      listEl.querySelectorAll('input').forEach(input => {
+        input.addEventListener('input', e => {
+          const idx = parseInt(e.target.dataset.index);
+          const field = e.target.dataset.field;
+          const col = e.target.dataset.col;
+          if (field === 'flag') {
+            state[col][idx].flag = e.target.value.toLowerCase();
+            const img = e.target.closest('.currency-editor-item').querySelector('img');
+            if (img) img.src = `https://flagcdn.com/w40/${e.target.value.toLowerCase()}.png`;
+          } else if (field === 'name') {
+            const parts = e.target.value.split('—').map(s => s.trim());
+            state[col][idx].code = parts[0] || 'XXX';
+            state[col][idx].name = parts[1] || parts[0] || 'Unknown';
+          } else if (field === 'rate') {
+            state[col][idx].rate = e.target.value;
+          }
+        });
+      });
+
+      listEl.querySelectorAll('.remove-btn').forEach(btn => {
+        btn.addEventListener('click', e => {
+          const idx = parseInt(e.target.dataset.index);
+          const col = e.target.dataset.col;
+          state[col].splice(idx, 1);
+          renderAdminCurrencies(listEl, state[col], col);
+        });
+      });
+    }
+
+    function renderAllAdmin() {
+      colIds.forEach(col => {
+        renderAdminCurrencies(
+          document.getElementById('admin-currency-list-' + col),
+          state[col], col
+        );
+      });
+    }
+
+    // ===== LOGO =====
+    function updateLogoDisplay() {
+      if (state.logo) {
+        displayLogo.src = state.logo; displayLogo.style.display = 'block';
+        displayLogoPlaceholder.style.display = 'none';
+        adminLogoPreview.src = state.logo; adminLogoPreview.style.display = 'block';
+        adminLogoPlaceholder.style.display = 'none';
+      } else {
+        displayLogo.style.display = 'none'; displayLogoPlaceholder.style.display = 'block';
+        adminLogoPreview.style.display = 'none'; adminLogoPlaceholder.style.display = 'block';
+      }
+    }
+
+    function saveState() { localStorage.setItem('mcDisplayData_v3', JSON.stringify(state)); }
+
+    // ===== ADMIN OPEN/CLOSE =====
+    let adminClicks = 0, adminClickTimer = null;
+    document.getElementById('admin-trigger').addEventListener('click', () => {
+      if (++adminClicks >= 5) { openAdmin(); adminClicks = 0; }
+      clearTimeout(adminClickTimer);
+      adminClickTimer = setTimeout(() => { adminClicks = 0; }, 2000);
+    });
+
+    function openAdmin() {
+      displayMode.classList.remove('mode-active');
+      adminMode.classList.add('admin-active');
+      adminCompany.value = state.company;
+      adminPt.value = state.pt;
+      updateLogoDisplay();
+      renderAllAdmin();
+    }
+
+    function closeAdminMode() {
+      state.company = adminCompany.value || defaults.company;
+      state.pt = adminPt.value || defaults.pt;
+      saveState();
+      displayCompany.textContent = state.company;
+      displayPt.textContent = state.pt;
+      updateLogoDisplay();
+      renderAllDisplay();
+      adminMode.classList.remove('admin-active');
+      displayMode.classList.add('mode-active');
+    }
+
+    document.getElementById('close-admin').addEventListener('click', closeAdminMode);
+    document.getElementById('save-settings').addEventListener('click', closeAdminMode);
+
+    logoInput.addEventListener('change', e => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = ev => { state.logo = ev.target.result; updateLogoDisplay(); };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    colIds.forEach(col => {
+      document.getElementById('add-currency-' + col).addEventListener('click', () => {
+        state[col].push({ flag: 'un', code: 'NEW', name: 'New Currency', rate: '0' });
+        renderAdminCurrencies(
+          document.getElementById('admin-currency-list-' + col),
+          state[col], col
+        );
+      });
+    });
+
+    document.getElementById('reset-defaults').addEventListener('click', () => {
+      if (confirm('Reset to defaults? All changes will be lost.')) {
+        state = JSON.parse(JSON.stringify(defaults));
+        saveState(); location.reload();
+      }
+    });
+
+    // ===== KEYBOARD =====
+    let keyBuffer = '';
+    document.addEventListener('keydown', e => {
+      keyBuffer += e.key.toLowerCase();
+      if (keyBuffer.length > 10) keyBuffer = keyBuffer.slice(-10);
+      if (keyBuffer.includes('admin123')) { openAdmin(); keyBuffer = ''; }
+      if (e.key === 'Escape' && adminMode.classList.contains('admin-active')) closeAdminMode();
+    });
+
+    // ===== INIT =====
+    displayCompany.textContent = state.company;
+    displayPt.textContent = state.pt;
+    updateLogoDisplay();
+    renderAllDisplay();
+    syncFromPos();
+    setInterval(syncFromPos, 30000);
+  </script>
+</body>
+</html>

@@ -2,6 +2,7 @@
 "use strict";
 
 const express = require('express');
+const { dttotRowMatches } = require('./dttot-match');
 const path = require('node:path');
 const fs = require('node:fs');
 const db = require('./pos-db.js');
@@ -387,6 +388,18 @@ router.get('/api/rates', requireAuth, (req, res) => {
   }
 });
 
+// Public, read-only buy rates for the TV board (public/pos/display.html).
+// No login: the same numbers are shown on the shop TV anyway.
+router.get('/api/display/rates', (req, res) => {
+  try {
+    const rates = db.prepare('SELECT code, buy_rate, updated_at FROM rates').all();
+    res.set('Cache-Control', 'no-store');
+    res.json({ success: true, data: rates });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 router.post('/api/rates', requireAuth, (req, res) => {
   try {
     const { code, name, buy_rate, sell_rate, denomination } = req.body;
@@ -404,6 +417,31 @@ router.post('/api/rates', requireAuth, (req, res) => {
     res.json({ success: true, id: result.lastInsertRowid });
   } catch (err) {
     res.status(400).json({ success: false, message: err.message });
+  }
+});
+
+// Update many buy rates at once (owner edits the whole board each morning).
+router.post('/api/rates/bulk-buy', requireAuth, (req, res) => {
+  const items = Array.isArray(req.body && req.body.rates) ? req.body.rates : null;
+  if (!items || items.length === 0) {
+    return res.status(400).json({ success: false, message: 'Tidak ada kurs yang diubah' });
+  }
+  const bad = items.find(it => !it || !it.id || !Number.isFinite(Number(it.buy_rate)) || Number(it.buy_rate) <= 0);
+  if (bad) {
+    return res.status(400).json({ success: false, message: 'Kurs beli harus angka lebih dari 0' });
+  }
+  const now = new Date().toISOString();
+  const stmt = db.prepare('UPDATE rates SET buy_rate = ?, updated_at = ? WHERE id = ?');
+  db.exec('BEGIN');
+  try {
+    let updated = 0;
+    for (const it of items) updated += stmt.run(Number(it.buy_rate), now, it.id).changes;
+    db.exec('COMMIT');
+    if (db.backupRatesToFile) db.backupRatesToFile();
+    res.json({ success: true, updated });
+  } catch (err) {
+    db.exec('ROLLBACK');
+    res.status(500).json({ success: false, message: err.message });
   }
 });
 
@@ -694,15 +732,7 @@ router.patch('/api/transactions/:id/delivery', requireAuth, (req, res) => {
 
 // DTTOT screening shared by live POST and offline sync
 function findDttotMatch(customerName) {
-  const clean = (customerName || '').trim().toUpperCase();
-  if (!clean) return null;
-  return db.prepare(`
-    SELECT * FROM dttot_list 
-    WHERE UPPER(name) = ? 
-       OR UPPER(aliases) LIKE ? 
-       OR ? LIKE '%' || UPPER(name) || '%'
-    LIMIT 1
-  `).get(clean, `%${clean}%`, clean);
+  return db.prepare('SELECT * FROM dttot_list').all().find(row => dttotRowMatches(customerName, row)) || null;
 }
 
 // ==================== BATCH OFFLINE SYNC API ====================
@@ -891,56 +921,21 @@ router.post('/api/dttot/check', requireAuth, (req, res) => {
       return res.json({ success: true, match: false });
     }
 
-    const cleanName = name.trim().toUpperCase();
-    
-    // 1. Direct or partial LIKE match on name or aliases
-    const directMatch = db.prepare(`
-      SELECT * FROM dttot_list 
-      WHERE UPPER(name) = ? 
-         OR UPPER(aliases) LIKE ? 
-         OR ? LIKE '%' || UPPER(name) || '%'
-      LIMIT 1
-    `).get(cleanName, `%${cleanName}%`, cleanName);
-
-    if (directMatch) {
+    const match = findDttotMatch(name);
+    if (match) {
       return res.json({
         success: true,
         match: true,
         data: {
-          id: directMatch.id,
-          name: directMatch.name,
-          aliases: directMatch.aliases,
-          nationality: directMatch.nationality,
-          list_type: directMatch.list_type,
-          notes: directMatch.notes
+          id: match.id,
+          ref_code: match.ref_code,
+          name: match.name,
+          aliases: match.aliases,
+          nationality: match.nationality,
+          list_type: match.list_type,
+          notes: match.notes
         }
       });
-    }
-
-    // 2. Token / word matching for multi-word names
-    const tokens = cleanName.split(/\s+/).filter(w => w.length >= 4);
-    if (tokens.length >= 2) {
-      for (const t of tokens) {
-        const tokenMatch = db.prepare(`
-          SELECT * FROM dttot_list 
-          WHERE UPPER(name) = ? OR UPPER(aliases) LIKE ?
-          LIMIT 1
-        `).get(t, `%${t}%`);
-        if (tokenMatch) {
-          return res.json({
-            success: true,
-            match: true,
-            data: {
-              id: tokenMatch.id,
-              name: tokenMatch.name,
-              aliases: tokenMatch.aliases,
-              nationality: tokenMatch.nationality,
-              list_type: tokenMatch.list_type,
-              notes: tokenMatch.notes
-            }
-          });
-        }
-      }
     }
 
     res.json({ success: true, match: false });
@@ -958,8 +953,8 @@ router.get('/api/dttot', requireAuth, (req, res) => {
 
     if (q && q.trim()) {
       const term = `%${q.trim().toUpperCase()}%`;
-      query += ' AND (UPPER(name) LIKE ? OR UPPER(aliases) LIKE ? OR UPPER(notes) LIKE ?)';
-      params.push(term, term, term);
+      query += ' AND (UPPER(name) LIKE ? OR UPPER(aliases) LIKE ? OR UPPER(notes) LIKE ? OR UPPER(ref_code) LIKE ?)';
+      params.push(term, term, term, term);
     }
 
     if (list_type && list_type !== 'ALL') {
@@ -1013,6 +1008,10 @@ router.post('/api/dttot', requireAuth, requireAdmin, (req, res) => {
 router.delete('/api/dttot/:id', requireAuth, requireAdmin, (req, res) => {
   try {
     const { id } = req.params;
+    const row = db.prepare('SELECT ref_code FROM dttot_list WHERE id = ?').get(id);
+    if (row && row.ref_code) {
+      return res.status(400).json({ success: false, message: 'Data resmi DTTOT (kode ' + row.ref_code + ') tidak bisa dihapus. Perbarui lewat file data DTTOT terbaru.' });
+    }
     db.prepare('DELETE FROM dttot_list WHERE id = ?').run(id);
     res.json({ success: true, message: 'Data kepatuhan DTTOT berhasil dihapus.' });
   } catch (err) {
