@@ -1,6 +1,6 @@
 /**
  * Skyline Exchange POS Application Logic
- * Supports: Dual Language (ID / EN), Offline-first IndexedDB, Web Bluetooth 58mm Thermal Printer, Delivery Mode, Rates & KYC
+ * Supports: Dual Language (ID / EN), Offline-first IndexedDB, Web Bluetooth 58mm Thermal Printer, Rates & KYC
  */
 
 // Dual Language Translations Dictionary
@@ -22,10 +22,8 @@ const i18n = {
     badgeAutoCalc: '[Kalkulasi Otomatis]',
     tabPos: 'Kasir Transaksi',
     tabRates: 'Papan Kurs',
-    tabDelivery: 'Delivery Valas',
     tabHistory: 'Riwayat & Laporan',
     tabSettings: 'Pengaturan',
-    tabSheets: 'Google Sheets',
     subtabSheets: 'Google Sheets',
     subtabStore: 'Profil Toko',
     subtabCompliance: 'Kepatuhan BI',
@@ -50,15 +48,8 @@ const i18n = {
     legendAuto: 'Otomatis / Kurs Papan',
     btnBeli: 'Beli valas',
     btnJual: 'Jual valas',
-    modeDelivery: 'Antar ke customer',
     expBeli: 'Kasir membeli valas dari customer. Customer menyerahkan Valas dan menerima Rupiah (IDR).',
     expJual: 'Kasir menjual valas ke customer. Customer membeli Valas dan menyerahkan Rupiah (IDR).',
-    deliveryAddrLabel: 'Alamat antar / hotel / villa *',
-    deliveryAddrPlaceholder: 'Hotel Grand Bali, villa no. 12, Kuta',
-    deliveryTimeLabel: 'Jadwal antar',
-    deliveryTimePlaceholder: 'Hari ini, 15:30 WITA',
-    deliveryCourierLabel: 'Kurir',
-    deliveryCourierPlaceholder: 'Nama kurir',
     custTitle: 'Customer',
     custNameLabel: 'Nama *',
     custNamePlaceholder: 'Nama lengkap',
@@ -130,8 +121,6 @@ const i18n = {
     rcptCustLabel: 'Customer',
     rcptPhoneLabel: 'No. Telp',
     rcptIdLabel: 'No. ID',
-    rcptServiceLabel: 'Layanan',
-    rcptDeliveryVal: 'DELIVERY (ANTAR)',
     rcptColValas: 'VALAS',
     rcptColQty: 'JML',
     rcptColRate: 'KURS',
@@ -176,16 +165,6 @@ const i18n = {
     btnCancelModalRate: 'Batal',
     btnSaveRate: 'Simpan Kurs',
 
-    // Tab Delivery
-    deliveryTitle: 'Manajemen Pengantaran Valas (Delivery)',
-    deliverySub: 'Lacak pesanan valas yang diantar ke hotel, villa, atau kantor pelanggan.',
-    statusAll: 'Semua Status',
-    statusPending: 'Menunggu Kurir',
-    statusOnTheWay: 'Dalam Pengantaran',
-    statusCompleted: 'Selesai',
-    statusCancelled: 'Batal',
-    btnReprintDelivery: 'Struk',
-    statusCompletedFull: 'Selesai (Sudah Serah Terima)',
 
     // Tab History & Summary
     histBuyToday: 'Total Beli Hari Ini (Kasir Beli)',
@@ -287,10 +266,8 @@ const i18n = {
     badgeAutoCalc: '[Auto-calculated]',
     tabPos: 'Cashier POS',
     tabRates: 'Exchange Rates',
-    tabDelivery: 'Currency Delivery',
     tabHistory: 'History & Reports',
     tabSettings: 'Settings',
-    tabSheets: 'Google Sheets',
     subtabSheets: 'Google Sheets',
     subtabStore: 'Store Profile',
     subtabCompliance: 'BI Compliance',
@@ -315,15 +292,8 @@ const i18n = {
     legendAuto: 'System Automated',
     btnBeli: 'We buy',
     btnJual: 'We sell',
-    modeDelivery: 'Deliver to customer',
     expBeli: 'We buy foreign currency from customer. Customer receives Rupiah (IDR).',
     expJual: 'We sell foreign currency to customer. Customer pays Rupiah (IDR).',
-    deliveryAddrLabel: 'Delivery address / hotel / villa *',
-    deliveryAddrPlaceholder: 'Grand Bali Hotel, villa 12, Kuta',
-    deliveryTimeLabel: 'Delivery time',
-    deliveryTimePlaceholder: 'Today, 15:30 WITA',
-    deliveryCourierLabel: 'Courier',
-    deliveryCourierPlaceholder: 'Courier name',
     custTitle: 'Customer',
     custNameLabel: 'Name *',
     custNamePlaceholder: 'Full name',
@@ -395,8 +365,6 @@ const i18n = {
     rcptCustLabel: 'Customer',
     rcptPhoneLabel: 'Phone No',
     rcptIdLabel: 'Passport / ID',
-    rcptServiceLabel: 'Service',
-    rcptDeliveryVal: 'DELIVERY SERVICE',
     rcptColValas: 'CURR',
     rcptColQty: 'QTY',
     rcptColRate: 'RATE',
@@ -441,16 +409,6 @@ const i18n = {
     btnCancelModalRate: 'Cancel',
     btnSaveRate: 'Save Rate',
 
-    // Tab Delivery
-    deliveryTitle: 'Currency Delivery Management',
-    deliverySub: 'Track foreign currency orders delivered to customer hotels, villas, or offices.',
-    statusAll: 'All Statuses',
-    statusPending: 'Awaiting Courier',
-    statusOnTheWay: 'On The Way',
-    statusCompleted: 'Completed',
-    statusCancelled: 'Cancelled',
-    btnReprintDelivery: 'Receipt',
-    statusCompletedFull: 'Completed (Handover Done)',
 
     // Tab History & Summary
     histBuyToday: 'Today Buy Volume (Cashier Buy)',
@@ -547,7 +505,6 @@ const state = {
   rates: [],
   cart: [],
   txType: 'BELI',
-  isDelivery: false,
   settings: {
     store_name: 'Skyline Exchange',
     store_address: 'Jl. Bypass Ngurah Rai No. 4X, Kuta, Bali',
@@ -1021,9 +978,7 @@ function setAppLanguage(lang) {
   // Header & Tabs
   safeSet('i18n-tab-pos', t.tabPos);
   safeSet('i18n-tab-rates', t.tabRates);
-  safeSet('i18n-tab-delivery', t.tabDelivery);
   safeSet('i18n-tab-history', t.tabHistory);
-  safeSet('i18n-tab-sheets', t.tabSheets);
   safeSet('i18n-tab-settings', t.tabSettings);
   safeSet('lbl-subtab-sheets', t.subtabSheets);
   safeSet('lbl-subtab-compliance', t.subtabCompliance);
@@ -1050,16 +1005,6 @@ function setAppLanguage(lang) {
   safeSet('lbl-legend-auto', t.legendAuto);
   safeSet('lbl-type-beli', t.btnBeli);
   safeSet('lbl-type-jual', t.btnJual);
-  safeSet('lbl-mode-delivery', t.modeDelivery);
-  safeSet('lbl-delivery-addr', t.deliveryAddrLabel);
-  safeSet('badge-req-delivery-addr', t.badgeRequired);
-  safePlaceholder('delivery-address', t.deliveryAddrPlaceholder);
-  safeSet('lbl-delivery-time', t.deliveryTimeLabel);
-  safeSet('badge-opt-delivery-time', t.badgeOptional);
-  safePlaceholder('delivery-time', t.deliveryTimePlaceholder);
-  safeSet('lbl-delivery-courier', t.deliveryCourierLabel);
-  safeSet('badge-opt-delivery-courier', t.badgeOptional);
-  safePlaceholder('delivery-courier', t.deliveryCourierPlaceholder);
 
   safeSet('lbl-cust-title', t.custTitle);
   safeSet('lbl-cust-name', t.custNameLabel);
@@ -1147,13 +1092,6 @@ function setAppLanguage(lang) {
   safeSet('lbl-th-spread', t.thSpread);
   safeSet('lbl-th-action-rates', t.thAction);
 
-  // Tab Delivery
-  safeSet('lbl-delivery-title', t.deliveryTitle);
-  safeSet('lbl-delivery-sub', t.deliverySub);
-  safeSet('opt-delivery-all', t.statusAll);
-  safeSet('opt-delivery-pending', t.statusPending);
-  safeSet('opt-delivery-ontheway', t.statusOnTheWay);
-  safeSet('opt-delivery-completed', t.statusCompleted);
 
   // Tab History
   safeSet('lbl-hist-buy-card', t.histBuyToday);
@@ -1271,7 +1209,6 @@ function setAppLanguage(lang) {
   renderRatesSelect();
   renderCart();
   renderRatesTable();
-  loadDeliveryOrders();
   loadHistory();
   loadReportsSummary();
 
@@ -1319,8 +1256,6 @@ function setReceiptLanguage(lang, showToastNotification = true) {
   safeSet('lbl-rcpt-job', t.rcptJobLabel);
   safeSet('lbl-rcpt-gender', t.rcptGenderLabel);
   safeSet('lbl-rcpt-address', t.rcptAddressLabel);
-  safeSet('lbl-rcpt-delivery', t.rcptServiceLabel);
-  safeSet('rcpt-delivery-val', t.rcptDeliveryVal);
   safeSet('lbl-rcpt-pep', lang === 'en' ? 'PEP Status' : 'Status PEP');
   safeSet('lbl-rcpt-underlying', lang === 'en' ? 'Underlying Doc' : 'Dokumen Underlying');
 
@@ -2238,7 +2173,6 @@ function updateLiveReceiptMetadata() {
 
   const phoneRow = document.getElementById('rcpt-phone-row');
   const idRow = document.getElementById('rcpt-id-row');
-  const deliveryRow = document.getElementById('rcpt-delivery-row');
 
   const finalCustName = custName ? custName.toUpperCase() : '-';
   rcptCust.textContent = finalCustName;
@@ -2344,12 +2278,6 @@ function updateLiveReceiptMetadata() {
     }
   }
 
-  if (state.isDelivery) {
-    deliveryRow.classList.remove('hidden');
-    document.getElementById('rcpt-delivery-val').textContent = isRcptEn ? 'DELIVERY SERVICE' : 'DELIVERY (ANTAR)';
-  } else {
-    deliveryRow.classList.add('hidden');
-  }
 
   // Live Date Time on Receipt
   const now = new Date();
@@ -2593,11 +2521,7 @@ async function processTransactionInner() {
     total_idr: total,
     paid_amount: payment || total,
     change_amount: change,
-    is_delivery: state.isDelivery ? 1 : 0,
-    delivery_address: state.isDelivery ? document.getElementById('delivery-address').value.trim() : '',
-    delivery_time: state.isDelivery ? document.getElementById('delivery-time').value.trim() : '',
-    delivery_status: state.isDelivery ? 'PENDING' : 'COMPLETED',
-    courier_name: state.isDelivery ? document.getElementById('delivery-courier').value.trim() : '',
+    is_delivery: 0,
     items: [...state.cart],
     created_at: now.toISOString(),
     created_at_formatted: now.toLocaleDateString(state.receiptLang === 'en' ? 'en-US' : 'id-ID') + ' ' + now.toLocaleTimeString(state.receiptLang === 'en' ? 'en-US' : 'id-ID')
@@ -2670,7 +2594,6 @@ async function processTransactionInner() {
   }
 
   loadHistory();
-  loadDeliveryOrders();
   loadReportsSummary();
 }
 
@@ -2697,14 +2620,8 @@ function resetForm() {
   const underCard = document.getElementById('card-underlying-warning'); if (underCard) underCard.classList.add('hidden');
   clearDttotAlert();
   document.getElementById('input-payment').value = '';
-  document.getElementById('check-delivery').checked = false;
-  document.getElementById('delivery-fields').classList.add('hidden');
-  document.getElementById('delivery-address').value = '';
-  document.getElementById('delivery-time').value = '';
-  document.getElementById('delivery-courier').value = '';
   document.getElementById('input-signature-customer').value = '';
   document.getElementById('input-signature-customer').removeAttribute('data-customized');
-  state.isDelivery = false;
   renderCart();
   showToast(state.appLang === 'en' ? 'Form cleared' : 'Form dikosongkan', 'info');
 }
@@ -3043,8 +2960,7 @@ function buildCurrentFormReceiptData() {
     total_idr: total,
     paid_amount: payment || total,
     change_amount: change,
-    is_delivery: state.isDelivery ? 1 : 0,
-    delivery_address: state.isDelivery ? document.getElementById('delivery-address').value.trim() : '',
+    is_delivery: 0,
     items: [...state.cart],
     created_at_formatted: now.toLocaleDateString(locale) + ' ' + now.toLocaleTimeString(locale)
   };
@@ -3153,144 +3069,6 @@ function handleShareWhatsApp() {
   const encoded = encodeURIComponent(text);
   const waUrl = phone ? `https://wa.me/${phone}?text=${encoded}` : `https://wa.me/?text=${encoded}`;
   window.open(waUrl, '_blank');
-}
-
-// ==================== DELIVERY MANAGEMENT ====================
-async function loadDeliveryOrders() {
-  const container = document.getElementById('delivery-orders-list');
-  if (!container) return;
-
-  try {
-    const res = await authFetch('/api/transactions?delivery=1&limit=50');
-    const data = await res.json();
-    if (data.success) {
-      renderDeliveryOrders(data.data);
-    }
-  } catch {
-    container.innerHTML = `<div class="col-span-2 text-center py-8 text-slate-500">${state.appLang === 'en' ? 'Unable to load delivery orders while offline.' : 'Tidak dapat memuat pesanan delivery saat offline.'}</div>`;
-  }
-}
-
-function renderDeliveryOrders(orders) {
-  const container = document.getElementById('delivery-orders-list');
-  const countBadge = document.getElementById('badge-delivery-count');
-  const filter = document.getElementById('filter-delivery-status').value;
-  const isEn = state.appLang === 'en';
-
-  const filtered = filter === 'ALL' ? orders : orders.filter(o => o.delivery_status === filter);
-
-  const pendingCount = orders.filter(o => o.delivery_status === 'PENDING' || o.delivery_status === 'ON_THE_WAY').length;
-  if (pendingCount > 0) {
-    countBadge.textContent = pendingCount;
-    countBadge.classList.remove('hidden');
-  } else {
-    countBadge.classList.add('hidden');
-  }
-
-  if (filtered.length === 0) {
-    container.innerHTML = `
-      <div class="col-span-1 md:col-span-2 text-center py-12 bg-navy-800 rounded-xl border border-navy-700 text-slate-500">
-        <svg class="w-10 h-10 mx-auto mb-2 text-slate-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-        ${isEn ? 'No delivery orders matching this status.' : 'Tidak ada pesanan delivery dengan status ini.'}
-      </div>
-    `;
-    return;
-  }
-
-  container.innerHTML = '';
-  filtered.forEach(o => {
-    const statusBadges = {
-      PENDING: `<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30">${isEn ? 'Awaiting Courier' : 'Menunggu Kurir'}</span>`,
-      ON_THE_WAY: `<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">${isEn ? 'On The Way' : 'Dalam Pengantaran'}</span>`,
-      COMPLETED: `<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">${isEn ? 'Completed' : 'Selesai'}</span>`,
-      CANCELLED: `<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-rose-500/20 text-rose-300 border border-rose-500/30">${isEn ? 'Cancelled' : 'Batal'}</span>`
-    };
-
-    const card = document.createElement('div');
-    card.className = 'bg-navy-800 border border-navy-700 rounded-xl p-4 space-y-3 shadow-sm';
-
-    let itemsSummary = '';
-    if (o.items && o.items.length) {
-      itemsSummary = o.items.map(it => `${it.amount.toLocaleString(isEn ? 'en-US' : 'id-ID')} ${it.currency_code}`).join(', ');
-    }
-
-    card.innerHTML = `
-      <div class="flex items-start justify-between gap-2">
-        <div>
-          <span class="text-xs font-mono font-bold text-brand">${o.receipt_no}</span>
-          <h4 class="text-sm font-bold text-white uppercase">${o.customer_name}</h4>
-        </div>
-        ${statusBadges[o.delivery_status] || ''}
-      </div>
-
-      <div class="space-y-1 text-xs text-slate-300 font-sans">
-        <div class="flex items-start gap-1.5">
-          <svg class="w-4 h-4 text-slate-500 flex-shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-          <span class="text-slate-200">${o.delivery_address || (isEn ? 'Address not specified' : 'Alamat tidak dicantumkan')}</span>
-        </div>
-        ${o.customer_phone ? `
-          <div class="flex items-center gap-1.5">
-            <svg class="w-4 h-4 text-slate-500 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-            <a href="https://wa.me/${o.customer_phone.replace(/\D/g, '')}" target="_blank" class="text-emerald-400 hover:underline font-mono">${o.customer_phone}</a>
-          </div>
-        ` : ''}
-        ${o.delivery_time ? `
-          <div class="flex items-center gap-1.5">
-            <svg class="w-4 h-4 text-slate-500 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-            <span class="text-slate-400">${o.delivery_time}</span>
-          </div>
-        ` : ''}
-      </div>
-
-      <div class="pt-2 border-t border-navy-700 flex items-center justify-between text-xs font-mono">
-        <div>
-          <span class="text-slate-400">Forex:</span> <span class="font-bold text-white">${itemsSummary}</span>
-        </div>
-        <div class="text-right">
-          <span class="text-slate-400">Total:</span> <span class="font-bold text-brand">Rp ${o.total_idr.toLocaleString('id-ID')}</span>
-        </div>
-      </div>
-
-      <div class="pt-2 flex items-center gap-2">
-        <select class="select-change-delivery-status flex-1 bg-navy-900 border border-navy-600 rounded px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-brand" data-id="${o.id}">
-          <option value="PENDING" ${o.delivery_status === 'PENDING' ? 'selected' : ''}>${isEn ? 'Awaiting Courier' : 'Menunggu Kurir'}</option>
-          <option value="ON_THE_WAY" ${o.delivery_status === 'ON_THE_WAY' ? 'selected' : ''}>${isEn ? 'On The Way' : 'Dalam Pengantaran'}</option>
-          <option value="COMPLETED" ${o.delivery_status === 'COMPLETED' ? 'selected' : ''}>${isEn ? 'Completed (Handover Done)' : 'Selesai (Sudah Serah Terima)'}</option>
-          <option value="CANCELLED" ${o.delivery_status === 'CANCELLED' ? 'selected' : ''}>${isEn ? 'Cancel' : 'Batalkan'}</option>
-        </select>
-        <button type="button" class="btn-delivery-reprint py-1.5 px-3 rounded bg-navy-700 hover:bg-navy-600 text-slate-200 text-xs font-medium" data-id="${o.id}">
-          ${isEn ? 'Receipt' : 'Struk'}
-        </button>
-      </div>
-    `;
-
-    container.appendChild(card);
-  });
-
-  document.querySelectorAll('.select-change-delivery-status').forEach(sel => {
-    sel.addEventListener('change', async () => {
-      const id = sel.getAttribute('data-id');
-      const newStatus = sel.value;
-      try {
-        await authFetch(`/api/transactions/${id}/delivery`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ delivery_status: newStatus })
-        });
-        showToast(isEn ? 'Delivery status updated' : 'Status delivery diperbarui', 'success');
-        loadDeliveryOrders();
-      } catch (err) {
-        showToast(isEn ? 'Failed to update status' : 'Gagal memperbarui status', 'error');
-      }
-    });
-  });
-
-  document.querySelectorAll('.btn-delivery-reprint').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const id = btn.getAttribute('data-id');
-      await reprintTransaction(id);
-    });
-  });
 }
 
 // ==================== HISTORY & REPORTS ====================
@@ -3603,15 +3381,6 @@ function switchSubtab(subtabName) {
     if (panelStore) panelStore.classList.remove('hidden');
     btnStore?.setAttribute('aria-selected', 'true');
   }
-
-  // Top nav has both "Google Sheets" and "Pengaturan": light up the one matching this subtab
-  if (document.getElementById('tab-settings')?.classList.contains('hidden')) return;
-  const navOn = subtabName === 'sheets' ? 'tab-sheets' : 'tab-settings';
-  document.querySelectorAll('.nav-tab[data-target="tab-sheets"], .nav-tab[data-target="tab-settings"]').forEach(el => {
-    el.className = el.dataset.target === navOn
-      ? 'nav-tab active-tab px-3 sm:px-4 py-2.5 font-semibold text-brand border-b-2 border-brand flex items-center gap-1.5 whitespace-nowrap'
-      : 'nav-tab px-3 sm:px-4 py-2.5 font-medium text-slate-400 hover:text-slate-200 border-b-2 border-transparent flex items-center gap-1.5 whitespace-nowrap';
-  });
 }
 
 
@@ -3788,25 +3557,6 @@ function switchTab(tabId) {
     el.className = 'nav-tab px-3 sm:px-4 py-2.5 font-medium text-slate-400 hover:text-slate-200 border-b-2 border-transparent flex items-center gap-1.5 whitespace-nowrap';
   });
 
-  if (tabId === 'tab-sheets') {
-    const settingsEl = document.getElementById('tab-settings');
-    if (settingsEl) settingsEl.classList.remove('hidden');
-    switchSubtab('sheets');
-    const tabBtn = document.querySelector('.nav-tab[data-target="tab-sheets"]');
-    if (tabBtn) {
-      tabBtn.className = 'nav-tab active-tab px-3 sm:px-4 py-2.5 font-semibold text-brand border-b-2 border-brand flex items-center gap-1.5 whitespace-nowrap';
-    }
-    setTimeout(() => {
-      const urlInput = document.getElementById('setting-sheets-url');
-      if (urlInput) {
-        urlInput.focus();
-        urlInput.select();
-        urlInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-    }, 50);
-    return;
-  }
-
   const targetEl = document.getElementById(tabId);
   if (targetEl) targetEl.classList.remove('hidden');
 
@@ -3816,7 +3566,6 @@ function switchTab(tabId) {
   }
 
   if (tabId === 'tab-rates') loadRates();
-  if (tabId === 'tab-delivery') loadDeliveryOrders();
   if (tabId === 'tab-history') { loadHistory(); loadReportsSummary(); }
   // "Google Sheets" has its own nav tab, so Pengaturan opens on the store profile
   if (tabId === 'tab-settings') switchSubtab('store');
@@ -4161,19 +3910,6 @@ function initEventListeners() {
   document.getElementById('btn-type-beli').addEventListener('click', () => setTransactionType('BELI'));
   document.getElementById('btn-type-jual').addEventListener('click', () => setTransactionType('JUAL'));
 
-  // Delivery Checkbox
-  const deliveryCheck = document.getElementById('check-delivery');
-  const deliveryFields = document.getElementById('delivery-fields');
-  deliveryCheck.addEventListener('change', () => {
-    state.isDelivery = deliveryCheck.checked;
-    if (state.isDelivery) {
-      deliveryFields.classList.remove('hidden');
-    } else {
-      deliveryFields.classList.add('hidden');
-    }
-    updateLiveReceiptMetadata();
-  });
-
   // Currency select change
   document.getElementById('item-currency').addEventListener('change', (e) => {
     state.customPickedByUser = e.target.value === '__CUSTOM__';
@@ -4317,9 +4053,6 @@ function initEventListeners() {
   document.getElementById('history-date-filter').value = new Date().toISOString().split('T')[0];
   document.getElementById('history-date-filter').addEventListener('change', loadHistory);
   document.getElementById('history-search-input').addEventListener('input', loadHistory);
-
-  // Delivery Filter
-  document.getElementById('filter-delivery-status').addEventListener('change', loadDeliveryOrders);
 
   // Settings Form Submit
   document.getElementById('form-settings').addEventListener('submit', async (e) => {
