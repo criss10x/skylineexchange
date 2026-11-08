@@ -1929,9 +1929,17 @@ function renderCurrencyTiles() {
     .filter(Boolean)
     .map(r => {
       const rate = state.txType === 'BELI' ? r.buy_rate : r.sell_rate;
-      const label = r.code.replace(/,\s*/g, '/');
+      let curr = r.code;
+      let denom = null;
+      if (r.code.includes(' ')) {
+        const parts = r.code.split(' ');
+        curr = parts[0];
+        const rest = parts.slice(1).join(' ').trim();
+        denom = rest === 's' ? 'Small' : rest.replace(/,\s*/g, '/');
+      }
       return `<button type="button" class="cur-tile" data-code="${escapeHtml(r.code)}" aria-pressed="${r.code === selected}">
-        <span class="cur-tile__code">${escapeHtml(label)}</span>
+        <span class="cur-tile__code">${escapeHtml(curr)}</span>
+        ${denom ? `<span class="cur-tile__denom">${escapeHtml(denom)}</span>` : ''}
         <span class="cur-tile__rate num">${formatNumForInput(rate, true)}</span>
       </button>`;
     });
