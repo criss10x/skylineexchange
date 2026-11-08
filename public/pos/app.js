@@ -4322,6 +4322,28 @@ function initEventListeners() {
     const d = document.getElementById('history-date-filter')?.value;
     exportGoogleSheetsCsv(d);
   });
+  document.getElementById('btn-history-export-excel')?.addEventListener('click', () => {
+    const d = document.getElementById('history-date-filter')?.value;
+    exportExcel(d);
+  });
+  document.getElementById('btn-history-export-pdf')?.addEventListener('click', () => {
+    const d = document.getElementById('history-date-filter')?.value;
+    exportPdf(d);
+  });
+  document.getElementById('btn-history-all-dates')?.addEventListener('click', () => {
+    const dateInput = document.getElementById('history-date-filter');
+    if (dateInput) {
+      if (dateInput.value) {
+        dateInput.value = '';
+        showToast(state.appLang === 'en' ? 'Showing all transaction history' : 'Menampilkan semua riwayat transaksi', 'info');
+      } else {
+        dateInput.value = new Date().toISOString().split('T')[0];
+        showToast(state.appLang === 'en' ? 'Showing today transaction history' : 'Menampilkan riwayat hari ini', 'info');
+      }
+      loadHistory();
+      loadReportsSummary();
+    }
+  });
   document.getElementById('setting-sheets-url')?.addEventListener('change', (e) => {
     saveGoogleSheetsSettings(e.target.value.trim());
   });
@@ -4618,15 +4640,218 @@ async function copyGoogleSheetsScript() {
 }
 
 function exportGoogleSheetsCsv(targetDate) {
-  const date = targetDate || document.getElementById('history-date-filter')?.value || new Date().toISOString().split('T')[0];
-  const url = `/api/sheets/export-csv?date=${encodeURIComponent(date)}`;
+  const dateInput = document.getElementById('history-date-filter');
+  const date = targetDate !== undefined ? targetDate : (dateInput ? dateInput.value : '');
+  const isAll = !date;
+  const url = isAll ? '/api/sheets/export-csv?all=1' : `/api/sheets/export-csv?date=${encodeURIComponent(date)}`;
   const a = document.createElement('a');
   a.href = url;
-  a.download = `Skyline_POS_${date}.csv`;
+  a.download = isAll ? 'Skyline_POS_Transactions_ALL.csv' : `Skyline_POS_${date}.csv`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
-  showToast(state.appLang === 'en' ? `Exporting CSV for date ${date}...` : `Mengunduh CSV tanggal ${date}...`, 'info');
+  showToast(state.appLang === 'en' ? (isAll ? 'Exporting all CSV transactions (Google Sheets format)...' : `Exporting CSV for date ${date}...`) : (isAll ? 'Mengunduh seluruh database CSV (Format Google Sheets)...' : `Mengunduh CSV tanggal ${date}...`), 'info');
+}
+
+function exportExcel(targetDate) {
+  const dateInput = document.getElementById('history-date-filter');
+  const date = targetDate !== undefined ? targetDate : (dateInput ? dateInput.value : '');
+  const isAll = !date;
+  const url = isAll ? '/api/sheets/export-excel?all=1' : `/api/sheets/export-excel?date=${encodeURIComponent(date)}`;
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = isAll ? 'Skyline_POS_Transactions_ALL.xlsx' : `Skyline_POS_${date}.xlsx`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  showToast(state.appLang === 'en' ? (isAll ? 'Exporting all Excel transactions (.xlsx)...' : `Exporting Excel for date ${date}...`) : (isAll ? 'Mengunduh seluruh database Excel (.xlsx)...' : `Mengunduh Excel tanggal ${date}...`), 'info');
+}
+
+async function exportPdf(targetDate) {
+  const isEn = state.appLang === 'en';
+  const dateInput = document.getElementById('history-date-filter');
+  const date = targetDate !== undefined ? targetDate : (dateInput ? dateInput.value : '');
+  const isAll = !date;
+  const url = isAll ? '/api/transactions?limit=2000' : `/api/transactions?limit=1000&date=${encodeURIComponent(date)}`;
+  
+  showToast(isEn ? 'Preparing printable PDF report...' : 'Menyiapkan dokumen laporan PDF...', 'info');
+
+  try {
+    const res = await authFetch(url);
+    const data = await res.json();
+    if (!data.success || !data.data || data.data.length === 0) {
+      showToast(isEn ? 'No transaction data available for PDF export.' : 'Tidak ada data transaksi untuk diekspor ke PDF.', 'warning');
+      return;
+    }
+
+    const txList = data.data;
+    const flatRows = [];
+    txList.forEach(t => {
+      const items = (t.items && t.items.length > 0) ? t.items : [{
+        currency_code: t.currency_code || 'USD',
+        amount: t.amount || 0,
+        rate: t.rate || 0,
+        subtotal_idr: t.subtotal_idr || t.total_idr || 0
+      }];
+      items.forEach(it => {
+        flatRows.push({
+          ...t,
+          currency_code: it.currency_code,
+          amount: it.amount,
+          rate: it.rate,
+          subtotal_idr: it.subtotal_idr
+        });
+      });
+    });
+
+    const periodTitle = isAll ? (isEn ? 'All Recorded Transactions' : 'Semua Riwayat Transaksi') : date;
+    const totalIdr = flatRows.reduce((acc, r) => acc + (Number(r.subtotal_idr) || 0), 0);
+    const totalRowsCount = flatRows.length;
+
+    const trHtml = flatRows.map((r, i) => {
+      const d = new Date(r.created_at);
+      const dateStr = !isNaN(d.getTime())
+        ? `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`
+        : r.created_at;
+      return `
+        <tr>
+          <td style="text-align:center;">${i + 1}</td>
+          <td style="text-align:center; white-space:nowrap;">${dateStr}</td>
+          <td style="font-weight:bold;">${escapeHtml((r.customer_name || 'CASH').toUpperCase())}</td>
+          <td>${escapeHtml(r.customer_phone || '-')}</td>
+          <td style="font-family:monospace;">${escapeHtml(r.customer_id_no || '-')}</td>
+          <td style="font-family:monospace;">${escapeHtml(r.customer_npwp || '-')}</td>
+          <td>${escapeHtml((r.customer_nationality || 'INDONESIA').toUpperCase())}</td>
+          <td>${escapeHtml((r.customer_job || '-').toUpperCase())}</td>
+          <td style="text-align:center;">${escapeHtml((r.customer_gender || '-').toUpperCase())}</td>
+          <td>${escapeHtml((r.customer_address || '-').toUpperCase())}</td>
+          <td style="text-align:center; font-family:monospace; font-weight:bold;">${escapeHtml(r.receipt_no || '-')}</td>
+          <td style="text-align:center; font-weight:bold;">${escapeHtml(r.currency_code || '-')}</td>
+          <td style="text-align:right; font-family:monospace;">${Number(r.amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+          <td style="text-align:right; font-family:monospace;">${Number(r.rate || 0).toLocaleString('id-ID')}</td>
+          <td style="text-align:right; font-family:monospace; font-weight:bold;">Rp ${Number(r.subtotal_idr || 0).toLocaleString('id-ID')}</td>
+          <td style="text-align:center; font-weight:bold;">${escapeHtml(r.type || 'BELI')}</td>
+          <td>${escapeHtml(r.teller_name || '-')}</td>
+        </tr>
+      `;
+    }).join('');
+
+    const printWin = window.open('', '_blank');
+    if (!printWin) {
+      showToast(isEn ? 'Popup blocked. Please allow popups for PDF printing.' : 'Pop-up terblokir di browser. Izinkan pop-up untuk mencetak PDF.', 'error');
+      return;
+    }
+
+    printWin.document.write(`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Skyline_POS_Laporan_${periodTitle}</title>
+  <style>
+    @page { size: A4 landscape; margin: 10mm 8mm; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; font-size: 8.5px; color: #000; background: #fff; margin: 0; padding: 12px; }
+    .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 10px; }
+    .brand { font-size: 16px; font-weight: 800; letter-spacing: -0.02em; }
+    .subbrand { font-size: 9.5px; color: #333; margin-top: 2px; }
+    .rep-title { text-align: right; }
+    .rep-title h2 { margin: 0; font-size: 13px; font-weight: 800; text-transform: uppercase; }
+    .rep-title p { margin: 2px 0 0 0; font-size: 9px; color: #444; }
+    .summary-box { display: flex; gap: 12px; margin-bottom: 10px; }
+    .kpi { border: 1px solid #94a3b8; border-radius: 4px; padding: 6px 10px; min-width: 140px; background: #f8fafc; }
+    .kpi-title { font-size: 8px; text-transform: uppercase; color: #475569; font-weight: bold; }
+    .kpi-val { font-size: 12px; font-weight: 800; margin-top: 2px; font-family: monospace; }
+    table { width: 100%; border-collapse: collapse; font-size: 8px; }
+    th { background: #f1f5f9; border: 1px solid #94a3b8; padding: 5px 3px; font-size: 8px; font-weight: 700; text-transform: uppercase; }
+    td { border: 1px solid #cbd5e1; padding: 4px 3px; vertical-align: middle; }
+    .tot-row { background: #f8fafc; font-weight: bold; }
+    .tot-row td { border-top: 2px solid #000; padding: 6px 3px; }
+    .footer { margin-top: 24px; display: flex; justify-content: space-between; page-break-inside: avoid; }
+    .sig-col { text-align: center; width: 180px; }
+    .sig-line { margin-top: 45px; border-bottom: 1px solid #000; }
+    .print-bar { margin-bottom: 12px; display: flex; gap: 8px; }
+    .print-btn { padding: 8px 16px; background: #0284c7; color: #fff; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 12px; }
+    @media print { .print-bar { display: none !important; } }
+  </style>
+</head>
+<body>
+  <div class="print-bar">
+    <button class="print-btn" onclick="window.print()">🖨️ Cetak / Simpan sebagai PDF (A4 Landscape)</button>
+  </div>
+  <div class="header">
+    <div>
+      <div class="brand">SKYLINE EXCHANGE</div>
+      <div class="subbrand">PT SKYLINE VALAS MANDIRI &bull; Izin KUPVA BB Bank Indonesia</div>
+    </div>
+    <div class="rep-title">
+      <h2>Laporan Database Rekapitulasi Valas</h2>
+      <p>Periode: ${periodTitle} &bull; Dicetak: ${new Date().toLocaleString(isEn ? 'en-US' : 'id-ID')}</p>
+    </div>
+  </div>
+  <div class="summary-box">
+    <div class="kpi">
+      <div class="kpi-title">Total Baris Transaksi</div>
+      <div class="kpi-val">${totalRowsCount} Baris</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-title">Total Volume Rupiah (IDR)</div>
+      <div class="kpi-val" style="color: #047857;">Rp ${totalIdr.toLocaleString('id-ID')}</div>
+    </div>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th style="width:22px;">No</th>
+        <th>Tanggal</th>
+        <th>Customer Name</th>
+        <th>Phone</th>
+        <th>No Identitas</th>
+        <th>NPWP</th>
+        <th>Country</th>
+        <th>Occupation</th>
+        <th>Gender</th>
+        <th>Address</th>
+        <th>Invoice No</th>
+        <th>Valas</th>
+        <th>Amount</th>
+        <th>Rate</th>
+        <th>Total (IDR)</th>
+        <th>Tipe</th>
+        <th>Teller</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${trHtml}
+      <tr class="tot-row">
+        <td colspan="12" style="text-align:right; font-weight:bold;">TOTAL KESELURUHAN:</td>
+        <td colspan="3" style="text-align:right; font-weight:bold; font-size:9.5px; font-family:monospace; color:#047857;">
+          Rp ${totalIdr.toLocaleString('id-ID')}
+        </td>
+        <td colspan="2"></td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="footer">
+    <div class="sig-col">
+      <div>Dibuat Oleh (Kasir / Teller):</div>
+      <div class="sig-line"></div>
+      <div style="margin-top:4px;">Nama &amp; Tanda Tangan</div>
+    </div>
+    <div class="sig-col">
+      <div>Mengetahui (Supervisor / Direksi):</div>
+      <div class="sig-line"></div>
+      <div style="margin-top:4px;">Nama &amp; Tanda Tangan</div>
+    </div>
+  </div>
+</body>
+</html>`);
+    printWin.document.close();
+    setTimeout(() => {
+      try { printWin.print(); } catch (e) {}
+    }, 400);
+
+  } catch (err) {
+    showToast(isEn ? 'Failed to generate PDF report: ' + err.message : 'Gagal membuat laporan PDF: ' + err.message, 'error');
+  }
 }
 
 // ==================== AUTH & USER MANAGEMENT ====================

@@ -7,6 +7,7 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 const fs = require('node:fs');
 const db = require('./pos-db.js');
+const ExcelJS = require('exceljs');
 
 const router = express.Router();
 
@@ -1181,42 +1182,282 @@ router.get('/api/sheets/script', requireAuth, (req, res) => {
   }
 });
 
-// Export CSV formatted for Google Sheets import
-router.get('/api/sheets/export-csv', requireAuth, (req, res) => {
-  try {
-    const { date } = req.query;
+// Helper: Format export dates as DD-MMM-YYYY (e.g. 11-Aug-2026)
+const EXPORT_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+function formatExportDate(isoString) {
+  if (!isoString) return '';
+  const d = new Date(isoString);
+  if (isNaN(d.getTime())) return String(isoString).split('T')[0];
+  const dd = String(d.getDate()).padStart(2, '0');
+  const mmm = EXPORT_MONTHS[d.getMonth()];
+  const yyyy = d.getFullYear();
+  return `${dd}-${mmm}-${yyyy}`;
+}
+
+// Helper: Query transactions with item lines for export
+function getTransactionsForExport(date, isAll) {
+  let query = `
+    SELECT 
+      t.id, t.receipt_no, t.type, t.customer_name, t.customer_phone, t.customer_id_no,
+      t.customer_npwp, t.customer_nationality, t.customer_job, t.customer_gender,
+      t.customer_address, t.is_pep, t.pep_institution, t.source_of_funds,
+      t.transaction_purpose, t.is_underlying, t.underlying_type, t.underlying_doc_no,
+      t.dttot_check_status, t.teller_name, t.total_idr, t.paid_amount, t.change_amount,
+      t.notes, t.created_at,
+      ti.currency_code, ti.amount, ti.rate, ti.subtotal_idr
+    FROM transactions t
+    LEFT JOIN transaction_items ti ON ti.transaction_id = t.id
+  `;
+  const params = [];
+  if (!isAll) {
     const targetDate = date || new Date().toISOString().split('T')[0];
-    const txList = db.prepare(`
-      SELECT t.*, ti.currency_code, ti.amount, ti.rate, ti.subtotal_idr
-      FROM transactions t
-      JOIN transaction_items ti ON ti.transaction_id = t.id
-      WHERE t.created_at LIKE ?
-      ORDER BY t.type ASC, t.id ASC
-    `).all(`${targetDate}%`);
-
-    let csv = 'DATE,NAME,CURRENCY,RATE,AMOUNT,TOTAL (RP),NOTES,KOMISI\r\n';
-    for (const r of txList) {
-      const d = new Date(r.created_at);
-      const dd = String(d.getDate()).padStart(2, '0');
-      const mm = String(d.getMonth() + 1).padStart(2, '0');
-      const yyyy = d.getFullYear();
-      const dateStr = `${dd}/${mm}/${yyyy}`;
-      const name = `"${(r.customer_name + (r.customer_id_no ? ' (' + r.customer_id_no + ')' : '')).replace(/"/g, '""')}"`;
-      const curr = r.currency_code;
-      const rate = r.rate;
-      const amount = r.amount;
-      const total = r.subtotal_idr;
-      const notes = `"${(r.notes || '').replace(/"/g, '""')}"`;
-      csv += `${dateStr},${name},${curr},${rate},${amount},${total},${notes},\r\n`;
-    }
-
-    res.setHeader('Content-Type', 'text/csv');
-    res.setHeader('Content-Disposition', `attachment; filename="Skyline_POS_${targetDate}.csv"`);
-    res.send(csv);
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    query += ' WHERE t.created_at LIKE ?';
+    params.push(`${targetDate}%`);
   }
-});
+  query += ' ORDER BY t.id ASC, ti.id ASC';
+  return db.prepare(query).all(...params);
+}
+
+// Helper: Build CSV matching the 14 Google Sheets template columns + extended columns
+function buildTransactionsCsvString(rows) {
+  // UTF-8 BOM so Excel & Google Sheets open cleanly with proper accents & delimiters
+  let csv = '\uFEFFDATE,CUSTOMER NAME,PHONE NUMBER,ID NUMBER,NPWP,COUNTRY,OCCUPATION,GENDER,ADDRESS,INVOICE NUMBER,CURRENCY,AMOUNT,BUY RATE,TOTAL IDR,TRANSACTION TYPE,TELLER,PEP,UNDERLYING,NOTES\r\n';
+  
+  function esc(val) {
+    if (val === null || val === undefined) return '""';
+    const s = String(val).replace(/"/g, '""');
+    return `"${s}"`;
+  }
+
+  for (const r of rows) {
+    const dateStr = formatExportDate(r.created_at);
+    const name = esc((r.customer_name || 'CASH').toUpperCase());
+    const phone = esc(r.customer_phone || '');
+    const idNo = esc(r.customer_id_no || '');
+    const npwp = esc(r.customer_npwp || '');
+    const country = esc((r.customer_nationality || 'INDONESIA').toUpperCase());
+    const job = esc((r.customer_job || '').toUpperCase());
+    const gender = esc((r.customer_gender || '').toUpperCase());
+    const address = esc((r.customer_address || '').toUpperCase());
+    const invoiceNo = esc(r.receipt_no || '');
+    const currency = esc(r.currency_code || '');
+    const amount = Number(r.amount) || 0;
+    const rate = Number(r.rate) || 0;
+    const totalIdr = Number(r.subtotal_idr || r.total_idr) || 0;
+    const type = esc(r.type || 'BELI');
+    const teller = esc(r.teller_name || '');
+    const pep = esc(r.is_pep ? 'YA' : 'TIDAK');
+    const underlying = esc(r.is_underlying ? (r.underlying_type || 'YA') : 'TIDAK');
+    const notes = esc(r.notes || '');
+
+    csv += `${dateStr},${name},${phone},${idNo},${npwp},${country},${job},${gender},${address},${invoiceNo},${currency},${amount},${rate},${totalIdr},${type},${teller},${pep},${underlying},${notes}\r\n`;
+  }
+  return csv;
+}
+
+// Helper: Build native Excel .xlsx file matching the 14 columns + styling & formulas
+async function buildTransactionsExcelBuffer(rows, periodTitle) {
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = 'Skyline Exchange POS';
+  workbook.created = new Date();
+
+  const worksheet = workbook.addWorksheet('Transactions', {
+    pageSetup: { orientation: 'landscape', paperSize: 9 } // A4 Landscape
+  });
+
+  // Title Banner
+  worksheet.mergeCells('A1:S1');
+  const titleCell = worksheet.getCell('A1');
+  titleCell.value = 'PT SKYLINE VALAS MANDIRI - REKAP TRANSAKSI VALUTA ASING (KUPVA BB)';
+  titleCell.font = { name: 'Calibri', size: 14, bold: true, color: { argb: 'FFFFFFFF' } };
+  titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0B2135' } };
+  titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+  worksheet.getRow(1).height = 32;
+
+  // Subtitle Banner
+  worksheet.mergeCells('A2:S2');
+  const subCell = worksheet.getCell('A2');
+  subCell.value = `Periode: ${periodTitle} | Format Database Transaksi Standar KUPVA BB Bank Indonesia`;
+  subCell.font = { name: 'Calibri', size: 10, italic: true, color: { argb: 'FF475569' } };
+  subCell.alignment = { horizontal: 'center', vertical: 'middle' };
+  worksheet.getRow(2).height = 20;
+
+  // 14 Core Template Columns + Extended Compliance Columns
+  const headers = [
+    { header: 'DATE', key: 'date', width: 14 },
+    { header: 'CUSTOMER NAME', key: 'customer_name', width: 26 },
+    { header: 'PHONE NUMBER', key: 'phone', width: 18 },
+    { header: 'ID NUMBER', key: 'id_no', width: 20 },
+    { header: 'NPWP', key: 'npwp', width: 20 },
+    { header: 'COUNTRY', key: 'country', width: 16 },
+    { header: 'OCCUPATION', key: 'job', width: 18 },
+    { header: 'GENDER', key: 'gender', width: 12 },
+    { header: 'ADDRESS', key: 'address', width: 26 },
+    { header: 'INVOICE NUMBER', key: 'invoice_no', width: 20 },
+    { header: 'CURRENCY', key: 'currency', width: 12 },
+    { header: 'AMOUNT', key: 'amount', width: 16 },
+    { header: 'BUY RATE', key: 'rate', width: 16 },
+    { header: 'TOTAL IDR', key: 'total_idr', width: 22 },
+    { header: 'TYPE', key: 'type', width: 12 },
+    { header: 'TELLER', key: 'teller', width: 16 },
+    { header: 'PEP', key: 'pep', width: 10 },
+    { header: 'UNDERLYING', key: 'underlying', width: 16 },
+    { header: 'NOTES', key: 'notes', width: 24 }
+  ];
+
+  const headerRow = worksheet.getRow(4);
+  headerRow.height = 26;
+  headers.forEach((col, idx) => {
+    const cell = headerRow.getCell(idx + 1);
+    cell.value = col.header;
+    cell.font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF134E4A' } };
+    cell.alignment = { horizontal: 'center', vertical: 'middle' };
+    cell.border = {
+      top: { style: 'thin', color: { argb: 'FF94A3B8' } },
+      bottom: { style: 'medium', color: { argb: 'FF0F172A' } },
+      left: { style: 'thin', color: { argb: 'FF94A3B8' } },
+      right: { style: 'thin', color: { argb: 'FF94A3B8' } }
+    };
+    worksheet.getColumn(idx + 1).width = col.width;
+  });
+
+  let rowIdx = 5;
+  rows.forEach((r, i) => {
+    const dRow = worksheet.getRow(rowIdx);
+    dRow.height = 20;
+    const isEven = i % 2 === 0;
+    const bg = isEven ? 'FFFFFFFF' : 'FFF8FAFC';
+
+    dRow.values = [
+      formatExportDate(r.created_at),
+      (r.customer_name || 'CASH').toUpperCase(),
+      r.customer_phone || '',
+      r.customer_id_no || '',
+      r.customer_npwp || '',
+      (r.customer_nationality || 'INDONESIA').toUpperCase(),
+      (r.customer_job || '').toUpperCase(),
+      (r.customer_gender || '').toUpperCase(),
+      (r.customer_address || '').toUpperCase(),
+      r.receipt_no || '',
+      r.currency_code || '',
+      Number(r.amount) || 0,
+      Number(r.rate) || 0,
+      Number(r.subtotal_idr || r.total_idr) || 0,
+      r.type || 'BELI',
+      r.teller_name || '',
+      r.is_pep ? 'YA' : 'TIDAK',
+      r.is_underlying ? (r.underlying_type || 'YA') : 'TIDAK',
+      r.notes || ''
+    ];
+
+    for (let c = 1; c <= headers.length; c++) {
+      const cell = dRow.getCell(c);
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bg } };
+      cell.font = { name: 'Calibri', size: 10, color: { argb: 'FF0F172A' } };
+      cell.border = {
+        top: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+        bottom: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+        left: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+        right: { style: 'thin', color: { argb: 'FFE2E8F0' } }
+      };
+
+      if (c === 1 || c === 8 || c === 11 || c === 15 || c === 17) {
+        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+      } else if (c === 12) {
+        cell.alignment = { horizontal: 'right', vertical: 'middle' };
+        cell.numFmt = '#,##0.00';
+      } else if (c === 13) {
+        cell.alignment = { horizontal: 'right', vertical: 'middle' };
+        cell.numFmt = '#,##0';
+      } else if (c === 14) {
+        cell.alignment = { horizontal: 'right', vertical: 'middle' };
+        cell.numFmt = 'Rp #,##0';
+        cell.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FF0F172A' } };
+      } else {
+        cell.alignment = { horizontal: 'left', vertical: 'middle' };
+      }
+    }
+    rowIdx++;
+  });
+
+  // Summary calculation row
+  if (rows.length > 0) {
+    const sumRow = worksheet.getRow(rowIdx);
+    sumRow.height = 24;
+    sumRow.getCell(1).value = 'TOTAL KESELURUHAN';
+    worksheet.mergeCells(`A${rowIdx}:K${rowIdx}`);
+    const mergedSumLabel = sumRow.getCell(1);
+    mergedSumLabel.font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FF0F172A' } };
+    mergedSumLabel.alignment = { horizontal: 'right', vertical: 'middle' };
+    mergedSumLabel.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE2E8F0' } };
+
+    const sumAmountCell = sumRow.getCell(12);
+    sumAmountCell.value = { formula: `SUM(L5:L${rowIdx - 1})` };
+    sumAmountCell.numFmt = '#,##0.00';
+    sumAmountCell.font = { name: 'Calibri', size: 11, bold: true };
+    sumAmountCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE2E8F0' } };
+
+    const emptyM = sumRow.getCell(13);
+    emptyM.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE2E8F0' } };
+
+    const sumIdrCell = sumRow.getCell(14);
+    sumIdrCell.value = { formula: `SUM(N5:N${rowIdx - 1})` };
+    sumIdrCell.numFmt = 'Rp #,##0';
+    sumIdrCell.font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FF047857' } };
+    sumIdrCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE2E8F0' } };
+
+    for (let c = 15; c <= headers.length; c++) {
+      const cell = sumRow.getCell(c);
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE2E8F0' } };
+    }
+  }
+
+  return await workbook.xlsx.writeBuffer();
+}
+
+// Export CSV handler (Google Sheets template compatible)
+const handleExportCsv = (req, res) => {
+  try {
+    const isAll = req.query.all === '1' || req.query.all === 'true';
+    const targetDate = req.query.date || new Date().toISOString().split('T')[0];
+    const rows = getTransactionsForExport(targetDate, isAll);
+    const csvData = buildTransactionsCsvString(rows);
+
+    const filename = isAll ? 'Skyline_POS_Transactions_ALL.csv' : `Skyline_POS_${targetDate}.csv`;
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(csvData);
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Gagal mengekspor CSV: ' + err.message });
+  }
+};
+
+// Export Excel handler (.xlsx native)
+const handleExportExcel = async (req, res) => {
+  try {
+    const isAll = req.query.all === '1' || req.query.all === 'true';
+    const targetDate = req.query.date || new Date().toISOString().split('T')[0];
+    const rows = getTransactionsForExport(targetDate, isAll);
+    const periodTitle = isAll ? 'Semua Riwayat Database' : targetDate;
+
+    const buffer = await buildTransactionsExcelBuffer(rows, periodTitle);
+    const filename = isAll ? 'Skyline_POS_Transactions_ALL.xlsx' : `Skyline_POS_${targetDate}.xlsx`;
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(buffer);
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Gagal mengekspor Excel: ' + err.message });
+  }
+};
+
+// Register export endpoints with aliases
+router.get('/api/sheets/export-csv', requireAuth, handleExportCsv);
+router.get('/api/transactions/export/csv', requireAuth, handleExportCsv);
+router.get('/api/sheets/export-excel', requireAuth, handleExportExcel);
+router.get('/api/transactions/export/excel', requireAuth, handleExportExcel);
+
 
 
 // ==================== SYSTEM & DATABASE DIAGNOSTICS / BACKUP API ====================
