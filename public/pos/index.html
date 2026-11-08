@@ -1858,11 +1858,31 @@
       <div class="bg-navy-800 border border-navy-700 rounded-xl overflow-hidden shadow-sm">
         <div class="p-3 bg-navy-850 border-b border-navy-700 flex flex-wrap items-center justify-between gap-3 text-xs">
           <div class="flex flex-wrap items-center gap-2">
-            <span class="font-bold text-slate-200" id="lbl-hist-title">Riwayat Transaksi</span>
-            <input type="date" id="history-date-filter" class="bg-navy-900 border border-navy-600 rounded px-2.5 py-1 text-slate-200 focus:outline-none focus:border-brand">
-            <button type="button" id="btn-history-all-dates" class="px-2.5 py-1 rounded bg-navy-750 hover:bg-navy-700 text-slate-300 text-[11px] font-medium border border-navy-600 transition-colors">
-              <span id="lbl-btn-all-dates">Semua Tanggal</span>
-            </button>
+            <span class="font-bold text-slate-200 shrink-0" id="lbl-hist-title">Filter Tanggal:</span>
+            
+            <div class="flex items-center gap-1.5 bg-navy-900 border border-navy-600 rounded px-2.5 py-1">
+              <span class="text-slate-400 text-[11px] font-medium" id="lbl-hist-from">Dari:</span>
+              <input type="date" id="history-start-date" class="bg-transparent text-slate-200 text-xs focus:outline-none cursor-pointer">
+            </div>
+
+            <div class="flex items-center gap-1.5 bg-navy-900 border border-navy-600 rounded px-2.5 py-1">
+              <span class="text-slate-400 text-[11px] font-medium" id="lbl-hist-to">Sampai:</span>
+              <input type="date" id="history-end-date" class="bg-transparent text-slate-200 text-xs focus:outline-none cursor-pointer">
+            </div>
+
+            <div class="flex items-center gap-1">
+              <button type="button" id="btn-history-today" title="Filter hanya hari ini" class="px-2.5 py-1 rounded bg-navy-750 hover:bg-navy-700 text-slate-300 text-[11px] font-medium border border-navy-600 transition-colors">
+                <span id="lbl-btn-today">Hari Ini</span>
+              </button>
+              <button type="button" id="btn-history-month" title="Filter bulan ini dari tanggal 1" class="px-2.5 py-1 rounded bg-navy-750 hover:bg-navy-700 text-slate-300 text-[11px] font-medium border border-navy-600 transition-colors">
+                <span id="lbl-btn-month">Bulan Ini</span>
+              </button>
+              <button type="button" id="btn-history-all-dates" title="Tampilkan seluruh riwayat transaksi" class="px-2.5 py-1 rounded bg-navy-750 hover:bg-navy-700 text-slate-300 text-[11px] font-medium border border-navy-600 transition-colors">
+                <span id="lbl-btn-all-dates">Semua</span>
+              </button>
+            </div>
+
+            <input type="hidden" id="history-date-filter">
           </div>
           <div class="flex flex-wrap items-center gap-2">
             <input type="text" id="history-search-input" placeholder="Cari no struk / customer / identitas..." class="bg-navy-900 border border-navy-600 rounded px-3 py-1 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand w-48 sm:w-56">

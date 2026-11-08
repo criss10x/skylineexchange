@@ -171,6 +171,12 @@ const i18n = {
     histSellToday: 'Total Jual Hari Ini (Kasir Jual)',
     histTurnoverToday: 'Perputaran Total Hari Ini',
     histTitle: 'Riwayat Transaksi',
+    histFilterDate: 'Filter Tanggal:',
+    histFrom: 'Dari:',
+    histTo: 'Sampai:',
+    histBtnToday: 'Hari Ini',
+    histBtnMonth: 'Bulan Ini',
+    histBtnAll: 'Semua',
     histSearchPlaceholder: 'Cari no struk / nama customer...',
     thHistNo: 'No. Struk',
     thHistTime: 'Waktu',
@@ -417,6 +423,12 @@ const i18n = {
     histSellToday: 'Today Sell Volume (Cashier Sell)',
     histTurnoverToday: 'Total Daily Turnover',
     histTitle: 'Transaction History',
+    histFilterDate: 'Filter Date:',
+    histFrom: 'From:',
+    histTo: 'To:',
+    histBtnToday: 'Today',
+    histBtnMonth: 'This Month',
+    histBtnAll: 'All',
     histSearchPlaceholder: 'Search receipt no / customer...',
     thHistNo: 'Receipt No',
     thHistTime: 'Time',
@@ -1102,7 +1114,12 @@ function setAppLanguage(lang) {
   safeSet('lbl-hist-buy-card', t.histBuyToday);
   safeSet('lbl-hist-sell-card', t.histSellToday);
   safeSet('lbl-hist-turnover-card', t.histTurnoverToday);
-  safeSet('lbl-hist-title', t.histTitle);
+  safeSet('lbl-hist-title', t.histFilterDate || t.histTitle);
+  safeSet('lbl-hist-from', t.histFrom);
+  safeSet('lbl-hist-to', t.histTo);
+  safeSet('lbl-btn-today', t.histBtnToday);
+  safeSet('lbl-btn-month', t.histBtnMonth);
+  safeSet('lbl-btn-all-dates', t.histBtnAll);
   safePlaceholder('history-search-input', t.histSearchPlaceholder);
   safeSet('lbl-th-hist-no', t.thHistNo);
   safeSet('lbl-th-hist-time', t.thHistTime);
@@ -3095,14 +3112,52 @@ function handleShareWhatsApp() {
 }
 
 // ==================== HISTORY & REPORTS ====================
+function getHistoryDateFilterState() {
+  const startEl = document.getElementById('history-start-date');
+  const endEl = document.getElementById('history-end-date');
+  const legacyEl = document.getElementById('history-date-filter');
+
+  let s = startEl ? startEl.value : '';
+  let e = endEl ? endEl.value : '';
+
+  if (!s && !e && legacyEl && legacyEl.value) {
+    s = legacyEl.value;
+    e = legacyEl.value;
+  }
+
+  const isAll = !s && !e;
+  const isRange = Boolean(s && e && s !== e);
+  let label = '';
+  if (isAll) {
+    label = state.appLang === 'en' ? 'All Transactions' : 'Semua Riwayat';
+  } else if (isRange) {
+    label = `${s} s/d ${e}`;
+  } else {
+    label = s || e;
+  }
+
+  return {
+    startDate: s,
+    endDate: e,
+    isAll,
+    isRange,
+    label
+  };
+}
+
 async function loadHistory() {
   const tbody = document.getElementById('history-table-body');
-  const dateInput = document.getElementById('history-date-filter');
   if (!tbody) return;
 
-  const dateVal = dateInput.value;
-  let url = '/api/transactions?limit=100';
-  if (dateVal) url += `&date=${dateVal}`;
+  const filter = getHistoryDateFilterState();
+  let url = '/api/transactions?limit=1000';
+  if (filter.isAll) {
+    url += '&all=1';
+  } else if (filter.startDate && filter.endDate) {
+    url += `&startDate=${encodeURIComponent(filter.startDate)}&endDate=${encodeURIComponent(filter.endDate)}`;
+  } else if (filter.startDate || filter.endDate) {
+    url += `&date=${encodeURIComponent(filter.startDate || filter.endDate)}`;
+  }
 
   try {
     const res = await authFetch(url);
@@ -3137,12 +3192,21 @@ function renderHistoryTable(transactions) {
     return;
   }
 
+  const filter = getHistoryDateFilterState();
+  const showDate = filter.isAll || filter.isRange;
+
   tbody.innerHTML = '';
   filtered.forEach(t => {
     const tr = document.createElement('tr');
     tr.className = 'hover:bg-navy-700/40 transition-colors';
 
-    const dateStr = new Date(t.created_at).toLocaleTimeString(isEn ? 'en-US' : 'id-ID', { hour: '2-digit', minute: '2-digit' });
+    const d = new Date(t.created_at);
+    const dateStr = !isNaN(d.getTime())
+      ? (showDate 
+          ? `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+          : d.toLocaleTimeString(isEn ? 'en-US' : 'id-ID', { hour: '2-digit', minute: '2-digit' }))
+      : t.created_at;
+
     const isBeli = t.type === 'BELI';
     const typeBadge = isBeli 
       ? `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400">${isEn ? 'BUY' : 'BELI'}</span>`
@@ -3152,7 +3216,7 @@ function renderHistoryTable(transactions) {
 
     tr.innerHTML = `
       <td class="py-2.5 px-3 font-bold text-brand">${t.receipt_no}</td>
-      <td class="py-2.5 px-3 text-slate-400">${dateStr}</td>
+      <td class="py-2.5 px-3 text-slate-400 whitespace-nowrap">${dateStr}</td>
       <td class="py-2.5 px-3">${typeBadge}</td>
       <td class="py-2.5 px-3 font-sans font-semibold text-white uppercase">
         ${t.customer_name}
@@ -3198,15 +3262,25 @@ async function reprintTransaction(id) {
 
 async function loadReportsSummary() {
   try {
-    const res = await authFetch('/api/reports/summary');
+    const filter = getHistoryDateFilterState();
+    let url = '/api/reports/summary';
+    if (filter.isAll) {
+      url += '?all=1';
+    } else if (filter.startDate && filter.endDate) {
+      url += `?startDate=${encodeURIComponent(filter.startDate)}&endDate=${encodeURIComponent(filter.endDate)}`;
+    } else if (filter.startDate || filter.endDate) {
+      url += `?date=${encodeURIComponent(filter.startDate || filter.endDate)}`;
+    }
+
+    const res = await authFetch(url);
     const data = await res.json();
     if (data.success && data.data) {
-      const { totals } = data.data;
+      const { totals, period } = data.data;
       const isEn = state.appLang === 'en';
       let buyTotal = 0, buyCount = 0;
       let sellTotal = 0, sellCount = 0;
 
-      totals.forEach(t => {
+      (totals || []).forEach(t => {
         if (t.type === 'BELI') {
           buyTotal = t.sum_idr || 0;
           buyCount = t.count || 0;
@@ -3215,6 +3289,34 @@ async function loadReportsSummary() {
           sellCount = t.count || 0;
         }
       });
+
+      // Update Card Headings according to period
+      const todayStr = new Date().toISOString().split('T')[0];
+      const isToday = !filter.isAll && !filter.isRange && (filter.startDate === todayStr || (!filter.startDate && !filter.endDate));
+      
+      const buyCardLabel = document.getElementById('lbl-hist-buy-card');
+      const sellCardLabel = document.getElementById('lbl-hist-sell-card');
+      const turnoverCardLabel = document.getElementById('lbl-hist-turnover-card');
+
+      if (filter.isAll) {
+        if (buyCardLabel) buyCardLabel.textContent = isEn ? 'Total Buy (All Time)' : 'Total Beli (Semua Riwayat)';
+        if (sellCardLabel) sellCardLabel.textContent = isEn ? 'Total Sell (All Time)' : 'Total Jual (Semua Riwayat)';
+        if (turnoverCardLabel) turnoverCardLabel.textContent = isEn ? 'Total Turnover (All Time)' : 'Perputaran Total (Semua)';
+      } else if (filter.isRange) {
+        const pLabel = period?.label || `${filter.startDate} s/d ${filter.endDate}`;
+        if (buyCardLabel) buyCardLabel.textContent = isEn ? `Total Buy (${pLabel})` : `Total Beli (${pLabel})`;
+        if (sellCardLabel) sellCardLabel.textContent = isEn ? `Total Sell (${pLabel})` : `Total Jual (${pLabel})`;
+        if (turnoverCardLabel) turnoverCardLabel.textContent = isEn ? `Turnover (${pLabel})` : `Perputaran Total (${pLabel})`;
+      } else if (isToday) {
+        if (buyCardLabel) buyCardLabel.textContent = isEn ? 'Today Buy Volume (Cashier Buy)' : 'Total Beli Hari Ini (Kasir Beli)';
+        if (sellCardLabel) sellCardLabel.textContent = isEn ? 'Today Sell Volume (Cashier Sell)' : 'Total Jual Hari Ini (Kasir Jual)';
+        if (turnoverCardLabel) turnoverCardLabel.textContent = isEn ? 'Total Daily Turnover' : 'Perputaran Total Hari Ini';
+      } else {
+        const singleDate = filter.startDate || filter.endDate;
+        if (buyCardLabel) buyCardLabel.textContent = isEn ? `Total Buy (${singleDate})` : `Total Beli (${singleDate})`;
+        if (sellCardLabel) sellCardLabel.textContent = isEn ? `Total Sell (${singleDate})` : `Total Jual (${singleDate})`;
+        if (turnoverCardLabel) turnoverCardLabel.textContent = isEn ? `Turnover (${singleDate})` : `Perputaran Total (${singleDate})`;
+      }
 
       document.getElementById('sum-buy-idr').textContent = 'Rp ' + buyTotal.toLocaleString('id-ID');
       document.getElementById('sum-buy-count').textContent = isEn ? `${buyCount} buy transactions` : `${buyCount} transaksi beli`;
@@ -4072,10 +4174,66 @@ function initEventListeners() {
     }
   });
 
-  // History Filter Listeners
-  document.getElementById('history-date-filter').value = new Date().toISOString().split('T')[0];
-  document.getElementById('history-date-filter').addEventListener('change', loadHistory);
-  document.getElementById('history-search-input').addEventListener('input', loadHistory);
+  // History Date Range Filter Listeners
+  const startEl = document.getElementById('history-start-date');
+  const endEl = document.getElementById('history-end-date');
+  const legacyDateInput = document.getElementById('history-date-filter');
+  const todayIso = new Date().toISOString().split('T')[0];
+
+  if (startEl && !startEl.value) startEl.value = todayIso;
+  if (endEl && !endEl.value) endEl.value = todayIso;
+  if (legacyDateInput) legacyDateInput.value = todayIso;
+
+  function handleDateFilterChange() {
+    if (legacyDateInput) legacyDateInput.value = startEl ? startEl.value : '';
+    loadHistory();
+    loadReportsSummary();
+  }
+
+  startEl?.addEventListener('change', () => {
+    if (endEl && (!endEl.value || endEl.value < startEl.value)) {
+      endEl.value = startEl.value;
+    }
+    handleDateFilterChange();
+  });
+
+  endEl?.addEventListener('change', () => {
+    if (startEl && (!startEl.value || startEl.value > endEl.value)) {
+      startEl.value = endEl.value;
+    }
+    handleDateFilterChange();
+  });
+
+  document.getElementById('btn-history-today')?.addEventListener('click', () => {
+    const today = new Date().toISOString().split('T')[0];
+    if (startEl) startEl.value = today;
+    if (endEl) endEl.value = today;
+    showToast(state.appLang === 'en' ? 'Filtered to Today' : 'Menampilkan transaksi Hari Ini', 'info');
+    handleDateFilterChange();
+  });
+
+  document.getElementById('btn-history-month')?.addEventListener('click', () => {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    const firstDay = `${y}-${m}-01`;
+    const today = now.toISOString().split('T')[0];
+    if (startEl) startEl.value = firstDay;
+    if (endEl) endEl.value = today;
+    showToast(state.appLang === 'en' ? `Filtered to This Month (${firstDay} to ${today})` : `Menampilkan transaksi Bulan Ini (${firstDay} s/d ${today})`, 'info');
+    handleDateFilterChange();
+  });
+
+  document.getElementById('btn-history-all-dates')?.addEventListener('click', () => {
+    if (startEl) startEl.value = '';
+    if (endEl) endEl.value = '';
+    showToast(state.appLang === 'en' ? 'Showing All Transactions' : 'Menampilkan Semua Riwayat Transaksi', 'info');
+    handleDateFilterChange();
+  });
+
+  document.getElementById('history-search-input')?.addEventListener('input', () => {
+    loadHistory();
+  });
 
   // Settings Form Submit
   document.getElementById('form-settings').addEventListener('submit', async (e) => {
@@ -4315,34 +4473,16 @@ function initEventListeners() {
   document.getElementById('btn-close-guide-footer')?.addEventListener('click', closeGoogleSheetsGuideModal);
   document.getElementById('btn-copy-sheets-script')?.addEventListener('click', copyGoogleSheetsScript);
   document.getElementById('btn-history-sync-sheets')?.addEventListener('click', () => {
-    const d = document.getElementById('history-date-filter')?.value;
-    syncTransactionsToGoogleSheets(d);
+    syncTransactionsToGoogleSheets();
   });
   document.getElementById('btn-history-export-csv')?.addEventListener('click', () => {
-    const d = document.getElementById('history-date-filter')?.value;
-    exportGoogleSheetsCsv(d);
+    exportGoogleSheetsCsv();
   });
   document.getElementById('btn-history-export-excel')?.addEventListener('click', () => {
-    const d = document.getElementById('history-date-filter')?.value;
-    exportExcel(d);
+    exportExcel();
   });
   document.getElementById('btn-history-export-pdf')?.addEventListener('click', () => {
-    const d = document.getElementById('history-date-filter')?.value;
-    exportPdf(d);
-  });
-  document.getElementById('btn-history-all-dates')?.addEventListener('click', () => {
-    const dateInput = document.getElementById('history-date-filter');
-    if (dateInput) {
-      if (dateInput.value) {
-        dateInput.value = '';
-        showToast(state.appLang === 'en' ? 'Showing all transaction history' : 'Menampilkan semua riwayat transaksi', 'info');
-      } else {
-        dateInput.value = new Date().toISOString().split('T')[0];
-        showToast(state.appLang === 'en' ? 'Showing today transaction history' : 'Menampilkan riwayat hari ini', 'info');
-      }
-      loadHistory();
-      loadReportsSummary();
-    }
+    exportPdf();
   });
   document.getElementById('setting-sheets-url')?.addEventListener('change', (e) => {
     saveGoogleSheetsSettings(e.target.value.trim());
@@ -4533,7 +4673,7 @@ async function saveGoogleSheetsSettings(url) {
   }
 }
 
-async function syncTransactionsToGoogleSheets(targetDate) {
+async function syncTransactionsToGoogleSheets() {
   const isEn = state.appLang === 'en';
   const url = (document.getElementById('setting-sheets-url')?.value || state.settings.google_sheets_url || '').trim();
 
@@ -4544,14 +4684,24 @@ async function syncTransactionsToGoogleSheets(targetDate) {
     return;
   }
 
-  const date = targetDate || new Date().toISOString().split('T')[0];
-  showToast(isEn ? `Syncing transactions (${date}) to Google Sheets...` : `Menyinkronkan transaksi (${date}) ke Google Sheets...`, 'info');
+  const filter = getHistoryDateFilterState();
+  const payload = { url };
+  if (filter.isAll) {
+    payload.all = true;
+  } else if (filter.startDate && filter.endDate) {
+    payload.startDate = filter.startDate;
+    payload.endDate = filter.endDate;
+  } else if (filter.startDate || filter.endDate) {
+    payload.date = filter.startDate || filter.endDate;
+  }
+
+  showToast(isEn ? `Syncing transactions (${filter.label}) to Google Sheets...` : `Menyinkronkan transaksi (${filter.label}) ke Google Sheets...`, 'info');
 
   try {
     const res = await authFetch('/api/sheets/sync', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ date, url })
+      body: JSON.stringify(payload)
     });
     const data = await res.json();
 
@@ -4639,42 +4789,75 @@ async function copyGoogleSheetsScript() {
   }
 }
 
-function exportGoogleSheetsCsv(targetDate) {
-  const dateInput = document.getElementById('history-date-filter');
-  const date = targetDate !== undefined ? targetDate : (dateInput ? dateInput.value : '');
-  const isAll = !date;
-  const url = isAll ? '/api/sheets/export-csv?all=1' : `/api/sheets/export-csv?date=${encodeURIComponent(date)}`;
+function exportGoogleSheetsCsv() {
+  const filter = getHistoryDateFilterState();
+  let url = '/api/sheets/export-csv';
+  let filename = 'Skyline_POS_Transactions_ALL.csv';
+
+  if (filter.isAll) {
+    url += '?all=1';
+  } else if (filter.startDate && filter.endDate) {
+    url += `?startDate=${encodeURIComponent(filter.startDate)}&endDate=${encodeURIComponent(filter.endDate)}`;
+    filename = filter.isRange ? `Skyline_POS_${filter.startDate}_sd_${filter.endDate}.csv` : `Skyline_POS_${filter.startDate}.csv`;
+  } else if (filter.startDate || filter.endDate) {
+    const d = filter.startDate || filter.endDate;
+    url += `?date=${encodeURIComponent(d)}`;
+    filename = `Skyline_POS_${d}.csv`;
+  }
+
   const a = document.createElement('a');
   a.href = url;
-  a.download = isAll ? 'Skyline_POS_Transactions_ALL.csv' : `Skyline_POS_${date}.csv`;
+  a.download = filename;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
-  showToast(state.appLang === 'en' ? (isAll ? 'Exporting all CSV transactions (Google Sheets format)...' : `Exporting CSV for date ${date}...`) : (isAll ? 'Mengunduh seluruh database CSV (Format Google Sheets)...' : `Mengunduh CSV tanggal ${date}...`), 'info');
+
+  showToast(state.appLang === 'en'
+    ? `Exporting CSV (${filter.label})...`
+    : `Mengunduh CSV (${filter.label})...`, 'info');
 }
 
-function exportExcel(targetDate) {
-  const dateInput = document.getElementById('history-date-filter');
-  const date = targetDate !== undefined ? targetDate : (dateInput ? dateInput.value : '');
-  const isAll = !date;
-  const url = isAll ? '/api/sheets/export-excel?all=1' : `/api/sheets/export-excel?date=${encodeURIComponent(date)}`;
+function exportExcel() {
+  const filter = getHistoryDateFilterState();
+  let url = '/api/sheets/export-excel';
+  let filename = 'Skyline_POS_Transactions_ALL.xlsx';
+
+  if (filter.isAll) {
+    url += '?all=1';
+  } else if (filter.startDate && filter.endDate) {
+    url += `?startDate=${encodeURIComponent(filter.startDate)}&endDate=${encodeURIComponent(filter.endDate)}`;
+    filename = filter.isRange ? `Skyline_POS_${filter.startDate}_sd_${filter.endDate}.xlsx` : `Skyline_POS_${filter.startDate}.xlsx`;
+  } else if (filter.startDate || filter.endDate) {
+    const d = filter.startDate || filter.endDate;
+    url += `?date=${encodeURIComponent(d)}`;
+    filename = `Skyline_POS_${d}.xlsx`;
+  }
+
   const a = document.createElement('a');
   a.href = url;
-  a.download = isAll ? 'Skyline_POS_Transactions_ALL.xlsx' : `Skyline_POS_${date}.xlsx`;
+  a.download = filename;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
-  showToast(state.appLang === 'en' ? (isAll ? 'Exporting all Excel transactions (.xlsx)...' : `Exporting Excel for date ${date}...`) : (isAll ? 'Mengunduh seluruh database Excel (.xlsx)...' : `Mengunduh Excel tanggal ${date}...`), 'info');
+
+  showToast(state.appLang === 'en'
+    ? `Exporting Excel (${filter.label})...`
+    : `Mengunduh Excel (${filter.label})...`, 'info');
 }
 
-async function exportPdf(targetDate) {
+async function exportPdf() {
   const isEn = state.appLang === 'en';
-  const dateInput = document.getElementById('history-date-filter');
-  const date = targetDate !== undefined ? targetDate : (dateInput ? dateInput.value : '');
-  const isAll = !date;
-  const url = isAll ? '/api/transactions?limit=2000' : `/api/transactions?limit=1000&date=${encodeURIComponent(date)}`;
-  
-  showToast(isEn ? 'Preparing printable PDF report...' : 'Menyiapkan dokumen laporan PDF...', 'info');
+  const filter = getHistoryDateFilterState();
+  let url = '/api/transactions?limit=5000';
+  if (filter.isAll) {
+    url += '&all=1';
+  } else if (filter.startDate && filter.endDate) {
+    url += `&startDate=${encodeURIComponent(filter.startDate)}&endDate=${encodeURIComponent(filter.endDate)}`;
+  } else if (filter.startDate || filter.endDate) {
+    url += `&date=${encodeURIComponent(filter.startDate || filter.endDate)}`;
+  }
+
+  showToast(isEn ? `Preparing PDF report (${filter.label})...` : `Menyiapkan dokumen laporan PDF (${filter.label})...`, 'info');
 
   try {
     const res = await authFetch(url);
@@ -4704,7 +4887,9 @@ async function exportPdf(targetDate) {
       });
     });
 
-    const periodTitle = isAll ? (isEn ? 'All Recorded Transactions' : 'Semua Riwayat Transaksi') : date;
+    const periodTitle = filter.isAll
+      ? (isEn ? 'All Recorded Transactions' : 'Semua Riwayat Transaksi')
+      : (filter.isRange ? `${filter.startDate} s/d ${filter.endDate}` : filter.label);
     const totalIdr = flatRows.reduce((acc, r) => acc + (Number(r.subtotal_idr) || 0), 0);
     const totalRowsCount = flatRows.length;
 

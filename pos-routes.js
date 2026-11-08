@@ -500,14 +500,30 @@ router.delete('/api/rates/:id', requireAuth, (req, res) => {
 // ==================== TRANSACTIONS API ====================
 router.get('/api/transactions', requireAuth, (req, res) => {
   try {
-    const { date, type, delivery, limit = 50 } = req.query;
+    const { date, startDate, endDate, start_date, end_date, date_from, date_to, all, type, delivery, limit = 100 } = req.query;
+    const isAll = all === '1' || all === 'true';
+    const s = startDate || start_date || date_from;
+    const e = endDate || end_date || date_to;
+
     let query = 'SELECT * FROM transactions WHERE 1=1';
     const params = [];
 
-    if (date) {
-      query += ' AND created_at LIKE ?';
-      params.push(`${date}%`);
+    if (!isAll) {
+      if (s && e) {
+        const start = s < e ? s : e;
+        const end = s < e ? e : s;
+        query += ' AND substr(created_at, 1, 10) BETWEEN ? AND ?';
+        params.push(start, end);
+      } else if (s || e) {
+        const target = s || e;
+        query += ' AND substr(created_at, 1, 10) = ?';
+        params.push(target);
+      } else if (date) {
+        query += ' AND substr(created_at, 1, 10) = ?';
+        params.push(date);
+      }
     }
+
     if (type) {
       query += ' AND type = ?';
       params.push(type);
@@ -516,8 +532,9 @@ router.get('/api/transactions', requireAuth, (req, res) => {
       query += ' AND is_delivery = 1';
     }
 
+    const safeLimit = Math.min(Math.max(Number(limit) || 100, 1), 5000);
     query += ' ORDER BY id DESC LIMIT ?';
-    params.push(Number(limit));
+    params.push(safeLimit);
 
     const transactions = db.prepare(query).all(...params);
 
@@ -1044,8 +1061,39 @@ router.delete('/api/dttot/:id', requireAuth, requireAdmin, (req, res) => {
 
 router.get('/api/reports/summary', requireAuth, (req, res) => {
   try {
-    const { date } = req.query;
-    const targetDate = date || new Date().toISOString().split('T')[0];
+    const { date, startDate, endDate, start_date, end_date, date_from, date_to, all } = req.query;
+    const isAll = all === '1' || all === 'true';
+    const s = startDate || start_date || date_from;
+    const e = endDate || end_date || date_to;
+
+    let whereClause = '';
+    let whereParams = [];
+    let period = {};
+
+    if (isAll) {
+      whereClause = '1=1';
+      period = { isAll: true, isRange: false, label: 'Semua Riwayat' };
+    } else if (s && e) {
+      const start = s < e ? s : e;
+      const end = s < e ? e : s;
+      whereClause = 'substr(created_at, 1, 10) BETWEEN ? AND ?';
+      whereParams = [start, end];
+      period = { startDate: start, endDate: end, isRange: start !== end, label: start === end ? start : `${start} s/d ${end}` };
+    } else if (s || e) {
+      const target = s || e;
+      whereClause = 'substr(created_at, 1, 10) = ?';
+      whereParams = [target];
+      period = { startDate: target, endDate: target, isRange: false, label: target };
+    } else if (date) {
+      whereClause = 'substr(created_at, 1, 10) = ?';
+      whereParams = [date];
+      period = { startDate: date, endDate: date, isRange: false, label: date };
+    } else {
+      const today = new Date().toISOString().split('T')[0];
+      whereClause = 'substr(created_at, 1, 10) = ?';
+      whereParams = [today];
+      period = { startDate: today, endDate: today, isRange: false, label: today };
+    }
 
     const totals = db.prepare(`
       SELECT 
@@ -1053,9 +1101,9 @@ router.get('/api/reports/summary', requireAuth, (req, res) => {
         COUNT(*) as count, 
         SUM(total_idr) as sum_idr 
       FROM transactions 
-      WHERE created_at LIKE ? 
+      WHERE ${whereClause} 
       GROUP BY type
-    `).all(`${targetDate}%`);
+    `).all(...whereParams);
 
     const currencies = db.prepare(`
       SELECT 
@@ -1065,14 +1113,15 @@ router.get('/api/reports/summary', requireAuth, (req, res) => {
         SUM(ti.subtotal_idr) as total_idr
       FROM transaction_items ti
       JOIN transactions t ON t.id = ti.transaction_id
-      WHERE t.created_at LIKE ?
+      WHERE ${whereClause.replace(/created_at/g, 't.created_at')}
       GROUP BY ti.currency_code, t.type
-    `).all(`${targetDate}%`);
+    `).all(...whereParams);
 
     res.json({
       success: true,
       data: {
-        date: targetDate,
+        date: period.startDate || period.label,
+        period,
         totals,
         currencies
       }
@@ -1121,19 +1170,34 @@ router.post('/api/sheets/sync', requireAuth, async (req, res) => {
       });
     }
 
+    const { startDate, endDate, start_date, end_date } = req.body;
     let txQuery = 'SELECT * FROM transactions WHERE 1=1';
     const params = [];
+
+    const isAll = all === '1' || all === 'true' || all === true;
+    const s = startDate || start_date;
+    const e = endDate || end_date;
 
     if (transaction_id) {
       txQuery += ' AND id = ?';
       params.push(transaction_id);
+    } else if (isAll) {
+      // Sync all recorded
+    } else if (s && e) {
+      const start = s < e ? s : e;
+      const end = s < e ? e : s;
+      txQuery += ' AND substr(created_at, 1, 10) BETWEEN ? AND ?';
+      params.push(start, end);
+    } else if (s || e) {
+      txQuery += ' AND substr(created_at, 1, 10) = ?';
+      params.push(s || e);
     } else if (date) {
-      txQuery += ' AND created_at LIKE ?';
-      params.push(`${date}%`);
-    } else if (!all) {
+      txQuery += ' AND substr(created_at, 1, 10) = ?';
+      params.push(date);
+    } else {
       const today = new Date().toISOString().split('T')[0];
-      txQuery += ' AND created_at LIKE ?';
-      params.push(`${today}%`);
+      txQuery += ' AND substr(created_at, 1, 10) = ?';
+      params.push(today);
     }
 
     txQuery += ' ORDER BY id ASC';
@@ -1194,8 +1258,8 @@ function formatExportDate(isoString) {
   return `${dd}-${mmm}-${yyyy}`;
 }
 
-// Helper: Query transactions with item lines for export
-function getTransactionsForExport(date, isAll) {
+// Helper: Query transactions with item lines for export (single date or date range)
+function getTransactionsForExport({ date, startDate, endDate, isAll } = {}) {
   let query = `
     SELECT 
       t.id, t.receipt_no, t.type, t.customer_name, t.customer_phone, t.customer_id_no,
@@ -1210,9 +1274,21 @@ function getTransactionsForExport(date, isAll) {
   `;
   const params = [];
   if (!isAll) {
-    const targetDate = date || new Date().toISOString().split('T')[0];
-    query += ' WHERE t.created_at LIKE ?';
-    params.push(`${targetDate}%`);
+    const s = startDate;
+    const e = endDate;
+    if (s && e) {
+      const start = s < e ? s : e;
+      const end = s < e ? e : s;
+      query += ' WHERE substr(t.created_at, 1, 10) BETWEEN ? AND ?';
+      params.push(start, end);
+    } else if (s || e) {
+      query += ' WHERE substr(t.created_at, 1, 10) = ?';
+      params.push(s || e);
+    } else {
+      const targetDate = date || new Date().toISOString().split('T')[0];
+      query += ' WHERE substr(t.created_at, 1, 10) = ?';
+      params.push(targetDate);
+    }
   }
   query += ' ORDER BY t.id ASC, ti.id ASC';
   return db.prepare(query).all(...params);
@@ -1420,11 +1496,22 @@ async function buildTransactionsExcelBuffer(rows, periodTitle) {
 const handleExportCsv = (req, res) => {
   try {
     const isAll = req.query.all === '1' || req.query.all === 'true';
-    const targetDate = req.query.date || new Date().toISOString().split('T')[0];
-    const rows = getTransactionsForExport(targetDate, isAll);
+    const s = req.query.startDate || req.query.start_date || req.query.date_from;
+    const e = req.query.endDate || req.query.end_date || req.query.date_to;
+    const date = req.query.date;
+
+    const rows = getTransactionsForExport({ date, startDate: s, endDate: e, isAll });
     const csvData = buildTransactionsCsvString(rows);
 
-    const filename = isAll ? 'Skyline_POS_Transactions_ALL.csv' : `Skyline_POS_${targetDate}.csv`;
+    let filename = 'Skyline_POS_Transactions_ALL.csv';
+    if (!isAll) {
+      if (s && e && s !== e) {
+        filename = `Skyline_POS_${s}_sd_${e}.csv`;
+      } else {
+        const targetDate = s || e || date || new Date().toISOString().split('T')[0];
+        filename = `Skyline_POS_${targetDate}.csv`;
+      }
+    }
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     res.send(csvData);
@@ -1437,12 +1524,27 @@ const handleExportCsv = (req, res) => {
 const handleExportExcel = async (req, res) => {
   try {
     const isAll = req.query.all === '1' || req.query.all === 'true';
-    const targetDate = req.query.date || new Date().toISOString().split('T')[0];
-    const rows = getTransactionsForExport(targetDate, isAll);
-    const periodTitle = isAll ? 'Semua Riwayat Database' : targetDate;
+    const s = req.query.startDate || req.query.start_date || req.query.date_from;
+    const e = req.query.endDate || req.query.end_date || req.query.date_to;
+    const date = req.query.date;
+
+    const rows = getTransactionsForExport({ date, startDate: s, endDate: e, isAll });
+
+    let periodTitle = 'Semua Riwayat Database';
+    let filename = 'Skyline_POS_Transactions_ALL.xlsx';
+
+    if (!isAll) {
+      if (s && e && s !== e) {
+        periodTitle = `Periode: ${s} s/d ${e}`;
+        filename = `Skyline_POS_${s}_sd_${e}.xlsx`;
+      } else {
+        const targetDate = s || e || date || new Date().toISOString().split('T')[0];
+        periodTitle = `Periode: ${targetDate}`;
+        filename = `Skyline_POS_${targetDate}.xlsx`;
+      }
+    }
 
     const buffer = await buildTransactionsExcelBuffer(rows, periodTitle);
-    const filename = isAll ? 'Skyline_POS_Transactions_ALL.xlsx' : `Skyline_POS_${targetDate}.xlsx`;
 
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
