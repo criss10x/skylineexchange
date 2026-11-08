@@ -4656,7 +4656,6 @@ function showLoginOverlay() {
     }
     usernameInput.focus();
   }
-  loadPublicCashiers();
 }
 
 function hideLoginOverlay() {
@@ -4733,39 +4732,6 @@ function renderTellerProfileCard() {
   if (roleEl) roleEl.textContent = state.user.role || 'TELLER';
 }
 
-function renderLoginCashierPills(cashiers) {
-  const container = document.getElementById('login-cashier-pills');
-  const wrapper = document.getElementById('login-cashier-selector-wrapper');
-  if (!container || !wrapper) return;
-
-  if (!cashiers || cashiers.length === 0) {
-    wrapper.classList.add('hidden');
-    return;
-  }
-
-  wrapper.classList.remove('hidden');
-  container.innerHTML = cashiers.map(c => {
-    const name = c.displayName || c.display_name || c.username;
-    const isOwner = c.role === 'ADMIN';
-    return `
-      <button type="button" onclick="selectCashierForLogin('${escapeHtml(c.username)}')" class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-navy-800 hover:bg-navy-700 border border-navy-600 hover:border-brand text-xs text-slate-200 transition-colors shadow-sm cursor-pointer select-none">
-        <span class="w-2 h-2 rounded-full ${isOwner ? 'bg-brand' : 'bg-emerald-400'}"></span>
-        <span class="font-bold text-white">${escapeHtml(name)}</span>
-        <span class="text-[10px] text-slate-400 font-mono">(@${escapeHtml(c.username)})</span>
-      </button>
-    `;
-  }).join('');
-}
-
-function selectCashierForLogin(username) {
-  const input = document.getElementById('login-username');
-  if (input) {
-    input.value = username;
-    const pwd = document.getElementById('login-password');
-    if (pwd) pwd.focus();
-  }
-}
-window.selectCashierForLogin = selectCashierForLogin;
 
 function renderTellerReadonlyUsers(cashiers) {
   const tbody = document.getElementById('teller-readonly-users-body');
@@ -4801,13 +4767,11 @@ async function loadPublicCashiers() {
     if (data.success && Array.isArray(data.data)) {
       localStorage.setItem('skyline_pos_cached_cashiers', JSON.stringify(data.data));
       saveUsersToIndexedDB(data.data);
-      renderLoginCashierPills(data.data);
       renderTellerReadonlyUsers(data.data);
     }
   } catch (err) {
     const cached = JSON.parse(localStorage.getItem('skyline_pos_cached_cashiers') || '[]');
     if (cached.length > 0) {
-      renderLoginCashierPills(cached);
       renderTellerReadonlyUsers(cached);
     }
   }
@@ -5013,7 +4977,6 @@ async function loadUsersList() {
       localStorage.setItem('skyline_pos_cached_cashiers', JSON.stringify(data.data));
       saveUsersToIndexedDB(data.data);
       renderAdminUsersTable(data.data, tbody, isEn);
-      renderLoginCashierPills(data.data);
       renderTellerReadonlyUsers(data.data);
     } else {
       if (cachedUsers.length === 0) {
