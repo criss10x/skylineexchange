@@ -96,6 +96,7 @@
       #modal-edit-rate,
       #modal-sheets-guide,
       #modal-user-mgmt,
+      #modal-usb-helper,
       #modal-printer-guide {
         display: none !important;
       }
@@ -759,6 +760,7 @@
     html.light #modal-add-user > div,
     html.light #modal-reset-user-pwd > div,
     html.light #modal-printer-guide > div,
+    html.light #modal-usb-helper > div,
     html.light #modal-add-dttot > div {
       background-color: #ffffff !important;
       border-color: #e2e8f0 !important;
@@ -817,7 +819,8 @@
     html.light #btn-login-submit,
     html.light #lbl-btn-save-rate,
     html.light #btn-copy-sheets-script,
-    html.light #btn-done-modal-printer-guide {
+    html.light #btn-done-modal-printer-guide,
+    html.light #btn-helper-done {
       background-color: #0d9488 !important;
       color: #ffffff !important;
     }
@@ -826,7 +829,8 @@
     html.light #btn-modal-add-rate:hover,
     html.light #btn-login-submit:hover,
     html.light #btn-copy-sheets-script:hover,
-    html.light #btn-done-modal-printer-guide:hover {
+    html.light #btn-done-modal-printer-guide:hover,
+    html.light #btn-helper-done:hover {
       background-color: #0f766e !important;
     }
 
@@ -2131,17 +2135,17 @@
               <legend class="pos-label" id="lbl-set-paper-size">Ukuran Kertas & Tipe Printer</legend>
               <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <label class="set-choice">
-                  <input type="radio" name="setting-paper-size" id="setting-paper-80" value="80" class="mt-0.5 w-4 h-4 text-brand bg-navy-900 border-navy-600 focus:ring-brand" checked>
+                  <input type="radio" name="setting-paper-size" id="setting-paper-80" value="80" class="mt-0.5 w-4 h-4 text-brand bg-navy-900 border-navy-600 focus:ring-brand">
                   <span>
                     <span class="block text-sm font-semibold text-slate-100" id="lbl-paper-80-title">80 mm (Thermal Kasir)</span>
                     <span class="block text-[13px] text-slate-400" id="lbl-paper-80-desc">Lebar 48 kolom, thermal & auto-cutter</span>
                   </span>
                 </label>
                 <label class="set-choice">
-                  <input type="radio" name="setting-paper-size" id="setting-paper-76" value="76" class="mt-0.5 w-4 h-4 text-brand bg-navy-900 border-navy-600 focus:ring-brand">
+                  <input type="radio" name="setting-paper-size" id="setting-paper-76" value="76" class="mt-0.5 w-4 h-4 text-brand bg-navy-900 border-navy-600 focus:ring-brand" checked>
                   <span>
                     <span class="block text-sm font-semibold text-slate-100" id="lbl-paper-76-title">76 mm (Dot Matrix / Pita)</span>
-                    <span class="block text-[13px] text-slate-400" id="lbl-paper-76-desc">Lebar 40 kolom, Epson TM-U220, pita hitam/merah</span>
+                    <span class="block text-[13px] text-slate-400" id="lbl-paper-76-desc">Lebar 40 kolom, Iware DM-76H, Epson TM-U220, pita hitam/merah</span>
                   </span>
                 </label>
                 <label class="set-choice">
@@ -2785,14 +2789,80 @@
     </div>
   </div>
 
+  <!-- Modal Panduan / Pilihan Koneksi USB & Driver Windows -->
+  <div id="modal-usb-helper" class="fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-3 hidden">
+    <div class="bg-navy-800 border border-navy-700 rounded-2xl w-full max-w-lg p-5 sm:p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between pb-3 border-b border-navy-700">
+        <div class="flex items-center gap-2">
+          <span class="text-xl">🖨️</span>
+          <h3 class="font-bold text-white text-base sm:text-lg" id="usb-helper-title">Status Printer USB / Driver Windows</h3>
+        </div>
+        <button type="button" id="btn-close-usb-helper" class="text-slate-400 hover:text-white text-2xl font-bold leading-none">&times;</button>
+      </div>
+
+      <div class="space-y-4 text-xs sm:text-sm text-slate-300">
+        <div class="p-3.5 rounded-xl bg-navy-900 border border-navy-700 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-brand flex items-center gap-1.5">
+              <span>🔌</span>
+              <span id="usb-helper-devicename">Iware DM-76H / USB Printer</span>
+            </span>
+            <span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">Windows Driver Siap</span>
+          </div>
+          <p class="leading-relaxed text-slate-300 text-xs">
+            Di sistem Windows, printer USB yang sudah terhubung biasanya dikunci secara eksklusif oleh <strong>Windows Driver</strong>. Hal ini normal sehingga browser tidak memerlukan koneksi WebUSB langsung.
+          </p>
+        </div>
+
+        <div class="space-y-2.5">
+          <div class="p-3 rounded-lg bg-navy-950 border border-navy-800 space-y-1">
+            <div class="font-semibold text-emerald-400 text-xs flex items-center gap-1.5">
+              <span>✅</span>
+              <span>Solusi 1: Cetak Langsung Lewat Windows Driver (Paling Direkomendasikan)</span>
+            </div>
+            <p class="text-[12px] text-slate-300 leading-relaxed">
+              Anda <strong>tidak perlu</strong> menghubungkan tombol ini. Cukup selesaikan transaksi lalu klik tombol <strong>"Cetak USB"</strong> pada nota. Struk akan otomatis keluar di printer Iware DM-76H Anda dengan format 76 mm Dot Matrix.
+            </p>
+          </div>
+
+          <div class="p-3 rounded-lg bg-navy-950 border border-navy-800 space-y-1">
+            <div class="font-semibold text-brand text-xs flex items-center gap-1.5">
+              <span>⚡</span>
+              <span>Solusi 2: Hubungkan Lewat Port Serial / COM (Direct ESC/POS)</span>
+            </div>
+            <p class="text-[12px] text-slate-300 leading-relaxed">
+              Jika printer Anda menggunakan kabel USB-Serial (Virtual COM Port seperti COM3/COM4), Anda bisa menghubungkannya langsung untuk cetak instan tanpa dialog Windows.
+            </p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+          <button type="button" id="btn-helper-test-driver" class="py-2.5 px-3 rounded-lg bg-navy-700 hover:bg-navy-600 text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors">
+            <svg class="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+            <span>Tes Cetak USB / Driver</span>
+          </button>
+          <button type="button" id="btn-helper-connect-serial" class="py-2.5 px-3 rounded-lg bg-navy-700 hover:bg-navy-600 text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors">
+            <svg class="w-4 h-4 text-brand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M3 12h3m12 0h3M12 3v3m0 12v3"/></svg>
+            <span>Hubungkan Serial / COM</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="pt-3 border-t border-navy-700 flex items-center justify-between">
+        <button type="button" id="btn-helper-open-guide" class="text-xs text-brand hover:underline font-medium">Buka Panduan Lengkap</button>
+        <button type="button" id="btn-helper-done" class="py-2 px-5 rounded-lg bg-brand hover:bg-brand-hover text-navy-950 font-bold text-xs sm:text-sm">Saya Mengerti</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Notification Toast Container -->
   <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col space-y-2 pointer-events-none"></div>
 
   <!-- Scripts -->
-  <script src="/pos/bluetooth-print.js?v=3.11"></script>
-  <script src="/pos/usb-print.js?v=3.11"></script>
-  <script src="/pos/serial-print.js?v=3.11"></script>
-  <script src="/pos/app.js?v=3.11"></script>
+  <script src="/pos/bluetooth-print.js?v=3.12"></script>
+  <script src="/pos/usb-print.js?v=3.12"></script>
+  <script src="/pos/serial-print.js?v=3.12"></script>
+  <script src="/pos/app.js?v=3.12"></script>
 
   <!-- Modal Tambah Data DTTOT -->
   <div id="modal-add-dttot" class="fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-3 hidden">

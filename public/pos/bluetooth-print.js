@@ -298,7 +298,7 @@ class BluetoothPrinter {
    */
   async buildEscPos(data, settings, lang = 'id') {
     const isEn = lang === 'en';
-    const paperSize = settings.paper_size || '80';
+    const paperSize = settings.paper_size || '76';
     const is80 = paperSize === '80';
     const is76 = paperSize === '76';
     const is58 = paperSize === '58';
@@ -535,7 +535,7 @@ class BluetoothPrinter {
    */
   async buildTestEscPos(settings, lang = 'id') {
     const isEn = lang === 'en';
-    const paperSize = settings.paper_size || '80';
+    const paperSize = settings.paper_size || '76';
     const is80 = paperSize === '80';
     const is76 = paperSize === '76';
     const is58 = paperSize === '58';

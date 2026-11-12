@@ -253,7 +253,7 @@ const defaultSettings = [
   { key: 'show_permit', value: '0' },
   { key: 'default_teller', value: 'TELLER 01' },
   { key: 'brand_color', value: '#00E2DE' },
-  { key: 'paper_size', value: '80' },
+  { key: 'paper_size', value: '76' },
   { key: 'disclaimer_1', value: 'Periksa fisik uang sebelum meninggalkan kasir.' },
   { key: 'disclaimer_2', value: 'Uang yang sudah ditukar tidak dapat dikembalikan.' },
   { key: 'google_sheets_url', value: '' },

@@ -1227,7 +1227,7 @@ function setAppLanguage(lang) {
   // Online / Offline Status Badge Text
   setOnlineStatus(state.isOnline);
   updateOfflineQueueBadge();
-  applyPaperSize(state.settings.paper_size || '80');
+  applyPaperSize(state.settings.paper_size || '76');
 
   // Transaction Types Explanation
   setTransactionType(state.txType);
@@ -1470,7 +1470,7 @@ function applySettingsToUI() {
   if (sheetsAutoSyncCheck) sheetsAutoSyncCheck.checked = s.google_sheets_auto_sync !== '0';
   renderSheetsStatus();
 
-  const paperSize = s.paper_size || '80';
+  const paperSize = s.paper_size || '76';
   const r80 = document.getElementById('setting-paper-80');
   const r76 = document.getElementById('setting-paper-76');
   const r58 = document.getElementById('setting-paper-58');
@@ -3814,25 +3814,136 @@ function initBluetoothUI() {
   }
 }
 
+// ==================== USB / SERIAL NAVBAR REFRESH ====================
+let toggleSerialPrinterGlobal = null;
+
+function refreshUsbNavbar() {
+  const isEn = state.appLang === 'en';
+  const statusDot = document.getElementById('usb-status-dot');
+  const nameLabel = document.getElementById('usb-printer-name');
+  const btnConnect = document.getElementById('btn-usb-connect');
+  const settingsStatusBadge = document.getElementById('settings-usb-status-badge');
+  const settingsStatusText = document.getElementById('settings-usb-status-text');
+
+  if (serialPrinter && serialPrinter.isConnected) {
+    if (statusDot) statusDot.className = 'w-2 h-2 rounded-full bg-brand animate-pulse';
+    if (nameLabel) nameLabel.textContent = isEn ? 'Serial: Connected' : 'Serial: Terhubung';
+    if (btnConnect) {
+      btnConnect.classList.add('border-brand/60', 'text-brand');
+      btnConnect.classList.remove('border-emerald-500/50', 'text-emerald-300');
+    }
+    return;
+  }
+
+  if (usbPrinter && usbPrinter.isConnected) {
+    if (statusDot) statusDot.className = 'w-2 h-2 rounded-full bg-brand animate-pulse';
+    const devName = (usbPrinter.device && usbPrinter.device.productName) || (isEn ? 'USB Connected' : 'USB Terhubung');
+    if (nameLabel) nameLabel.textContent = devName;
+    if (btnConnect) {
+      btnConnect.classList.add('border-brand/60', 'text-brand');
+      btnConnect.classList.remove('border-emerald-500/50', 'text-emerald-300');
+    }
+    return;
+  }
+
+  const usbMode = localStorage.getItem('pos_usb_mode');
+  if (usbMode === 'driver') {
+    if (statusDot) statusDot.className = 'w-2 h-2 rounded-full bg-emerald-400';
+    if (nameLabel) nameLabel.textContent = isEn ? 'USB (Driver Ready)' : 'USB (Driver Siap)';
+    if (btnConnect) {
+      btnConnect.classList.add('border-emerald-500/50', 'text-emerald-300');
+      btnConnect.classList.remove('border-brand/60', 'text-brand');
+    }
+    if (settingsStatusBadge) {
+      settingsStatusBadge.className = 'px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center gap-1.5';
+    }
+    if (settingsStatusText) {
+      settingsStatusText.textContent = isEn ? 'USB: Windows Driver Ready' : 'USB: Driver Windows Siap';
+    }
+    return;
+  }
+
+  if (statusDot) statusDot.className = 'w-2 h-2 rounded-full bg-slate-500';
+  if (nameLabel) nameLabel.textContent = (i18n[state.appLang] && i18n[state.appLang].connectUsb) || (isEn ? 'Connect USB Printer' : 'Hubungkan Printer USB');
+  if (btnConnect) {
+    btnConnect.classList.remove('border-brand/60', 'text-brand', 'border-emerald-500/50', 'text-emerald-300');
+  }
+  if (settingsStatusBadge) {
+    settingsStatusBadge.className = 'px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-700/60 text-slate-300 border border-slate-600 flex items-center gap-1.5';
+  }
+  if (settingsStatusText) {
+    settingsStatusText.textContent = isEn ? 'USB: Not Connected' : 'USB: Belum Terhubung';
+  }
+}
+
+function openUsbHelperModal(deviceTitle) {
+  const modal = document.getElementById('modal-usb-helper');
+  if (!modal) return;
+  const nameEl = document.getElementById('usb-helper-devicename');
+  if (nameEl && deviceTitle) nameEl.textContent = deviceTitle;
+  modal.classList.remove('hidden');
+}
+
+function initUsbHelperModal() {
+  const modal = document.getElementById('modal-usb-helper');
+  if (!modal) return;
+  const btnClose = document.getElementById('btn-close-usb-helper');
+  const btnDone = document.getElementById('btn-helper-done');
+  const btnTest = document.getElementById('btn-helper-test-driver');
+  const btnSerial = document.getElementById('btn-helper-connect-serial');
+  const btnGuide = document.getElementById('btn-helper-open-guide');
+
+  const closeModal = () => modal.classList.add('hidden');
+
+  if (btnClose) btnClose.addEventListener('click', closeModal);
+
+  if (btnDone) {
+    btnDone.addEventListener('click', () => {
+      localStorage.setItem('pos_usb_mode', 'driver');
+      refreshUsbNavbar();
+      closeModal();
+      showToast(state.appLang === 'en' ? 'USB Printer set to Windows Driver mode!' : 'Printer USB diset ke mode Driver Windows!', 'success');
+    });
+  }
+
+  if (btnTest) {
+    btnTest.addEventListener('click', async () => {
+      closeModal();
+      await handleBrowserPrint();
+    });
+  }
+
+  if (btnSerial) {
+    btnSerial.addEventListener('click', async () => {
+      closeModal();
+      if (toggleSerialPrinterGlobal) {
+        await toggleSerialPrinterGlobal();
+      }
+    });
+  }
+
+  if (btnGuide) {
+    btnGuide.addEventListener('click', () => {
+      closeModal();
+      const guideModal = document.getElementById('modal-printer-guide');
+      if (guideModal) guideModal.classList.remove('hidden');
+    });
+  }
+}
+
 // ==================== USB PRINTER UI ====================
 function initUsbUI() {
   if (!usbPrinter) return;
 
   const btnConnect = document.getElementById('btn-usb-connect');
-  const nameLabel = document.getElementById('usb-printer-name');
-  const statusDot = document.getElementById('usb-status-dot');
-
   const btnSettingsConnect = document.getElementById('btn-settings-usb-connect');
-  const settingsStatusBadge = document.getElementById('settings-usb-status-badge');
-  const settingsStatusText = document.getElementById('settings-usb-status-text');
 
   usbPrinter.onStatusChange = ({ connected, status, text }) => {
     const isEn = state.appLang === 'en';
-    if (connected) {
-      if (statusDot) statusDot.className = 'w-2 h-2 rounded-full bg-brand animate-pulse';
-      if (nameLabel) nameLabel.textContent = text || (isEn ? 'USB Connected' : 'USB Terhubung');
-      if (btnConnect) btnConnect.classList.add('border-brand/60', 'text-brand');
+    const settingsStatusBadge = document.getElementById('settings-usb-status-badge');
+    const settingsStatusText = document.getElementById('settings-usb-status-text');
 
+    if (connected) {
       if (settingsStatusBadge) {
         settingsStatusBadge.className = 'px-2.5 py-1 rounded-full text-xs font-semibold bg-brand/20 text-brand border border-brand/40 flex items-center gap-1.5';
       }
@@ -3849,16 +3960,6 @@ function initUsbUI() {
         btnSettingsConnect.classList.remove('border-brand/40', 'text-brand');
       }
     } else {
-      if (statusDot) statusDot.className = 'w-2 h-2 rounded-full bg-slate-500';
-      if (nameLabel) nameLabel.textContent = i18n[state.appLang].connectUsb || (isEn ? 'Connect USB Printer' : 'Hubungkan Printer USB');
-      if (btnConnect) btnConnect.classList.remove('border-brand/60', 'text-brand');
-
-      if (settingsStatusBadge) {
-        settingsStatusBadge.className = 'px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-700/60 text-slate-300 border border-slate-600 flex items-center gap-1.5';
-      }
-      if (settingsStatusText) {
-        settingsStatusText.textContent = isEn ? 'USB: Not Connected' : 'USB: Belum Terhubung';
-      }
       if (btnSettingsConnect) {
         btnSettingsConnect.innerHTML = `
           <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="7" y="2" width="10" height="7" rx="1"/><rect x="5" y="9" width="14" height="11" rx="2"/><line x1="9" y1="5" x2="9" y2="7"/><line x1="15" y1="5" x2="15" y2="7"/></svg>
@@ -3868,6 +3969,7 @@ function initUsbUI() {
         btnSettingsConnect.classList.add('border-brand/40', 'text-brand');
       }
     }
+    refreshUsbNavbar();
   };
 
   const handleToggleUsb = async () => {
@@ -3880,20 +3982,31 @@ function initUsbUI() {
     }
 
     if (usbPrinter.isConnected) {
-      if (confirm(isEn ? 'Disconnect current USB thermal printer?' : 'Putuskan koneksi dengan printer thermal USB saat ini?')) {
+      if (confirm(isEn ? 'Disconnect current USB printer?' : 'Putuskan koneksi dengan printer USB saat ini?')) {
         await usbPrinter.disconnect();
         showToast(isEn ? 'USB printer disconnected' : 'Printer USB diputuskan', 'info');
       }
       return;
     }
 
+    // If currently in driver mode and user clicks USB button, give them the helper options
+    const currentMode = localStorage.getItem('pos_usb_mode');
+    if (currentMode === 'driver') {
+      openUsbHelperModal('Iware DM-76H / Driver Windows');
+      return;
+    }
+
     try {
-      showToast(isEn ? 'Selecting USB thermal printer...' : 'Memilih printer thermal USB...', 'info');
+      showToast(isEn ? 'Selecting USB printer...' : 'Memilih printer USB...', 'info');
       const deviceName = await usbPrinter.connect();
       showToast(`${isEn ? 'Connected to' : 'Terhubung ke'} ${deviceName}!`, 'success');
     } catch (err) {
       if (err.name !== 'NotFoundError') {
-        showToast(`USB: ${err.message}`, 'warning');
+        if (err.isDriverLocked || (err.message && /Windows Driver|Access denied|claim/i.test(err.message))) {
+          openUsbHelperModal(err.deviceTitle || 'Iware DM-76H / USB Printer');
+        } else {
+          showToast(`USB: ${err.message}`, 'warning');
+        }
       }
     }
   };
@@ -3904,6 +4017,9 @@ function initUsbUI() {
   if (btnSettingsConnect) {
     btnSettingsConnect.addEventListener('click', handleToggleUsb);
   }
+
+  // Initial navbar state
+  refreshUsbNavbar();
 }
 
 // ==================== SERIAL / COM PRINTER UI ====================
@@ -3948,6 +4064,7 @@ function initSerialUI() {
         btnSettingsConnect.classList.add('border-brand/40', 'text-brand');
       }
     }
+    refreshUsbNavbar();
   };
 
   const handleToggleSerial = async () => {
@@ -3977,6 +4094,8 @@ function initSerialUI() {
       }
     }
   };
+
+  toggleSerialPrinterGlobal = handleToggleSerial;
 
   if (btnSettingsConnect) {
     btnSettingsConnect.addEventListener('click', handleToggleSerial);
@@ -4259,7 +4378,7 @@ function initEventListeners() {
       store_company: document.getElementById('setting-store-company').value.trim(),
       store_address: document.getElementById('setting-store-address').value.trim(),
       store_phone: document.getElementById('setting-store-phone').value.trim(),
-      paper_size: document.querySelector('input[name="setting-paper-size"]:checked')?.value || '80',
+      paper_size: document.querySelector('input[name="setting-paper-size"]:checked')?.value || '76',
       store_permit: document.getElementById('setting-store-permit').value.trim(),
       show_permit: document.getElementById('setting-show-permit').checked ? '1' : '0',
       default_teller: document.getElementById('setting-default-teller').value.trim() || 'TELLER 01',
@@ -5582,6 +5701,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initUsbUI();
   initSerialUI();
   initPrinterGuideModal();
+  initUsbHelperModal();
   initTheme();
 
   // Load Saved Language Preferences

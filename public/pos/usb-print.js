@@ -37,7 +37,20 @@ class UsbPrinter {
       // Open chooser dialog for any USB thermal printer
       this.device = await navigator.usb.requestDevice({ filters: [] });
 
-      await this.device.open();
+      try {
+        await this.device.open();
+      } catch (openErr) {
+        try { await this.device.close(); } catch {}
+        const isAccessDenied = openErr.name === 'SecurityError' || /access denied|claimed|busy|in use/i.test(openErr.message || '');
+        const err = new Error(isAccessDenied
+          ? 'Port USB printer sedang digunakan oleh Windows Driver. Anda dapat langsung mencetak menggunakan tombol "Cetak USB" pada nota, atau hubungkan via "Serial / COM".'
+          : openErr.message);
+        err.name = openErr.name;
+        err.isDriverLocked = true;
+        err.deviceTitle = this.device.productName || 'USB Thermal / Dot Matrix Printer';
+        throw err;
+      }
+
       if (this.device.configuration === null) {
         await this.device.selectConfiguration(1);
       }
@@ -72,8 +85,12 @@ class UsbPrinter {
       try {
         await this.device.claimInterface(targetInterface);
       } catch (claimErr) {
-        await this.device.close();
-        throw new Error('Port USB printer sedang digunakan secara eksklusif oleh Windows Driver. Gunakan tombol "Cetak USB / Driver" untuk mencetak langsung lewat Windows.');
+        try { await this.device.close(); } catch {}
+        const err = new Error('Port USB printer sedang digunakan oleh Windows Driver. Anda dapat langsung mencetak menggunakan tombol "Cetak USB" pada nota, atau hubungkan via "Serial / COM".');
+        err.name = claimErr.name;
+        err.isDriverLocked = true;
+        err.deviceTitle = this.device.productName || 'USB Thermal / Dot Matrix Printer';
+        throw err;
       }
 
       this.interfaceNumber = targetInterface;
