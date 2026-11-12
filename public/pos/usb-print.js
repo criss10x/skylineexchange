@@ -43,7 +43,7 @@ class UsbPrinter {
         try { await this.device.close(); } catch {}
         const isAccessDenied = openErr.name === 'SecurityError' || /access denied|claimed|busy|in use/i.test(openErr.message || '');
         const err = new Error(isAccessDenied
-          ? 'Port USB printer sedang digunakan oleh Windows Driver. Anda dapat langsung mencetak menggunakan tombol "Cetak USB" pada nota, atau hubungkan via "Serial / COM".'
+          ? 'Printer USB ini dipegang driver Windows, jadi browser tidak bisa membukanya langsung. Pakai Skyline Print Bridge di Pengaturan > Printer struk.'
           : openErr.message);
         err.name = openErr.name;
         err.isDriverLocked = true;
@@ -86,7 +86,7 @@ class UsbPrinter {
         await this.device.claimInterface(targetInterface);
       } catch (claimErr) {
         try { await this.device.close(); } catch {}
-        const err = new Error('Port USB printer sedang digunakan oleh Windows Driver. Anda dapat langsung mencetak menggunakan tombol "Cetak USB" pada nota, atau hubungkan via "Serial / COM".');
+        const err = new Error('Printer USB ini dipegang driver Windows, jadi browser tidak bisa membukanya langsung. Pakai Skyline Print Bridge di Pengaturan > Printer struk.');
         err.name = claimErr.name;
         err.isDriverLocked = true;
         err.deviceTitle = this.device.productName || 'USB Thermal / Dot Matrix Printer';

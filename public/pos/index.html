@@ -1616,7 +1616,7 @@
                 <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6.5 6.5l11 11L12 23V1l5.5 5.5-11 11"/></svg>
                 <span id="lbl-btn-print-bt">Cetak BT</span>
               </button>
-              <button type="button" id="btn-browser-print" title="Cetak ke printer USB via WebUSB atau driver Windows" class="h-10 px-2 rounded-lg bg-navy-700 hover:bg-navy-600 text-slate-200 font-semibold text-[13px] flex items-center justify-center gap-1.5 transition-colors">
+              <button type="button" id="btn-browser-print" title="Cetak struk ESC/POS ke printer yang terhubung, atau dialog cetak Windows" class="h-10 px-2 rounded-lg bg-navy-700 hover:bg-navy-600 text-slate-200 font-semibold text-[13px] flex items-center justify-center gap-1.5 transition-colors">
                 <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
                 <span id="lbl-btn-print-browser">Cetak USB</span>
               </button>
@@ -2127,7 +2127,7 @@
           <!-- Struk thermal -->
           <div class="set-section space-y-5">
             <div>
-              <h3 class="pos-h text-slate-100">Struk thermal</h3>
+              <h3 class="pos-h text-slate-100">Struk</h3>
               <p class="set-desc">Ukuran kertas, logo, dan catatan di bagian bawah struk.</p>
             </div>
 
@@ -2214,8 +2214,34 @@
           <!-- Printer thermal -->
           <div class="set-section space-y-4">
             <div>
-              <h3 class="pos-h text-slate-100" id="lbl-printer-diag-title">Printer thermal</h3>
-              <p class="set-desc" id="lbl-printer-diag-sub">Hubungkan dan tes printer Bluetooth, USB, atau Serial COM.</p>
+              <h3 class="pos-h text-slate-100" id="lbl-printer-diag-title">Printer struk</h3>
+              <p class="set-desc" id="lbl-printer-diag-sub">Struk dikirim sebagai perintah ESC/POS. Pakai satu jalur: Print Bridge (USB + driver Windows), Serial / COM, USB langsung, atau Bluetooth.</p>
+            </div>
+
+            <div id="bridge-card" class="rounded-xl border border-navy-700 bg-navy-900 p-4 space-y-3">
+              <div class="flex flex-wrap items-start justify-between gap-2">
+                <div class="min-w-0">
+                  <h4 class="text-sm font-semibold text-slate-100" id="lbl-bridge-title">Printer USB dengan driver Windows (Skyline Print Bridge)</h4>
+                  <p class="set-hint !mt-1 max-w-prose" id="lbl-bridge-desc">Untuk iWare DM-76H dan printer USB lain yang sudah bisa mencetak dari Windows. POS mengirim perintah ESC/POS ke aplikasi kecil di PC kasir, lalu diteruskan ke printer.</p>
+                </div>
+                <span id="bridge-status" class="set-status set-status--warn shrink-0">Belum aktif di PC ini</span>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 items-end">
+                <div class="sm:col-span-6">
+                  <label for="bridge-printer-select" class="pos-label" id="lbl-bridge-printer">Printer struk di Windows</label>
+                  <select id="bridge-printer-select" class="pos-input w-full bg-navy-900 border border-navy-600 rounded-lg text-slate-100" disabled>
+                    <option value="">-</option>
+                  </select>
+                </div>
+                <button type="button" id="btn-bridge-check" class="set-btn set-btn--secondary w-full sm:col-span-3"><span id="lbl-btn-bridge-check">Cek koneksi</span></button>
+                <button type="button" id="btn-bridge-test" class="set-btn set-btn--primary w-full sm:col-span-3" disabled><span id="lbl-btn-bridge-test">Tes cetak ESC/POS</span></button>
+              </div>
+              <ol id="bridge-install-steps" class="list-decimal pl-5 space-y-1 text-[13px] text-slate-300">
+                <li>Di PC kasir, unduh <a href="/pos/print-bridge/SkylinePrintBridge.cmd" download class="set-link">SkylinePrintBridge.cmd</a>. Jika Chrome memperingatkan file ini, pilih <em>Keep</em>.</li>
+                <li>Klik dua kali file itu. Jika muncul "Windows protected your PC", klik <em>More info</em> lalu <em>Run anyway</em>.</li>
+                <li>Klik <strong>Cek koneksi</strong>. Jika Chrome meminta izin akses ke aplikasi di perangkat ini, pilih <strong>Izinkan</strong>.</li>
+                <li>Pilih printer struk, lalu klik <strong>Tes cetak ESC/POS</strong>. Bridge jalan otomatis setiap Windows menyala.</li>
+              </ol>
             </div>
             <div class="flex flex-wrap items-center gap-2">
               <div id="settings-bt-status-badge" class="px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-700/60 text-slate-300 border border-slate-600 flex items-center gap-1.5">
@@ -2247,12 +2273,12 @@
               </button>
               <button type="button" id="btn-settings-browser-test" class="set-btn set-btn--secondary w-full">
                 <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-                <span id="lbl-btn-settings-test-sys">Tes Cetak USB / Driver</span>
+                <span id="lbl-btn-settings-test-sys">Tes Cetak Struk</span>
               </button>
             </div>
 
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <p class="set-hint !mt-0 max-w-prose" id="lbl-printer-diag-note">Printer Bluetooth sudah berstatus <strong>"Paired"</strong> di Windows? Hubungkan lewat <strong>Serial / COM</strong> atau langsung cetak lewat <strong>Tes Cetak USB / Driver</strong>.</p>
+              <p class="set-hint !mt-0 max-w-prose" id="lbl-printer-diag-note">Tes Cetak Struk memakai jalur yang sedang terhubung. Jika belum ada, yang terbuka dialog cetak Windows (bukan ESC/POS).</p>
               <button type="button" id="btn-open-printer-guide" class="set-link shrink-0">
                 <span id="lbl-btn-printer-guide">Panduan Printer Paired / Driver</span>
               </button>
@@ -2763,8 +2789,8 @@
             <span>Kasus 2: Printer Menggunakan Kabel USB</span>
           </div>
           <div class="bg-navy-950 p-2.5 rounded-lg border border-navy-800 space-y-1.5 text-xs">
-            <div><strong>Jika Driver Windows Sudah Terpasang:</strong> Port USB dikunci eksklusif oleh Windows. Cukup klik tombol <strong class="text-white bg-navy-700 px-1.5 py-0.5 rounded">Cetak USB / Driver</strong>.</div>
-            <div><strong>Jika Tanpa Driver Windows:</strong> Klik <strong class="text-brand bg-navy-800 px-1.5 py-0.5 rounded">Hubungkan USB</strong> untuk mengirim data langsung via WebUSB.</div>
+            <div><strong>Driver Windows sudah terpasang (contoh iWare DM-76H):</strong> driver memegang port USB, jadi browser tidak bisa membukanya. Pasang <strong>Skyline Print Bridge</strong> (Pengaturan &gt; Printer struk). Struk lalu keluar langsung sebagai ESC/POS tanpa dialog cetak.</div>
+            <div><strong>Tanpa driver Windows:</strong> klik <strong class="text-brand bg-navy-800 px-1.5 py-0.5 rounded">Hubungkan USB</strong> untuk mengirim data langsung via WebUSB.</div>
           </div>
         </div>
 
@@ -2795,7 +2821,7 @@
       <div class="flex items-center justify-between pb-3 border-b border-navy-700">
         <div class="flex items-center gap-2">
           <span class="text-xl">🖨️</span>
-          <h3 class="font-bold text-white text-base sm:text-lg" id="usb-helper-title">Status Printer USB / Driver Windows</h3>
+          <h3 class="font-bold text-white text-base sm:text-lg" id="usb-helper-title">Printer USB dipegang driver Windows</h3>
         </div>
         <button type="button" id="btn-close-usb-helper" class="text-slate-400 hover:text-white text-2xl font-bold leading-none">&times;</button>
       </div>
@@ -2807,40 +2833,29 @@
               <span>🔌</span>
               <span id="usb-helper-devicename">Iware DM-76H / USB Printer</span>
             </span>
-            <span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">Windows Driver Siap</span>
           </div>
           <p class="leading-relaxed text-slate-300 text-xs">
-            Di sistem Windows, printer USB yang sudah terhubung biasanya dikunci secara eksklusif oleh <strong>Windows Driver</strong>. Hal ini normal sehingga browser tidak memerlukan koneksi WebUSB langsung.
+            Printer ini sudah memakai <strong>driver Windows</strong>, jadi browser tidak boleh membuka port USB-nya langsung. Itu normal, printernya tidak rusak.
           </p>
         </div>
 
         <div class="space-y-2.5">
           <div class="p-3 rounded-lg bg-navy-950 border border-navy-800 space-y-1">
-            <div class="font-semibold text-emerald-400 text-xs flex items-center gap-1.5">
-              <span>✅</span>
-              <span>Solusi 1: Cetak Langsung Lewat Windows Driver (Paling Direkomendasikan)</span>
-            </div>
+            <div class="font-semibold text-emerald-400 text-xs">Solusi 1 (disarankan): Skyline Print Bridge</div>
             <p class="text-[12px] text-slate-300 leading-relaxed">
-              Anda <strong>tidak perlu</strong> menghubungkan tombol ini. Cukup selesaikan transaksi lalu klik tombol <strong>"Cetak USB"</strong> pada nota. Struk akan otomatis keluar di printer Iware DM-76H Anda dengan format 76 mm Dot Matrix.
+              Unduh dan jalankan <a href="/pos/print-bridge/SkylinePrintBridge.cmd" download class="text-brand underline">SkylinePrintBridge.cmd</a> sekali di PC kasir. Struk dikirim sebagai ESC/POS lewat driver Windows, tanpa dialog cetak. Setelah itu buka Pengaturan &gt; Printer struk dan klik Cek koneksi.
             </p>
           </div>
 
           <div class="p-3 rounded-lg bg-navy-950 border border-navy-800 space-y-1">
-            <div class="font-semibold text-brand text-xs flex items-center gap-1.5">
-              <span>⚡</span>
-              <span>Solusi 2: Hubungkan Lewat Port Serial / COM (Direct ESC/POS)</span>
-            </div>
+            <div class="font-semibold text-brand text-xs">Solusi 2: Port Serial / COM</div>
             <p class="text-[12px] text-slate-300 leading-relaxed">
-              Jika printer Anda menggunakan kabel USB-Serial (Virtual COM Port seperti COM3/COM4), Anda bisa menghubungkannya langsung untuk cetak instan tanpa dialog Windows.
+              Hanya jika printer muncul sebagai port COM (kabel USB-Serial / RS-232).
             </p>
           </div>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-          <button type="button" id="btn-helper-test-driver" class="py-2.5 px-3 rounded-lg bg-navy-700 hover:bg-navy-600 text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors">
-            <svg class="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-            <span>Tes Cetak USB / Driver</span>
-          </button>
+        <div class="grid grid-cols-1 gap-2 pt-1">
           <button type="button" id="btn-helper-connect-serial" class="py-2.5 px-3 rounded-lg bg-navy-700 hover:bg-navy-600 text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors">
             <svg class="w-4 h-4 text-brand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M3 12h3m12 0h3M12 3v3m0 12v3"/></svg>
             <span>Hubungkan Serial / COM</span>
@@ -2850,7 +2865,7 @@
 
       <div class="pt-3 border-t border-navy-700 flex items-center justify-between">
         <button type="button" id="btn-helper-open-guide" class="text-xs text-brand hover:underline font-medium">Buka Panduan Lengkap</button>
-        <button type="button" id="btn-helper-done" class="py-2 px-5 rounded-lg bg-brand hover:bg-brand-hover text-navy-950 font-bold text-xs sm:text-sm">Saya Mengerti</button>
+        <button type="button" id="btn-helper-done" class="py-2 px-5 rounded-lg bg-brand hover:bg-brand-hover text-navy-950 font-bold text-xs sm:text-sm">Tutup</button>
       </div>
     </div>
   </div>
@@ -2859,10 +2874,11 @@
   <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col space-y-2 pointer-events-none"></div>
 
   <!-- Scripts -->
-  <script src="/pos/bluetooth-print.js?v=3.12"></script>
-  <script src="/pos/usb-print.js?v=3.12"></script>
-  <script src="/pos/serial-print.js?v=3.12"></script>
-  <script src="/pos/app.js?v=3.12"></script>
+  <script src="/pos/bluetooth-print.js?v=3.13"></script>
+  <script src="/pos/usb-print.js?v=3.13"></script>
+  <script src="/pos/serial-print.js?v=3.13"></script>
+  <script src="/pos/bridge-print.js?v=3.13"></script>
+  <script src="/pos/app.js?v=3.13"></script>
 
   <!-- Modal Tambah Data DTTOT -->
   <div id="modal-add-dttot" class="fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-3 hidden">
