@@ -1,4 +1,4 @@
-const CACHE_NAME = 'skyline-pos-v2.6';
+const CACHE_NAME = 'skyline-pos-v2.7';
 // Styling comes from the Tailwind CDN runtime; without it cached, offline mode renders unstyled
 const TAILWIND_URL = 'https://cdn.tailwindcss.com/';
 const isPosScope = self.registration.scope.includes('/pos');
@@ -11,6 +11,7 @@ const ASSETS = [
   prefix + '/bluetooth-print.js',
   prefix + '/usb-print.js',
   prefix + '/serial-print.js',
+  prefix + '/bridge-print.js',
   prefix + '/icon.svg',
   prefix + '/logo.svg',
   prefix + '/favicon.svg',
@@ -53,6 +54,8 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
+  // Other origins (e.g. the Print Bridge on 127.0.0.1) go straight to the network, except Tailwind below
+  if (!event.request.url.startsWith(self.location.origin) && !event.request.url.startsWith('https://cdn.tailwindcss.com')) return;
 
   // Let API requests pass to network
   if (event.request.url.includes('/api/')) {

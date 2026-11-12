@@ -846,6 +846,11 @@ restoreSettingsFromFile();
 restoreRatesFromFile();
 restoreTransactionsFromFile();
 
+// One-time switch to the 76 mm dot-matrix default (iWare DM-76H). The marker row keeps a later 80 mm choice from Pengaturan.
+if (db.prepare("INSERT OR IGNORE INTO settings (key, value) VALUES ('paper_size_76_default', '1')").run().changes) {
+  db.prepare("UPDATE settings SET value = '76' WHERE key = 'paper_size' AND value = '80'").run();
+}
+
 // Save updated backup files
 backupUsersToFile();
 backupSettingsToFile();

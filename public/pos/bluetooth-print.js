@@ -215,6 +215,10 @@ class BluetoothPrinter {
     return `${line1}\n${line2}`;
   }
 
+  static toAscii(str) {
+    return String(str).normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^\x20-\x7E\n]/g, '?');
+  }
+
   /**
    * Convert image URL, SVG, or data-URL to monochrome 1-bit ESC/POS raster bit-image
    * Command: GS v 0 0 xL xH yL yH (Standard Epson/POS raster format)
@@ -312,7 +316,7 @@ class BluetoothPrinter {
 
     const addBytes = (...arr) => bytes.push(...arr);
     const addText = (str) => {
-      const encoded = encoder.encode(str);
+      const encoded = encoder.encode(BluetoothPrinter.toAscii(str));
       for (let i = 0; i < encoded.length; i++) {
         bytes.push(encoded[i]);
       }
@@ -548,7 +552,7 @@ class BluetoothPrinter {
     const bytes = [];
     const addBytes = (...arr) => bytes.push(...arr);
     const addText = (str) => {
-      const encoded = encoder.encode(str);
+      const encoded = encoder.encode(BluetoothPrinter.toAscii(str));
       for (let i = 0; i < encoded.length; i++) bytes.push(encoded[i]);
     };
     const addLine = (str = '') => addText(str + '\n');
@@ -609,7 +613,7 @@ class BluetoothPrinter {
 
     addLine(dividerDash);
     addBytes(0x1B, 0x21, 0x08);
-    addLine(isEn ? '*** BLUETOOTH PRINTER TEST ***' : '*** TES PRINTER BLUETOOTH ***');
+    addLine(isEn ? '*** PRINTER TEST ***' : '*** TES PRINTER ***');
     addBytes(0x1B, 0x21, 0x00);
     addLine(dividerDash);
 
@@ -618,9 +622,9 @@ class BluetoothPrinter {
     const now = new Date();
     const timeStr = now.toLocaleDateString(isEn ? 'en-US' : 'id-ID') + ' ' + now.toLocaleTimeString(isEn ? 'en-US' : 'id-ID');
     addLine(BluetoothPrinter.padLine(isEn ? 'Status' : 'Status', isEn ? 'CONNECTED OK' : 'TERHUBUNG OK', width));
-    addLine(BluetoothPrinter.padLine(isEn ? 'Paper Size' : 'Ukuran Kertas', is80 ? '80 mm (48 Kolom)' : '58 mm (32 Kolom)', width));
+    addLine(BluetoothPrinter.padLine(isEn ? 'Paper Size' : 'Ukuran Kertas', is80 ? '80 mm (48 Kolom)' : (is76 ? '76 mm (40 Kolom)' : '58 mm (32 Kolom)'), width));
     addLine(BluetoothPrinter.padLine(isEn ? 'Date & Time' : 'Tanggal & Waktu', timeStr, width));
-    addLine(BluetoothPrinter.padLine('Device', this.device ? (this.device.name || 'Thermal BLE') : 'Bluetooth Printer', width));
+    addLine(BluetoothPrinter.padLine(isEn ? 'Mode' : 'Mode', isDotMatrix ? 'ESC/POS DOT MATRIX' : 'ESC/POS THERMAL', width));
 
     addLine(dividerDouble);
     addLine(BluetoothPrinter.formatTableRow(isEn ? 'CURR' : 'VALAS', isEn ? 'QTY' : 'JML', isEn ? 'RATE' : 'KURS', 'SUB TOTAL', width));
@@ -635,7 +639,7 @@ class BluetoothPrinter {
     // Footer
     addBytes(0x1B, 0x61, 0x01);
     addLine('');
-    addLine(isEn ? 'Printer is verified and ready for cashier.' : 'Printer terverifikasi & siap untuk transaksi kasir.');
+    addLine(isEn ? 'Printer is ready for the cashier.' : 'Printer siap untuk transaksi kasir.');
     addLine('SKYLINE EXCHANGE POS');
     if (isDotMatrix) {
       addLine('\n\n\n\n\n');

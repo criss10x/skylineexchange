@@ -239,8 +239,8 @@ const i18n = {
     btnCopyScript: 'Salin Kode Script (1-Click)',
 
     // Pengujian & Status Printer
-    printerDiagTitle: 'Printer thermal',
-    printerDiagSub: 'Hubungkan dan tes printer Bluetooth, USB, atau Serial COM.',
+    printerDiagTitle: 'Printer struk',
+    printerDiagSub: 'Struk dikirim sebagai perintah ESC/POS. Pakai satu jalur: Print Bridge (USB + driver Windows), Serial / COM, USB langsung, atau Bluetooth.',
     btnSettingsConnect: 'Hubungkan BT',
     btnSettingsDisconnect: 'Putuskan BT',
     btnSettingsConnectUsb: 'Hubungkan USB',
@@ -248,8 +248,8 @@ const i18n = {
     btnSettingsConnectSerial: 'Hubungkan Serial / COM',
     btnSettingsDisconnectSerial: 'Putuskan Serial / COM',
     btnSettingsTestBt: 'Tes Cetak BT',
-    btnSettingsTestSys: 'Tes Cetak USB / Driver',
-    printerDiagNote: 'Printer Bluetooth sudah berstatus "Paired" di Windows? Hubungkan lewat Serial / COM atau langsung cetak lewat Tes Cetak USB / Driver.',
+    btnSettingsTestSys: 'Tes Cetak Struk',
+    printerDiagNote: 'Tes Cetak Struk memakai jalur yang sedang terhubung. Jika belum ada, yang terbuka dialog cetak Windows (bukan ESC/POS).',
     btDisconnectedText: 'BT: Belum Terhubung',
     btConnectedPrefix: 'BT: Terhubung',
     usbDisconnectedText: 'USB: Belum Terhubung',
@@ -493,8 +493,8 @@ const i18n = {
     btnCopyScript: 'Copy Script Code (1-Click)',
 
     // Printer Diagnostic & Testing
-    printerDiagTitle: 'Thermal printer',
-    printerDiagSub: 'Connect and test a Bluetooth, USB or Serial COM printer.',
+    printerDiagTitle: 'Receipt printer',
+    printerDiagSub: 'Receipts are sent as ESC/POS commands. Use one route: Print Bridge (USB + Windows driver), Serial / COM, direct USB or Bluetooth.',
     btnSettingsConnect: 'Connect BT',
     btnSettingsDisconnect: 'Disconnect BT',
     btnSettingsConnectUsb: 'Connect USB',
@@ -502,8 +502,8 @@ const i18n = {
     btnSettingsConnectSerial: 'Connect Serial / COM',
     btnSettingsDisconnectSerial: 'Disconnect Serial / COM',
     btnSettingsTestBt: 'Test Print BT',
-    btnSettingsTestSys: 'Test USB / Driver Print',
-    printerDiagNote: 'Bluetooth printer already paired in Windows? Connect via Serial / COM or print directly using Test USB / Driver Print.',
+    btnSettingsTestSys: 'Test Receipt Print',
+    printerDiagNote: 'Test Receipt Print uses the route that is connected. With none connected it opens the Windows print dialog (not ESC/POS).',
     btDisconnectedText: 'BT: Not Connected',
     btConnectedPrefix: 'BT: Connected',
     usbDisconnectedText: 'USB: Not Connected',
@@ -623,6 +623,7 @@ async function authFetch(url, options = {}) {
 const printer = new window.BluetoothPrinter();
 const usbPrinter = typeof window.UsbPrinter !== 'undefined' ? new window.UsbPrinter() : null;
 const serialPrinter = typeof window.SerialPrinter !== 'undefined' ? new window.SerialPrinter() : null;
+const bridgePrinter = typeof window.BridgePrinter !== 'undefined' ? new window.BridgePrinter() : null;
 
 // ==================== NUMERIC INPUT FORMATTING (id-ID) ====================
 // Money inputs are type="text" so they can show thousand separators while typing:
@@ -1188,10 +1189,8 @@ function setAppLanguage(lang) {
   if (settingsSerialStatusText && (!serialPrinter || !serialPrinter.isConnected)) {
     settingsSerialStatusText.textContent = t.serialDisconnectedText;
   }
-  const usbPrinterName = document.getElementById('usb-printer-name');
-  if (usbPrinterName && (!usbPrinter || !usbPrinter.isConnected)) {
-    usbPrinterName.textContent = t.connectUsb;
-  }
+  refreshUsbNavbar();
+  renderBridgeStatus();
   const btPrinterName = document.getElementById('bt-printer-name');
   if (btPrinterName && !printer.isConnected) {
     btPrinterName.textContent = t.connectBt;
@@ -2618,33 +2617,13 @@ async function processTransactionInner() {
   // Update on-screen printable receipt
   renderReceiptData(payload);
 
-  // Attempt Thermal Print (Serial / COM, USB, or Bluetooth) with chosen receipt language
-  if (serialPrinter && serialPrinter.isConnected) {
-    try {
-      const escPosBytes = await printer.buildEscPos(payload, state.settings, state.receiptLang);
-      await serialPrinter.print(escPosBytes);
-      showToast(isEn ? 'Receipt printed to Serial / COM printer!' : 'Struk berhasil dicetak ke printer Serial / COM!', 'success');
-    } catch (err) {
-      showToast(`${isEn ? 'Serial print failed' : 'Gagal mencetak Serial'}: ${err.message}`, 'error');
-    }
-  } else if (usbPrinter && usbPrinter.isConnected) {
-    try {
-      const escPosBytes = await printer.buildEscPos(payload, state.settings, state.receiptLang);
-      await usbPrinter.print(escPosBytes);
-      showToast(isEn ? 'Receipt printed to USB printer!' : 'Struk berhasil dicetak ke printer USB!', 'success');
-    } catch (err) {
-      showToast(`${isEn ? 'USB print failed' : 'Gagal mencetak USB'}: ${err.message}`, 'error');
-    }
-  } else if (printer.isConnected) {
-    try {
-      const escPosBytes = await printer.buildEscPos(payload, state.settings, state.receiptLang);
-      await printer.print(escPosBytes);
-      showToast(isEn ? 'Receipt printed to Bluetooth printer!' : 'Struk berhasil dicetak ke printer Bluetooth!', 'success');
-    } catch (err) {
-      showToast(`${isEn ? 'Bluetooth print failed' : 'Gagal mencetak Bluetooth'}: ${err.message}`, 'error');
-    }
-  } else {
-    showToast(isEn ? 'Transaction completed. You can print the receipt now.' : 'Transaksi selesai. Anda dapat mencetak struk sekarang.', 'info');
+  // Print the receipt over whichever ESC/POS route is connected, in the chosen receipt language
+  try {
+    const via = await sendEscPos(await printer.buildEscPos(payload, state.settings, state.receiptLang));
+    if (via) showToast(isEn ? `Receipt printed (${via})` : `Struk dicetak (${via})`, 'success');
+    else showToast(isEn ? 'Transaction completed. You can print the receipt now.' : 'Transaksi selesai. Anda dapat mencetak struk sekarang.', 'info');
+  } catch (err) {
+    showToast(`${isEn ? 'Print failed' : 'Gagal mencetak'}: ${err.message}`, 'error');
   }
 
   loadHistory();
@@ -2934,28 +2913,15 @@ async function handleTestBrowserPrint() {
     created_at_formatted: now.toLocaleDateString(locale) + ' ' + now.toLocaleTimeString(locale)
   };
 
-  if (serialPrinter && serialPrinter.isConnected) {
-    try {
-      showToast(isEn ? 'Printing Serial / COM test receipt...' : 'Mencetak struk tes Serial / COM...', 'info');
-      const escPosBytes = await printer.buildTestEscPos(state.settings, state.receiptLang);
-      await serialPrinter.print(escPosBytes);
-      showToast(isEn ? 'Serial / COM test receipt printed successfully!' : 'Struk tes Serial / COM berhasil dicetak!', 'success');
+  try {
+    const via = await sendEscPos(await printer.buildTestEscPos(state.settings, state.receiptLang));
+    if (via) {
+      showToast(isEn ? `Test receipt printed (${via})` : `Struk tes dicetak (${via})`, 'success');
       return;
-    } catch (err) {
-      console.warn('Serial test print error, falling back to other methods:', err);
     }
-  }
-
-  if (usbPrinter && usbPrinter.isConnected) {
-    try {
-      showToast(isEn ? 'Printing USB test receipt...' : 'Mencetak struk tes USB...', 'info');
-      const escPosBytes = await printer.buildTestEscPos(state.settings, state.receiptLang);
-      await usbPrinter.print(escPosBytes);
-      showToast(isEn ? 'USB test receipt printed successfully!' : 'Struk tes USB berhasil dicetak!', 'success');
-      return;
-    } catch (err) {
-      console.warn('USB direct test print error, falling back to window.print():', err);
-    }
+  } catch (err) {
+    showToast(`${isEn ? 'Print failed' : 'Gagal mencetak'}: ${err.message}`, 'error');
+    return;
   }
 
   const prev = state.currentReceipt;
@@ -2987,6 +2953,13 @@ function buildCurrentFormReceiptData() {
   const custGender = document.getElementById('cust-gender')?.value.trim() || '';
   const custAddress = document.getElementById('cust-address')?.value.trim() || '';
   const signatureName = document.getElementById('input-signature-customer').value.trim();
+  const isUnderlying = state.isUnderlyingRequired || false;
+  const underlyingType = document.getElementById('underlying-doc-type')?.value || '';
+  const underlyingDocNo = document.getElementById('underlying-doc-no')?.value.trim() || '';
+  const isPep = document.getElementById('cust-pep-toggle')?.checked || false;
+  const pepInstitution = document.getElementById('pep-institution')?.value.trim() || '';
+  const sourceOfFunds = document.getElementById('pep-source-funds')?.value || '';
+  const transactionPurpose = document.getElementById('pep-purpose')?.value || '';
   const { total, payment, change } = calculateTotals();
 
   const now = new Date();
@@ -3020,6 +2993,19 @@ function buildCurrentFormReceiptData() {
   };
 }
 
+// Sends ESC/POS bytes over the first connected route. Returns the route used, or null when none is ready
+// (the caller then falls back to the browser print dialog).
+async function sendEscPos(bytes) {
+  if (serialPrinter && serialPrinter.isConnected) { await serialPrinter.print(bytes); return 'Serial / COM'; }
+  if (usbPrinter && usbPrinter.isConnected) { await usbPrinter.print(bytes); return 'USB'; }
+  // Only re-probe a bridge this browser has seen before, so other devices never get Chrome's local-access prompt
+  if (bridgePrinter && (bridgePrinter.isConnected || (bridgePrinter.wasSeen && await bridgePrinter.check(1000)))) {
+    return await bridgePrinter.print(bytes);
+  }
+  if (printer.isConnected) { await printer.print(bytes); return 'Bluetooth'; }
+  return null;
+}
+
 async function handleBrowserPrint() {
   const currentData = state.currentReceipt || buildCurrentFormReceiptData();
   const isEn = state.appLang === 'en';
@@ -3032,29 +3018,15 @@ async function handleBrowserPrint() {
   // Always refresh on-screen printable receipt DOM before printing
   renderReceiptData(currentData);
 
-  if (serialPrinter && serialPrinter.isConnected) {
-    try {
-      showToast(isEn ? 'Printing via Serial / COM...' : 'Mencetak lewat Serial / COM...', 'info');
-      const escPosBytes = await printer.buildEscPos(currentData, state.settings, state.receiptLang);
-      await serialPrinter.print(escPosBytes);
-      showToast(isEn ? 'Receipt printed via Serial / COM!' : 'Struk berhasil dicetak lewat Serial / COM!', 'success');
+  try {
+    const via = await sendEscPos(await printer.buildEscPos(currentData, state.settings, state.receiptLang));
+    if (via) {
+      showToast(isEn ? `Receipt printed (${via})` : `Struk dicetak (${via})`, 'success');
       return;
-    } catch (err) {
-      console.warn('Serial print error, falling back to system print:', err);
     }
-  }
-
-  if (usbPrinter && usbPrinter.isConnected) {
-    try {
-      showToast(isEn ? 'Printing via USB thermal printer...' : 'Mencetak lewat printer thermal USB...', 'info');
-      const escPosBytes = await printer.buildEscPos(currentData, state.settings, state.receiptLang);
-      await usbPrinter.print(escPosBytes);
-      showToast(isEn ? 'Receipt printed via USB successfully!' : 'Struk berhasil dicetak lewat USB!', 'success');
-      return;
-    } catch (err) {
-      console.warn('WebUSB direct print error, falling back to system print:', err);
-      showToast(isEn ? 'Direct WebUSB failed, opening system print...' : 'Koneksi direct USB gagal, membuka dialog cetak sistem...', 'info');
-    }
+  } catch (err) {
+    showToast(`${isEn ? 'Print failed' : 'Gagal mencetak'}: ${err.message}`, 'error');
+    return;
   }
 
   const tabPos = document.getElementById('tab-pos');
@@ -3708,7 +3680,10 @@ function switchTab(tabId) {
   if (tabId === 'tab-rates') loadRates();
   if (tabId === 'tab-history') { loadHistory(); loadReportsSummary(); }
   // "Google Sheets" has its own nav tab, so Pengaturan opens on the store profile
-  if (tabId === 'tab-settings') switchSubtab('store');
+  if (tabId === 'tab-settings') {
+    switchSubtab('store');
+    if (bridgePrinter && bridgePrinter.wasSeen) bridgePrinter.check();
+  }
 }
 
 // ==================== BLUETOOTH PRINTER UI ====================
@@ -3846,20 +3821,17 @@ function refreshUsbNavbar() {
     return;
   }
 
-  const usbMode = localStorage.getItem('pos_usb_mode');
-  if (usbMode === 'driver') {
+  if (bridgePrinter && bridgePrinter.isConnected) {
     if (statusDot) statusDot.className = 'w-2 h-2 rounded-full bg-emerald-400';
-    if (nameLabel) nameLabel.textContent = isEn ? 'USB (Driver Ready)' : 'USB (Driver Siap)';
+    if (nameLabel) nameLabel.textContent = bridgePrinter.activePrinter() || (isEn ? 'Choose printer' : 'Pilih printer');
     if (btnConnect) {
       btnConnect.classList.add('border-emerald-500/50', 'text-emerald-300');
       btnConnect.classList.remove('border-brand/60', 'text-brand');
     }
     if (settingsStatusBadge) {
-      settingsStatusBadge.className = 'px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center gap-1.5';
+      settingsStatusBadge.className = 'px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-700/60 text-slate-300 border border-slate-600 flex items-center gap-1.5';
     }
-    if (settingsStatusText) {
-      settingsStatusText.textContent = isEn ? 'USB: Windows Driver Ready' : 'USB: Driver Windows Siap';
-    }
+    if (settingsStatusText) settingsStatusText.textContent = isEn ? 'USB: Not Connected' : 'USB: Belum Terhubung';
     return;
   }
 
@@ -3889,7 +3861,6 @@ function initUsbHelperModal() {
   if (!modal) return;
   const btnClose = document.getElementById('btn-close-usb-helper');
   const btnDone = document.getElementById('btn-helper-done');
-  const btnTest = document.getElementById('btn-helper-test-driver');
   const btnSerial = document.getElementById('btn-helper-connect-serial');
   const btnGuide = document.getElementById('btn-helper-open-guide');
 
@@ -3897,21 +3868,7 @@ function initUsbHelperModal() {
 
   if (btnClose) btnClose.addEventListener('click', closeModal);
 
-  if (btnDone) {
-    btnDone.addEventListener('click', () => {
-      localStorage.setItem('pos_usb_mode', 'driver');
-      refreshUsbNavbar();
-      closeModal();
-      showToast(state.appLang === 'en' ? 'USB Printer set to Windows Driver mode!' : 'Printer USB diset ke mode Driver Windows!', 'success');
-    });
-  }
-
-  if (btnTest) {
-    btnTest.addEventListener('click', async () => {
-      closeModal();
-      await handleBrowserPrint();
-    });
-  }
+  if (btnDone) btnDone.addEventListener('click', closeModal);
 
   if (btnSerial) {
     btnSerial.addEventListener('click', async () => {
@@ -3989,13 +3946,6 @@ function initUsbUI() {
       return;
     }
 
-    // If currently in driver mode and user clicks USB button, give them the helper options
-    const currentMode = localStorage.getItem('pos_usb_mode');
-    if (currentMode === 'driver') {
-      openUsbHelperModal('Iware DM-76H / Driver Windows');
-      return;
-    }
-
     try {
       showToast(isEn ? 'Selecting USB printer...' : 'Memilih printer USB...', 'info');
       const deviceName = await usbPrinter.connect();
@@ -4012,7 +3962,14 @@ function initUsbUI() {
   };
 
   if (btnConnect) {
-    btnConnect.addEventListener('click', handleToggleUsb);
+    // A running Print Bridge is the USB path for printers with a Windows driver: open its settings
+    btnConnect.addEventListener('click', async () => {
+      if (!usbPrinter.isConnected && bridgePrinter && bridgePrinter.isConnected) {
+        openPrinterSettings();
+        return;
+      }
+      await handleToggleUsb();
+    });
   }
   if (btnSettingsConnect) {
     btnSettingsConnect.addEventListener('click', handleToggleUsb);
@@ -4100,6 +4057,93 @@ function initSerialUI() {
   if (btnSettingsConnect) {
     btnSettingsConnect.addEventListener('click', handleToggleSerial);
   }
+}
+
+// ==================== PRINT BRIDGE (USB printer with a Windows driver) ====================
+function openPrinterSettings() {
+  switchTab('tab-settings');
+  setTimeout(() => document.getElementById('bridge-card')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
+}
+
+function renderBridgeStatus() {
+  if (!bridgePrinter) return;
+  const isEn = state.appLang === 'en';
+  const setText = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
+  const connected = bridgePrinter.isConnected;
+  const active = bridgePrinter.activePrinter();
+
+  setText('lbl-bridge-title', isEn ? 'USB printer with a Windows driver (Skyline Print Bridge)' : 'Printer USB dengan driver Windows (Skyline Print Bridge)');
+  setText('lbl-bridge-desc', isEn
+    ? 'For the iWare DM-76H and any USB printer that already prints from Windows. The POS sends ESC/POS commands to a small helper on the cashier PC, which passes them to the printer.'
+    : 'Untuk iWare DM-76H dan printer USB lain yang sudah bisa mencetak dari Windows. POS mengirim perintah ESC/POS ke aplikasi kecil di PC kasir, lalu diteruskan ke printer.');
+  setText('lbl-bridge-printer', isEn ? 'Receipt printer in Windows' : 'Printer struk di Windows');
+  setText('lbl-btn-bridge-check', isEn ? 'Check connection' : 'Cek koneksi');
+  setText('lbl-btn-bridge-test', isEn ? 'Test ESC/POS print' : 'Tes cetak ESC/POS');
+
+  const badge = document.getElementById('bridge-status');
+  if (badge) {
+    badge.className = 'set-status shrink-0 ' + (connected && active ? 'set-status--ok' : 'set-status--warn');
+    badge.textContent = !connected ? (isEn ? 'Not running on this PC' : 'Belum aktif di PC ini')
+      : active ? (isEn ? 'Ready' : 'Siap')
+      : (isEn ? 'Choose a printer' : 'Pilih printer');
+  }
+
+  const select = document.getElementById('bridge-printer-select');
+  if (select) {
+    select.innerHTML = '';
+    select.add(new Option(connected ? (isEn ? '-- choose printer --' : '-- pilih printer --') : '-', ''));
+    bridgePrinter.printers.forEach(name => select.add(new Option(name, name)));
+    select.value = active;
+    select.disabled = !connected;
+  }
+  const btnTest = document.getElementById('btn-bridge-test');
+  if (btnTest) btnTest.disabled = !connected || !active;
+
+  const steps = document.getElementById('bridge-install-steps');
+  if (steps) {
+    steps.classList.toggle('hidden', connected);
+    steps.innerHTML = isEn
+      ? `<li>On the cashier PC, download <a href="/pos/print-bridge/SkylinePrintBridge.cmd" download class="set-link">SkylinePrintBridge.cmd</a>. If Chrome warns about the file, choose <em>Keep</em>.</li>
+         <li>Double-click it. If "Windows protected your PC" appears, click <em>More info</em> then <em>Run anyway</em>.</li>
+         <li>Click <strong>Check connection</strong>. If Chrome asks to access apps on this device, choose <strong>Allow</strong>.</li>
+         <li>Pick the receipt printer, then click <strong>Test ESC/POS print</strong>. The bridge starts with Windows from now on.</li>`
+      : `<li>Di PC kasir, unduh <a href="/pos/print-bridge/SkylinePrintBridge.cmd" download class="set-link">SkylinePrintBridge.cmd</a>. Jika Chrome memperingatkan file ini, pilih <em>Keep</em>.</li>
+                <li>Klik dua kali file itu. Jika muncul "Windows protected your PC", klik <em>More info</em> lalu <em>Run anyway</em>.</li>
+                <li>Klik <strong>Cek koneksi</strong>. Jika Chrome meminta izin akses ke aplikasi di perangkat ini, pilih <strong>Izinkan</strong>.</li>
+                <li>Pilih printer struk, lalu klik <strong>Tes cetak ESC/POS</strong>. Bridge jalan otomatis setiap Windows menyala.</li>`;
+  }
+  refreshUsbNavbar();
+}
+
+function initBridgeUI() {
+  if (!bridgePrinter) return;
+  const isEn = () => state.appLang === 'en';
+  bridgePrinter.onStatusChange = renderBridgeStatus;
+
+  document.getElementById('bridge-printer-select')?.addEventListener('change', (e) => {
+    bridgePrinter.printerName = e.target.value;
+    renderBridgeStatus();
+  });
+
+  document.getElementById('btn-bridge-check')?.addEventListener('click', async () => {
+    const ok = await bridgePrinter.check();
+    showToast(ok
+      ? (isEn() ? 'Print Bridge connected' : 'Print Bridge terhubung')
+      : (isEn() ? 'Print Bridge is not running on this PC. Run SkylinePrintBridge.cmd first.' : 'Print Bridge belum aktif di PC ini. Jalankan SkylinePrintBridge.cmd dulu.'),
+      ok ? 'success' : 'warning');
+  });
+
+  document.getElementById('btn-bridge-test')?.addEventListener('click', async () => {
+    try {
+      const name = await bridgePrinter.print(await printer.buildTestEscPos(state.settings, state.receiptLang));
+      showToast(isEn() ? `Test receipt sent to ${name}` : `Struk tes dikirim ke ${name}`, 'success');
+    } catch (err) {
+      showToast(`Print Bridge: ${err.message}`, 'error');
+    }
+  });
+
+  renderBridgeStatus();
+  if (bridgePrinter.wasSeen) bridgePrinter.check();
 }
 
 // ==================== PRINTER TROUBLESHOOTING GUIDE MODAL ====================
@@ -5700,6 +5744,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initBluetoothUI();
   initUsbUI();
   initSerialUI();
+  initBridgeUI();
   initPrinterGuideModal();
   initUsbHelperModal();
   initTheme();
