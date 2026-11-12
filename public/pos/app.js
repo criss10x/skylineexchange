@@ -194,11 +194,13 @@ const i18n = {
     settingStoreCompanyHint: 'Dicetak di bawah nama money changer. Kosongkan jika tidak ingin ditampilkan.',
     settingStoreAddr: 'Alamat Outlet / Counter',
     settingStorePhone: 'No. WhatsApp & Telepon',
-    settingPaperSize: 'Ukuran Kertas Thermal Printer',
-    paper80Title: '80 mm (Standar Kasir)',
-    paper80Desc: 'Lebar 48 kolom, tampilan lega & auto-cutter',
+    settingPaperSize: 'Ukuran Kertas & Tipe Printer',
+    paper80Title: '80 mm (Thermal Kasir)',
+    paper80Desc: 'Lebar 48 kolom, thermal & auto-cutter',
+    paper76Title: '76 mm (Dot Matrix / Pita)',
+    paper76Desc: 'Lebar 40 kolom, Epson TM-U220, pita hitam/merah',
     paper58Title: '58 mm (Printer Mini / Mobile)',
-    paper58Desc: 'Lebar 32 kolom, compact untuk printer Bluetooth kecil',
+    paper58Desc: 'Lebar 32 kolom, compact Bluetooth kecil',
     settingPermit: 'Nomor Izin KUPVA / Bank Indonesia',
     settingShowPermit: 'Tampilkan di Struk (Saat ini disembunyikan)',
     settingTeller: 'Nama Teller Aktif di Kasir',
@@ -446,11 +448,13 @@ const i18n = {
     settingStoreCompanyHint: 'Printed under the money changer name. Leave empty to hide it.',
     settingStoreAddr: 'Outlet / Counter Address',
     settingStorePhone: 'WhatsApp & Phone Number',
-    settingPaperSize: 'Thermal Receipt Paper Size',
-    paper80Title: '80 mm (Standard POS)',
-    paper80Desc: '48 columns wide, spacious layout & auto-cutter',
+    settingPaperSize: 'Paper Size & Printer Type',
+    paper80Title: '80 mm (Thermal POS)',
+    paper80Desc: '48 columns wide, thermal & auto-cutter',
+    paper76Title: '76 mm (Dot Matrix / Impact)',
+    paper76Desc: '40 columns wide, Epson TM-U220, black/red ribbon',
     paper58Title: '58 mm (Mini / Mobile Printer)',
-    paper58Desc: '32 columns wide, compact for mini Bluetooth printers',
+    paper58Desc: '32 columns wide, compact Bluetooth',
     settingPermit: 'License Number (KUPVA / Bank Indonesia)',
     settingShowPermit: 'Show on Receipt (Currently hidden)',
     settingTeller: 'Active Teller Name',
@@ -1150,6 +1154,8 @@ function setAppLanguage(lang) {
   safeSet('lbl-set-paper-size', t.settingPaperSize);
   safeSet('lbl-paper-80-title', t.paper80Title);
   safeSet('lbl-paper-80-desc', t.paper80Desc);
+  safeSet('lbl-paper-76-title', t.paper76Title);
+  safeSet('lbl-paper-76-desc', t.paper76Desc);
   safeSet('lbl-paper-58-title', t.paper58Title);
   safeSet('lbl-paper-58-desc', t.paper58Desc);
   safeSet('lbl-set-permit', t.settingPermit);
@@ -1466,12 +1472,15 @@ function applySettingsToUI() {
 
   const paperSize = s.paper_size || '80';
   const r80 = document.getElementById('setting-paper-80');
+  const r76 = document.getElementById('setting-paper-76');
   const r58 = document.getElementById('setting-paper-58');
-  if (r80 && r58) {
+  if (r80 || r76 || r58) {
     if (paperSize === '58') {
-      r58.checked = true;
+      if (r58) r58.checked = true;
+    } else if (paperSize === '76') {
+      if (r76) r76.checked = true;
     } else {
-      r80.checked = true;
+      if (r80) r80.checked = true;
     }
   }
   applyPaperSize(paperSize);
@@ -1600,17 +1609,22 @@ function applyStoreLogo(logoUrl, showOnReceipt, logoSize) {
 
 function applyPaperSize(size) {
   const is80 = size === '80';
-  state.settings.paper_size = is80 ? '80' : '58';
+  const is76 = size === '76';
+  const is58 = size === '58';
+  state.settings.paper_size = size;
+
   document.body.classList.toggle('paper-80mm', is80);
-  document.body.classList.toggle('paper-58mm', !is80);
+  document.body.classList.toggle('paper-76mm', is76);
+  document.body.classList.toggle('paper-58mm', is58);
 
   const receiptEl = document.getElementById('printable-receipt');
   if (receiptEl) {
+    receiptEl.classList.remove('max-w-[380px]', 'max-w-[330px]', 'max-w-[280px]', 'text-[12px]', 'text-[11.5px]', 'text-[11px]');
     if (is80) {
-      receiptEl.classList.remove('max-w-[280px]', 'text-[11px]');
       receiptEl.classList.add('max-w-[380px]', 'text-[12px]');
+    } else if (is76) {
+      receiptEl.classList.add('max-w-[330px]', 'text-[11.5px]');
     } else {
-      receiptEl.classList.remove('max-w-[380px]', 'text-[12px]');
       receiptEl.classList.add('max-w-[280px]', 'text-[11px]');
     }
   }
@@ -1622,15 +1636,16 @@ function applyPaperSize(size) {
   }
   const badgeEl = document.getElementById('receipt-col-badge');
   if (badgeEl) {
-    badgeEl.textContent = is80 ? '80mm' : '58mm';
+    badgeEl.textContent = is80 ? '80mm (48 col)' : (is76 ? '76mm Dot Matrix (40 col)' : '58mm (32 col)');
   }
   const settingsTitle = document.getElementById('lbl-settings-title');
   if (settingsTitle) {
-    settingsTitle.textContent = isEn ? `Store & ${is80 ? '80mm' : '58mm'} Receipt Settings` : `Pengaturan Toko & Struk ${is80 ? '80mm' : '58mm'}`;
+    const sizeLabel = is80 ? '80mm' : (is76 ? '76mm Dot Matrix' : '58mm');
+    settingsTitle.textContent = isEn ? `Store & ${sizeLabel} Receipt Settings` : `Pengaturan Toko & Struk ${sizeLabel}`;
   }
 
-  const dashLine = is80 ? '------------------------------------------------' : '--------------------------------';
-  const doubleLine = is80 ? '================================================' : '================================';
+  const dashLine = is80 ? '-'.repeat(48) : (is76 ? '-'.repeat(40) : '-'.repeat(32));
+  const doubleLine = is80 ? '='.repeat(48) : (is76 ? '='.repeat(40) : '='.repeat(32));
   document.querySelectorAll('.rcpt-div-dash').forEach(el => el.textContent = dashLine);
   document.querySelectorAll('.rcpt-div-double').forEach(el => el.textContent = doubleLine);
 }
@@ -4386,6 +4401,7 @@ function initEventListeners() {
 
   // Paper Size Real-Time Toggle Listeners
   document.getElementById('setting-paper-80')?.addEventListener('change', () => applyPaperSize('80'));
+  document.getElementById('setting-paper-76')?.addEventListener('change', () => applyPaperSize('76'));
   document.getElementById('setting-paper-58')?.addEventListener('change', () => applyPaperSize('58'));
 
   // Settings Sub-Tabs Switcher Listeners

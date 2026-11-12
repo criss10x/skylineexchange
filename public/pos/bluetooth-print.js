@@ -185,6 +185,21 @@ class BluetoothPrinter {
       return `${line1}\n${line2}`;
     }
 
+    if (width === 40) {
+      // 76mm Dot Matrix layout (40 columns): Valas(5), Qty(8), Rate(10), Subtotal(14) = 37 + 3 spaces = 40
+      const c1 = sVal.padEnd(5);
+      const c2 = sJml.padStart(8);
+      const c3 = sKurs.padStart(10);
+      const c4 = sSub.padStart(14);
+      const singleLine = `${c1} ${c2} ${c3} ${c4}`;
+      if (singleLine.length <= 40 && sVal.length <= 5 && sJml.length <= 8 && sKurs.length <= 10 && sSub.length <= 14) {
+        return singleLine;
+      }
+      const line1 = `${sVal} x ${sJml} @ ${sKurs}`;
+      const line2 = sSub.padStart(40);
+      return `${line1}\n${line2}`;
+    }
+
     // 80mm standard POS layout (48 chars)
     if (sVal.length <= 6 && sJml.length <= 10 && sKurs.length <= 12 && sSub.length <= 20) {
       const c1 = sVal.padEnd(6);
@@ -283,8 +298,12 @@ class BluetoothPrinter {
    */
   async buildEscPos(data, settings, lang = 'id') {
     const isEn = lang === 'en';
-    const is80 = (settings.paper_size || '80') === '80';
-    const width = is80 ? 48 : 32;
+    const paperSize = settings.paper_size || '80';
+    const is80 = paperSize === '80';
+    const is76 = paperSize === '76';
+    const is58 = paperSize === '58';
+    const isDotMatrix = is76; // 76mm roll is standard impact / dot matrix (Epson TM-U220)
+    const width = is80 ? 48 : (is76 ? 40 : 32);
     const dividerDash = '-'.repeat(width);
     const dividerDouble = '='.repeat(width);
 
@@ -302,19 +321,39 @@ class BluetoothPrinter {
       addText(str + '\n');
     };
 
+    // Color switcher for dot matrix printers with 2-color ribbon (ERC-38B/R)
+    // ESC r 0 = Black, ESC r 1 = Red
+    const setColor = (color) => {
+      if (isDotMatrix) {
+        addBytes(0x1B, 0x72, color === 'red' ? 0x01 : 0x00);
+      }
+    };
+
     // ESC @ - Initialize printer
     addBytes(0x1B, 0x40);
 
-    // ESC t 0 - Select Code Page 437 (Standard ASCII / European)
-    addBytes(0x1B, 0x74, 0x00);
+    // ESC 2 - Default line spacing (1/6 inch)
+    addBytes(0x1B, 0x32);
+
+    if (isDotMatrix) {
+      // ESC M 0 - Select Font A (9x9 / 40 columns standard on 76mm roll)
+      addBytes(0x1B, 0x4D, 0x00);
+      // ESC r 0 - Ensure default black ribbon color
+      addBytes(0x1B, 0x72, 0x00);
+    } else {
+      // ESC t 0 - Select Code Page 437 (Standard ASCII / European) for thermal printers
+      addBytes(0x1B, 0x74, 0x00);
+    }
 
     // Center alignment
     addBytes(0x1B, 0x61, 0x01);
 
-    // Thermal Receipt Logo (if enabled)
-    const showLogo = settings.store_show_rcpt_logo === undefined || settings.store_show_rcpt_logo === null
+    // Thermal Receipt Logo (if enabled and NOT dot matrix)
+    // IMPORTANT: Dot Matrix impact printers (like Epson TM-U220) DO NOT support GS v 0 thermal raster.
+    // Sending GS v 0 to dot matrix prints endless sheets of random gibberish.
+    const showLogo = !isDotMatrix && (settings.store_show_rcpt_logo === undefined || settings.store_show_rcpt_logo === null
       ? true
-      : (settings.store_show_rcpt_logo === '1' || settings.store_show_rcpt_logo === true || settings.store_show_rcpt_logo === 1);
+      : (settings.store_show_rcpt_logo === '1' || settings.store_show_rcpt_logo === true || settings.store_show_rcpt_logo === 1));
 
     if (showLogo) {
       const activeLogo = settings.store_logo || '/assets/logo.svg';
@@ -362,7 +401,9 @@ class BluetoothPrinter {
     const txTypeStr = data.type === 'BELI' 
       ? (isEn ? 'BUY CURRENCY' : 'BELI VALAS (BUY)') 
       : (isEn ? 'SELL CURRENCY' : 'JUAL VALAS (SELL)');
+    setColor('red'); // Red ribbon on dot matrix for clear transaction type
     addLine(BluetoothPrinter.padLine(isEn ? 'Type' : 'Tipe Transaksi', txTypeStr, width));
+    setColor('black');
     addLine(BluetoothPrinter.padLine('Teller', data.teller_name, width));
 
     // Customer Data
@@ -435,7 +476,9 @@ class BluetoothPrinter {
     // Total Calculation
     addLine(dividerDouble);
     addBytes(0x1B, 0x21, 0x08); // Emphasized (bold)
+    setColor('red'); // Highlight Total IDR in red ribbon on dot matrix
     addLine(BluetoothPrinter.padLine('TOTAL IDR', 'Rp ' + data.total_idr.toLocaleString('id-ID'), width));
+    setColor('black');
     addBytes(0x1B, 0x21, 0x00); // Normal
     // BELI: the cashier pays the customer, so payment / change lines do not apply
     if (data.type !== 'BELI') {
@@ -471,8 +514,18 @@ class BluetoothPrinter {
     }
 
     // Feed and Paper Cut / Tear space
-    addLine('\n\n\n\n');
-    addBytes(0x1D, 0x56, 0x41, 0x10); // Partial cut if hardware supported
+    if (isDotMatrix) {
+      // Dot matrix impact printhead sits higher than tear bar / auto-cutter; feed 5 lines
+      addLine('\n\n\n\n\n');
+      // Epson TM-U220 Auto-Cutter: ESC m (Partial cut) and GS V 1
+      addBytes(0x1B, 0x6D);
+    } else {
+      addLine('\n\n\n\n');
+      addBytes(0x1D, 0x56, 0x41, 0x10); // Partial cut for thermal
+    }
+
+    // Cash drawer kick out pulse (ESC p 0 25 250) on receipt complete
+    addBytes(0x1B, 0x70, 0x00, 0x19, 0xFA);
 
     return new Uint8Array(bytes);
   }
@@ -482,8 +535,12 @@ class BluetoothPrinter {
    */
   async buildTestEscPos(settings, lang = 'id') {
     const isEn = lang === 'en';
-    const is80 = (settings.paper_size || '80') === '80';
-    const width = is80 ? 48 : 32;
+    const paperSize = settings.paper_size || '80';
+    const is80 = paperSize === '80';
+    const is76 = paperSize === '76';
+    const is58 = paperSize === '58';
+    const isDotMatrix = is76;
+    const width = is80 ? 48 : (is76 ? 40 : 32);
     const dividerDash = '-'.repeat(width);
     const dividerDouble = '='.repeat(width);
 
@@ -503,10 +560,22 @@ class BluetoothPrinter {
     // Center alignment
     addBytes(0x1B, 0x61, 0x01);
 
-    // Thermal Receipt Logo (if enabled)
-    const showLogo = settings.store_show_rcpt_logo === undefined || settings.store_show_rcpt_logo === null
+    // Color switcher for 2-color ribbon
+    const setColor = (color) => {
+      if (isDotMatrix) {
+        addBytes(0x1B, 0x72, color === 'red' ? 0x01 : 0x00);
+      }
+    };
+
+    if (isDotMatrix) {
+      addBytes(0x1B, 0x4D, 0x00); // Font A (40 col)
+      addBytes(0x1B, 0x72, 0x00); // Black
+    }
+
+    // Thermal Receipt Logo (if enabled and NOT dot matrix)
+    const showLogo = !isDotMatrix && (settings.store_show_rcpt_logo === undefined || settings.store_show_rcpt_logo === null
       ? true
-      : (settings.store_show_rcpt_logo === '1' || settings.store_show_rcpt_logo === true || settings.store_show_rcpt_logo === 1);
+      : (settings.store_show_rcpt_logo === '1' || settings.store_show_rcpt_logo === true || settings.store_show_rcpt_logo === 1));
 
     if (showLogo) {
       const activeLogo = settings.store_logo || '/assets/logo.svg';
@@ -568,8 +637,16 @@ class BluetoothPrinter {
     addLine('');
     addLine(isEn ? 'Printer is verified and ready for cashier.' : 'Printer terverifikasi & siap untuk transaksi kasir.');
     addLine('SKYLINE EXCHANGE POS');
-    addLine('\n\n\n\n');
-    addBytes(0x1D, 0x56, 0x41, 0x10);
+    if (isDotMatrix) {
+      addLine('\n\n\n\n\n');
+      addBytes(0x1B, 0x6D); // TM-U220 partial cut
+    } else {
+      addLine('\n\n\n\n');
+      addBytes(0x1D, 0x56, 0x41, 0x10);
+    }
+
+    // Cash drawer kick out pulse
+    addBytes(0x1B, 0x70, 0x00, 0x19, 0xFA);
 
     return new Uint8Array(bytes);
   }

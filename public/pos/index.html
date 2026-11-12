@@ -204,8 +204,13 @@
         max-width: 58mm !important;
         font-size: 11px !important;
       }
+      body.paper-76mm #printable-receipt {
+        width: 76mm !important;
+        max-width: 76mm !important;
+        font-size: 11.5px !important;
+      }
       body.paper-80mm #printable-receipt,
-      body:not(.paper-58mm) #printable-receipt {
+      body:not(.paper-58mm):not(.paper-76mm) #printable-receipt {
         width: 80mm !important;
         max-width: 80mm !important;
         font-size: 12.5px !important;
@@ -2123,20 +2128,27 @@
             </div>
 
             <fieldset>
-              <legend class="pos-label" id="lbl-set-paper-size">Ukuran Kertas Thermal Printer</legend>
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <legend class="pos-label" id="lbl-set-paper-size">Ukuran Kertas & Tipe Printer</legend>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <label class="set-choice">
                   <input type="radio" name="setting-paper-size" id="setting-paper-80" value="80" class="mt-0.5 w-4 h-4 text-brand bg-navy-900 border-navy-600 focus:ring-brand" checked>
                   <span>
-                    <span class="block text-sm font-semibold text-slate-100" id="lbl-paper-80-title">80 mm (Standar Kasir)</span>
-                    <span class="block text-[13px] text-slate-400" id="lbl-paper-80-desc">Lebar 48 kolom, tampilan lega & auto-cutter</span>
+                    <span class="block text-sm font-semibold text-slate-100" id="lbl-paper-80-title">80 mm (Thermal Kasir)</span>
+                    <span class="block text-[13px] text-slate-400" id="lbl-paper-80-desc">Lebar 48 kolom, thermal & auto-cutter</span>
+                  </span>
+                </label>
+                <label class="set-choice">
+                  <input type="radio" name="setting-paper-size" id="setting-paper-76" value="76" class="mt-0.5 w-4 h-4 text-brand bg-navy-900 border-navy-600 focus:ring-brand">
+                  <span>
+                    <span class="block text-sm font-semibold text-slate-100" id="lbl-paper-76-title">76 mm (Dot Matrix / Pita)</span>
+                    <span class="block text-[13px] text-slate-400" id="lbl-paper-76-desc">Lebar 40 kolom, Epson TM-U220, pita hitam/merah</span>
                   </span>
                 </label>
                 <label class="set-choice">
                   <input type="radio" name="setting-paper-size" id="setting-paper-58" value="58" class="mt-0.5 w-4 h-4 text-brand bg-navy-900 border-navy-600 focus:ring-brand">
                   <span>
                     <span class="block text-sm font-semibold text-slate-100" id="lbl-paper-58-title">58 mm (Printer Mini / Mobile)</span>
-                    <span class="block text-[13px] text-slate-400" id="lbl-paper-58-desc">Lebar 32 kolom, compact untuk printer Bluetooth kecil</span>
+                    <span class="block text-[13px] text-slate-400" id="lbl-paper-58-desc">Lebar 32 kolom, compact Bluetooth kecil</span>
                   </span>
                 </label>
               </div>
