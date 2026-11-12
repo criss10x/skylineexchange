@@ -1,4 +1,4 @@
-const CACHE_NAME = 'skyline-pos-v2.7';
+const CACHE_NAME = 'skyline-pos-v2.8';
 // Styling comes from the Tailwind CDN runtime; without it cached, offline mode renders unstyled
 const TAILWIND_URL = 'https://cdn.tailwindcss.com/';
 const isPosScope = self.registration.scope.includes('/pos');

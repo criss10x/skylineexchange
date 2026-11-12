@@ -198,7 +198,7 @@ const i18n = {
     paper80Title: '80 mm (Thermal Kasir)',
     paper80Desc: 'Lebar 48 kolom, thermal & auto-cutter',
     paper76Title: '76 mm (Dot Matrix / Pita)',
-    paper76Desc: 'Lebar 40 kolom, Epson TM-U220, pita hitam/merah',
+    paper76Desc: 'Lebar 33 kolom, iWare DM-76H / Epson TM-U220, pita hitam/merah',
     paper58Title: '58 mm (Printer Mini / Mobile)',
     paper58Desc: 'Lebar 32 kolom, compact Bluetooth kecil',
     settingPermit: 'Nomor Izin KUPVA / Bank Indonesia',
@@ -452,7 +452,7 @@ const i18n = {
     paper80Title: '80 mm (Thermal POS)',
     paper80Desc: '48 columns wide, thermal & auto-cutter',
     paper76Title: '76 mm (Dot Matrix / Impact)',
-    paper76Desc: '40 columns wide, Epson TM-U220, black/red ribbon',
+    paper76Desc: '33 columns wide, iWare DM-76H / Epson TM-U220, black/red ribbon',
     paper58Title: '58 mm (Mini / Mobile Printer)',
     paper58Desc: '32 columns wide, compact Bluetooth',
     settingPermit: 'License Number (KUPVA / Bank Indonesia)',
@@ -1635,7 +1635,7 @@ function applyPaperSize(size) {
   }
   const badgeEl = document.getElementById('receipt-col-badge');
   if (badgeEl) {
-    badgeEl.textContent = is80 ? '80mm (48 col)' : (is76 ? '76mm Dot Matrix (40 col)' : '58mm (32 col)');
+    badgeEl.textContent = is80 ? '80mm (48 col)' : (is76 ? '76mm Dot Matrix (33 col)' : '58mm (32 col)');
   }
   const settingsTitle = document.getElementById('lbl-settings-title');
   if (settingsTitle) {
