@@ -150,8 +150,32 @@ class BluetoothPrinter {
   static padLine(left, right, width = 48) {
     const l = String(left || '');
     const r = String(right || '');
-    const spaces = Math.max(1, width - l.length - r.length);
-    return l + ' '.repeat(spaces) + r;
+    // Too long for one row: value goes right-aligned on its own row instead of being split by the printer
+    if (l.length + r.length + 1 > width) {
+      return l + '\n' + BluetoothPrinter.wrapText(r, width).split('\n').map(x => x.padStart(width)).join('\n');
+    }
+    return l + ' '.repeat(width - l.length - r.length) + r;
+  }
+
+  // Word-wrap each line to the paper width (long words are hard-split)
+  static wrapText(text, width) {
+    return String(text).split('\n').map(line => {
+      if (line.length <= width) return line;
+      const out = [];
+      let cur = '';
+      for (let word of line.split(' ')) {
+        while (word.length > width) {
+          if (cur) { out.push(cur); cur = ''; }
+          out.push(word.slice(0, width));
+          word = word.slice(width);
+        }
+        if (!cur) cur = word;
+        else if (cur.length + 1 + word.length <= width) cur += ' ' + word;
+        else { out.push(cur); cur = word; }
+      }
+      if (cur) out.push(cur);
+      return out.join('\n');
+    }).join('\n');
   }
 
   static centerLine(text, width = 48) {
@@ -185,18 +209,17 @@ class BluetoothPrinter {
       return `${line1}\n${line2}`;
     }
 
-    if (width === 40) {
-      // 76mm Dot Matrix layout (40 columns): Valas(5), Qty(8), Rate(10), Subtotal(14) = 37 + 3 spaces = 40
+    if (width === 33) {
+      // 76mm Dot Matrix layout (33 columns, iWare DM-76H): Valas(5), Qty(5), Rate(7), Subtotal(13) = 30 + 3 spaces = 33
       const c1 = sVal.padEnd(5);
-      const c2 = sJml.padStart(8);
-      const c3 = sKurs.padStart(10);
-      const c4 = sSub.padStart(14);
-      const singleLine = `${c1} ${c2} ${c3} ${c4}`;
-      if (singleLine.length <= 40 && sVal.length <= 5 && sJml.length <= 8 && sKurs.length <= 10 && sSub.length <= 14) {
-        return singleLine;
+      const c2 = sJml.padStart(5);
+      const c3 = sKurs.padStart(7);
+      const c4 = sSub.padStart(13);
+      if (sVal.length <= 5 && sJml.length <= 5 && sKurs.length <= 7 && sSub.length <= 13) {
+        return `${c1} ${c2} ${c3} ${c4}`;
       }
       const line1 = `${sVal} x ${sJml} @ ${sKurs}`;
-      const line2 = sSub.padStart(40);
+      const line2 = sSub.padStart(33);
       return `${line1}\n${line2}`;
     }
 
@@ -307,7 +330,7 @@ class BluetoothPrinter {
     const is76 = paperSize === '76';
     const is58 = paperSize === '58';
     const isDotMatrix = is76; // 76mm roll is standard impact / dot matrix (Epson TM-U220)
-    const width = is80 ? 48 : (is76 ? 40 : 32);
+    const width = is80 ? 48 : (is76 ? 33 : 32); // 76 mm dot matrix (iWare DM-76H): 33 columns
     const dividerDash = '-'.repeat(width);
     const dividerDouble = '='.repeat(width);
 
@@ -322,7 +345,7 @@ class BluetoothPrinter {
       }
     };
     const addLine = (str = '') => {
-      addText(str + '\n');
+      addText(BluetoothPrinter.wrapText(str, width) + '\n');
     };
 
     // Color switcher for dot matrix printers with 2-color ribbon (ERC-38B/R)
@@ -340,7 +363,7 @@ class BluetoothPrinter {
     addBytes(0x1B, 0x32);
 
     if (isDotMatrix) {
-      // ESC M 0 - Select Font A (9x9 / 40 columns standard on 76mm roll)
+      // ESC M 0 - Select Font A (33 columns on a 76mm roll, iWare DM-76H)
       addBytes(0x1B, 0x4D, 0x00);
       // ESC r 0 - Ensure default black ribbon color
       addBytes(0x1B, 0x72, 0x00);
@@ -544,7 +567,7 @@ class BluetoothPrinter {
     const is76 = paperSize === '76';
     const is58 = paperSize === '58';
     const isDotMatrix = is76;
-    const width = is80 ? 48 : (is76 ? 40 : 32);
+    const width = is80 ? 48 : (is76 ? 33 : 32); // 76 mm dot matrix (iWare DM-76H): 33 columns
     const dividerDash = '-'.repeat(width);
     const dividerDouble = '='.repeat(width);
 
@@ -555,7 +578,7 @@ class BluetoothPrinter {
       const encoded = encoder.encode(BluetoothPrinter.toAscii(str));
       for (let i = 0; i < encoded.length; i++) bytes.push(encoded[i]);
     };
-    const addLine = (str = '') => addText(str + '\n');
+    const addLine = (str = '') => addText(BluetoothPrinter.wrapText(str, width) + '\n');
 
     // Initialize and Code Page 437
     addBytes(0x1B, 0x40);
@@ -572,7 +595,7 @@ class BluetoothPrinter {
     };
 
     if (isDotMatrix) {
-      addBytes(0x1B, 0x4D, 0x00); // Font A (40 col)
+      addBytes(0x1B, 0x4D, 0x00); // Font A (33 col)
       addBytes(0x1B, 0x72, 0x00); // Black
     }
 
@@ -622,7 +645,7 @@ class BluetoothPrinter {
     const now = new Date();
     const timeStr = now.toLocaleDateString(isEn ? 'en-US' : 'id-ID') + ' ' + now.toLocaleTimeString(isEn ? 'en-US' : 'id-ID');
     addLine(BluetoothPrinter.padLine(isEn ? 'Status' : 'Status', isEn ? 'CONNECTED OK' : 'TERHUBUNG OK', width));
-    addLine(BluetoothPrinter.padLine(isEn ? 'Paper Size' : 'Ukuran Kertas', is80 ? '80 mm (48 Kolom)' : (is76 ? '76 mm (40 Kolom)' : '58 mm (32 Kolom)'), width));
+    addLine(BluetoothPrinter.padLine(isEn ? 'Paper Size' : 'Ukuran Kertas', is80 ? '80 mm (48 Kolom)' : (is76 ? '76 mm (33 Kolom)' : '58 mm (32 Kolom)'), width));
     addLine(BluetoothPrinter.padLine(isEn ? 'Date & Time' : 'Tanggal & Waktu', timeStr, width));
     addLine(BluetoothPrinter.padLine(isEn ? 'Mode' : 'Mode', isDotMatrix ? 'ESC/POS DOT MATRIX' : 'ESC/POS THERMAL', width));
 
