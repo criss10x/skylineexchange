@@ -367,6 +367,8 @@ class BluetoothPrinter {
       addBytes(0x1B, 0x4D, 0x00);
       // ESC r 0 - Ensure default black ribbon color
       addBytes(0x1B, 0x72, 0x00);
+      // ESC e 2 - Reverse feed 2 lines: pulls back part of the blank gap left between the tear bar and the head
+      addBytes(0x1B, 0x65, 0x02);
     } else {
       // ESC t 0 - Select Code Page 437 (Standard ASCII / European) for thermal printers
       addBytes(0x1B, 0x74, 0x00);
@@ -542,8 +544,8 @@ class BluetoothPrinter {
 
     // Feed and Paper Cut / Tear space
     if (isDotMatrix) {
-      // Dot matrix impact printhead sits higher than tear bar / auto-cutter; feed 5 lines
-      addLine('\n\n\n\n\n');
+      // Last line must pass the tear bar, which sits well above the impact head (iWare DM-76H): feed 9 lines
+      addLine('\n'.repeat(8));
       // Epson TM-U220 Auto-Cutter: ESC m (Partial cut) and GS V 1
       addBytes(0x1B, 0x6D);
     } else {
@@ -597,6 +599,7 @@ class BluetoothPrinter {
     if (isDotMatrix) {
       addBytes(0x1B, 0x4D, 0x00); // Font A (33 col)
       addBytes(0x1B, 0x72, 0x00); // Black
+      addBytes(0x1B, 0x65, 0x02); // Reverse feed 2 lines (smaller top gap)
     }
 
     // Thermal Receipt Logo (if enabled and NOT dot matrix)
@@ -665,7 +668,7 @@ class BluetoothPrinter {
     addLine(isEn ? 'Printer is ready for the cashier.' : 'Printer siap untuk transaksi kasir.');
     addLine('SKYLINE EXCHANGE POS');
     if (isDotMatrix) {
-      addLine('\n\n\n\n\n');
+      addLine('\n'.repeat(8)); // 9 lines so the last text passes the tear bar
       addBytes(0x1B, 0x6D); // TM-U220 partial cut
     } else {
       addLine('\n\n\n\n');
