@@ -277,8 +277,8 @@ insertSettingStmt.run('store_logo', '');
 // Seed Default Rates & Currencies (both normal and small "s" denominations)
 const defaultRates = [
   { code: 'USD', name: 'US Dollar (100)', buy: 16250, sell: 16380, denomination: '100' },
-  { code: 'USDT', name: 'US Dollar (20, 10, 5)', buy: 15900, sell: 16250, denomination: '20, 10, 5' },
-  { code: 'USDK', name: 'US Dollar (2, 1)', buy: 15300, sell: 15950, denomination: '2, 1' },
+  { code: 'USD 20, 10, 5', name: 'US Dollar (20, 10, 5)', buy: 15900, sell: 16250, denomination: '20, 10, 5' },
+  { code: 'USD 2, 1', name: 'US Dollar (2, 1)', buy: 15300, sell: 15950, denomination: '2, 1' },
   { code: 'AUD', name: 'Australian Dollar', buy: 10450, sell: 10600, denomination: 'All' },
   { code: 'SGD', name: 'Singapore Dollar', buy: 12400, sell: 12520, denomination: 'All' },
   { code: 'EUR', name: 'Euro', buy: 17650, sell: 17850, denomination: 'All' },
@@ -303,13 +303,13 @@ const defaultRates = [
   { code: 'KRWs', name: 'South Korean Won (Small)', buy: 11.8, sell: 12.6, denomination: 'Small' }
 ];
 
-// Migrate legacy 'USD-S' if present to 'USDT'
+// Migrate legacy 'USD-S' if present to 'USD 20, 10, 5'
 try {
   const checkLegacyUsdS = db.prepare('SELECT id FROM rates WHERE code = ?').get('USD-S');
   if (checkLegacyUsdS) {
-    const checkTargetExists = db.prepare('SELECT id FROM rates WHERE code = ?').get('USDT');
+    const checkTargetExists = db.prepare('SELECT id FROM rates WHERE code = ?').get('USD 20, 10, 5');
     if (!checkTargetExists) {
-      db.prepare(`UPDATE rates SET code = 'USDT', name = 'US Dollar (20, 10, 5)', denomination = '20, 10, 5' WHERE id = ?`).run(checkLegacyUsdS.id);
+      db.prepare(`UPDATE rates SET code = 'USD 20, 10, 5', name = 'US Dollar (20, 10, 5)', denomination = '20, 10, 5' WHERE id = ?`).run(checkLegacyUsdS.id);
     } else {
       db.prepare('DELETE FROM rates WHERE id = ?').run(checkLegacyUsdS.id);
     }
@@ -847,11 +847,10 @@ restoreSettingsFromFile();
 restoreRatesFromFile();
 restoreTransactionsFromFile();
 
-// Shop's currency codes: USDT (tanggung 20/10/5), USDK (kecil 2/1), small notes as MYRs, HKDs, ...
+// Shop's currency codes for small notes: MYRs, HKDs, THBs, ... (USD 20, 10, 5 and USD 2, 1 keep their names)
 // Runs after the backup restore so a backup with the old codes is renamed too; the backup written below then has the new ones.
 // Rates and history stay as they are (old transactions keep the code they were saved with).
 const RATE_CODE_RENAMES = [
-  ['USD 20, 10, 5', 'USDT'], ['USD 2, 1', 'USDK'],
   ['MYR s', 'MYRs'], ['HKD s', 'HKDs'], ['THB s', 'THBs'], ['NTD s', 'NTDs'],
   ['PHP s', 'PHPs'], ['INR s', 'INRs'], ['CNY s', 'CNYs'], ['KRW s', 'KRWs']
 ];
@@ -889,7 +888,7 @@ db.backupUsersToFile = backupUsersToFile;
 db.restoreUsersFromFile = restoreUsersFromFile;
 db.backupSettingsToFile = backupSettingsToFile;
 // Display order of the rate board, POS pickers and TV sync (codes not listed follow, A-Z)
-db.RATE_ORDER = ['USD', 'USDT', 'USDK', 'AUD', 'EUR', 'GBP', 'CHF', 'JPY', 'SGD', 'CAD', 'MYR', 'MYRs', 'NZD', 'HKD', 'HKDs',
+db.RATE_ORDER = ['USD', 'USD 20, 10, 5', 'USD 2, 1', 'AUD', 'EUR', 'GBP', 'CHF', 'JPY', 'SGD', 'CAD', 'MYR', 'MYRs', 'NZD', 'HKD', 'HKDs',
   'CNY', 'CNYs', 'BND', 'SAR', 'AED', 'THB', 'THBs', 'PHP', 'PHPs', 'KRW', 'KRWs', 'INR', 'INRs', 'NTD', 'NTDs'];
 db.restoreSettingsFromFile = restoreSettingsFromFile;
 db.backupRatesToFile = backupRatesToFile;

@@ -1948,14 +1948,12 @@ function setTransactionType(type) {
 
 // ==================== CURRENCY TILES ====================
 // Popular currencies as large tiles showing the rate for the active mode.
-const QUICK_CURRENCIES = ['USD', 'USDT', 'USDK', 'AUD', 'EUR', 'GBP', 'JPY', 'SGD', 'MYR', 'HKD', 'CNY', 'THB', 'PHP', 'INR', 'NTD'];
+const QUICK_CURRENCIES = ['USD', 'USD 20, 10, 5', 'USD 2, 1', 'AUD', 'EUR', 'GBP', 'JPY', 'SGD', 'MYR', 'HKD', 'CNY', 'THB', 'PHP', 'INR', 'NTD'];
 
-// Split a rate code into currency + note size: USDT -> USD 20/10/5, USDK -> USD 2/1, MYRs -> MYR Small.
+// Split a rate code into currency + note size: USD 20, 10, 5 -> USD 20/10/5, MYRs -> MYR Small.
 // Older codes with a space ("USD 20, 10, 5", "MYR s") still work.
 function splitRateCode(code) {
   const c = String(code || '').trim();
-  if (c === 'USDT') return ['USD', '20/10/5'];
-  if (c === 'USDK') return ['USD', '2/1'];
   let m = /^([A-Z]{3})s$/.exec(c);
   if (m) return [m[1], 'Small'];
   m = /^([A-Z]{3})\s+(.+)$/.exec(c);
