@@ -277,38 +277,39 @@ insertSettingStmt.run('store_logo', '');
 // Seed Default Rates & Currencies (both normal and small "s" denominations)
 const defaultRates = [
   { code: 'USD', name: 'US Dollar (100)', buy: 16250, sell: 16380, denomination: '100' },
-  { code: 'USD 20, 10, 5', name: 'US Dollar (20, 10, 5)', buy: 15900, sell: 16250, denomination: '20, 10, 5' },
-  { code: 'USD 2, 1', name: 'US Dollar (2, 1)', buy: 15300, sell: 15950, denomination: '2, 1' },
+  { code: 'USDT', name: 'US Dollar (20, 10, 5)', buy: 15900, sell: 16250, denomination: '20, 10, 5' },
+  { code: 'USDK', name: 'US Dollar (2, 1)', buy: 15300, sell: 15950, denomination: '2, 1' },
   { code: 'AUD', name: 'Australian Dollar', buy: 10450, sell: 10600, denomination: 'All' },
   { code: 'SGD', name: 'Singapore Dollar', buy: 12400, sell: 12520, denomination: 'All' },
   { code: 'EUR', name: 'Euro', buy: 17650, sell: 17850, denomination: 'All' },
   { code: 'GBP', name: 'British Pound', buy: 21100, sell: 21350, denomination: 'All' },
   { code: 'JPY', name: 'Japanese Yen (x100)', buy: 107.5, sell: 109.8, denomination: '1000+' },
   { code: 'MYR', name: 'Malaysian Ringgit', buy: 3680, sell: 3760, denomination: '100, 50' },
-  { code: 'MYR s', name: 'Malaysian Ringgit (Small)', buy: 3500, sell: 3720, denomination: 'Small' },
+  { code: 'MYRs', name: 'Malaysian Ringgit (Small)', buy: 3500, sell: 3720, denomination: 'Small' },
   { code: 'HKD', name: 'Hong Kong Dollar', buy: 2070, sell: 2120, denomination: '1000, 500' },
-  { code: 'HKD s', name: 'Hong Kong Dollar (Small)', buy: 1950, sell: 2100, denomination: 'Small' },
+  { code: 'HKDs', name: 'Hong Kong Dollar (Small)', buy: 1950, sell: 2100, denomination: 'Small' },
   { code: 'THB', name: 'Thai Baht', buy: 475, sell: 495, denomination: '1000, 500' },
-  { code: 'THB s', name: 'Thai Baht (Small)', buy: 440, sell: 485, denomination: 'Small' },
+  { code: 'THBs', name: 'Thai Baht (Small)', buy: 440, sell: 485, denomination: 'Small' },
   { code: 'NTD', name: 'New Taiwan Dollar', buy: 495, sell: 520, denomination: '1000, 500' },
-  { code: 'NTD s', name: 'New Taiwan Dollar (Small)', buy: 460, sell: 510, denomination: 'Small' },
+  { code: 'NTDs', name: 'New Taiwan Dollar (Small)', buy: 460, sell: 510, denomination: 'Small' },
   { code: 'PHP', name: 'Philippine Peso', buy: 275, sell: 295, denomination: '1000, 500' },
-  { code: 'PHP s', name: 'Philippine Peso (Small)', buy: 250, sell: 290, denomination: 'Small' },
+  { code: 'PHPs', name: 'Philippine Peso (Small)', buy: 250, sell: 290, denomination: 'Small' },
   { code: 'INR', name: 'Indian Rupee', buy: 180, sell: 198, denomination: '500' },
-  { code: 'INR s', name: 'Indian Rupee (Small)', buy: 160, sell: 195, denomination: 'Small' },
+  { code: 'INRs', name: 'Indian Rupee (Small)', buy: 160, sell: 195, denomination: 'Small' },
   { code: 'CNY', name: 'Chinese Yuan', buy: 2240, sell: 2310, denomination: '100' },
-  { code: 'CNY s', name: 'Chinese Yuan (Small)', buy: 2100, sell: 2280, denomination: 'Small' },
+  { code: 'CNYs', name: 'Chinese Yuan (Small)', buy: 2100, sell: 2280, denomination: 'Small' },
   { code: 'SAR', name: 'Saudi Riyal', buy: 4320, sell: 4420, denomination: 'All' },
-  { code: 'KRW', name: 'South Korean Won (x100)', buy: 11.8, sell: 12.6, denomination: 'All' }
+  { code: 'KRW', name: 'South Korean Won (x100)', buy: 11.8, sell: 12.6, denomination: 'All' },
+  { code: 'KRWs', name: 'South Korean Won (Small)', buy: 11.8, sell: 12.6, denomination: 'Small' }
 ];
 
-// Migrate legacy 'USD-S' if present to 'USD 20, 10, 5'
+// Migrate legacy 'USD-S' if present to 'USDT'
 try {
   const checkLegacyUsdS = db.prepare('SELECT id FROM rates WHERE code = ?').get('USD-S');
   if (checkLegacyUsdS) {
-    const checkTargetExists = db.prepare('SELECT id FROM rates WHERE code = ?').get('USD 20, 10, 5');
+    const checkTargetExists = db.prepare('SELECT id FROM rates WHERE code = ?').get('USDT');
     if (!checkTargetExists) {
-      db.prepare(`UPDATE rates SET code = 'USD 20, 10, 5', name = 'US Dollar (20, 10, 5)', denomination = '20, 10, 5' WHERE id = ?`).run(checkLegacyUsdS.id);
+      db.prepare(`UPDATE rates SET code = 'USDT', name = 'US Dollar (20, 10, 5)', denomination = '20, 10, 5' WHERE id = ?`).run(checkLegacyUsdS.id);
     } else {
       db.prepare('DELETE FROM rates WHERE id = ?').run(checkLegacyUsdS.id);
     }
@@ -846,6 +847,27 @@ restoreSettingsFromFile();
 restoreRatesFromFile();
 restoreTransactionsFromFile();
 
+// Shop's currency codes: USDT (tanggung 20/10/5), USDK (kecil 2/1), small notes as MYRs, HKDs, ...
+// Runs after the backup restore so a backup with the old codes is renamed too; the backup written below then has the new ones.
+// Rates and history stay as they are (old transactions keep the code they were saved with).
+const RATE_CODE_RENAMES = [
+  ['USD 20, 10, 5', 'USDT'], ['USD 2, 1', 'USDK'],
+  ['MYR s', 'MYRs'], ['HKD s', 'HKDs'], ['THB s', 'THBs'], ['NTD s', 'NTDs'],
+  ['PHP s', 'PHPs'], ['INR s', 'INRs'], ['CNY s', 'CNYs'], ['KRW s', 'KRWs']
+];
+for (const [oldCode, newCode] of RATE_CODE_RENAMES) {
+  if (!db.prepare('SELECT 1 FROM rates WHERE code = ?').get(oldCode)) continue;
+  // a row with the new code can only be the fresh seed here: the old row holds the real rates
+  db.prepare('DELETE FROM rates WHERE code = ?').run(newCode);
+  db.prepare('UPDATE rates SET code = ? WHERE code = ?').run(newCode, oldCode);
+}
+// KRWs is new: start from the KRW rates until the cashier sets its own
+if (!db.prepare("SELECT 1 FROM rates WHERE code = 'KRWs'").get()) {
+  const krw = db.prepare("SELECT buy_rate, sell_rate FROM rates WHERE code = 'KRW'").get() || { buy_rate: 11.8, sell_rate: 12.6 };
+  db.prepare('INSERT INTO rates (code, name, buy_rate, sell_rate, denomination, updated_at) VALUES (?, ?, ?, ?, ?, ?)')
+    .run('KRWs', 'South Korean Won (Small)', krw.buy_rate, krw.sell_rate, 'Small', new Date().toISOString());
+}
+
 // One-time switch to the 76 mm dot-matrix default (iWare DM-76H). The marker row keeps a later 80 mm choice from Pengaturan.
 if (db.prepare("INSERT OR IGNORE INTO settings (key, value) VALUES ('paper_size_76_default', '1')").run().changes) {
   db.prepare("UPDATE settings SET value = '76' WHERE key = 'paper_size' AND value = '80'").run();
@@ -866,6 +888,9 @@ db.verifyToken = verifyToken;
 db.backupUsersToFile = backupUsersToFile;
 db.restoreUsersFromFile = restoreUsersFromFile;
 db.backupSettingsToFile = backupSettingsToFile;
+// Display order of the rate board, POS pickers and TV sync (codes not listed follow, A-Z)
+db.RATE_ORDER = ['USD', 'USDT', 'USDK', 'AUD', 'EUR', 'GBP', 'CHF', 'JPY', 'SGD', 'CAD', 'MYR', 'MYRs', 'NZD', 'HKD', 'HKDs',
+  'CNY', 'CNYs', 'BND', 'SAR', 'AED', 'THB', 'THBs', 'PHP', 'PHPs', 'KRW', 'KRWs', 'INR', 'INRs', 'NTD', 'NTDs'];
 db.restoreSettingsFromFile = restoreSettingsFromFile;
 db.backupRatesToFile = backupRatesToFile;
 db.restoreRatesFromFile = restoreRatesFromFile;

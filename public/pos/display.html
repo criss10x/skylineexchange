@@ -685,7 +685,13 @@
         if (!data.success) return;
         await syncBrand(data.brand);
         const next = {};
-        data.data.forEach(r => { if (r.buy_rate > 0) next[r.code.trim()] = Number(r.buy_rate); });
+        const tvCode = { USDT: 'USD 20, 10, 5', USDK: 'USD 2, 1' };
+        data.data.forEach(r => {
+          if (!(r.buy_rate > 0)) return;
+          const code = r.code.trim();
+          next[code] = Number(r.buy_rate);
+          if (tvCode[code]) next[tvCode[code]] = Number(r.buy_rate);
+        });
         if (JSON.stringify(next) === JSON.stringify(posRates)) return;
         posRates = next;
         localStorage.setItem('mcDisplayPosRates', JSON.stringify(posRates));
