@@ -1082,6 +1082,73 @@ router.delete('/api/dttot/:id', requireAuth, requireAdmin, (req, res) => {
   }
 });
 
+// BI "Laporan Summary Valas [By Currency]": per currency (all note sizes together, e.g. USD + USD 20, 10, 5 = BN-USD)
+// opening balance, buy and sell volume in the period, closing balance at moving average cost (kurs tengah).
+// Opening stock comes only from transactions recorded before the period; there is no separate stock input.
+function buildBiSummary(start, end) {
+  const lines = db.prepare(`
+    SELECT t.type, ${STORE_DAY_SQL_T} AS day, ti.currency_code, ti.amount, ti.subtotal_idr
+    FROM transactions t JOIN transaction_items ti ON ti.transaction_id = t.id
+    WHERE ${STORE_DAY_SQL_T} <= ?
+    ORDER BY t.created_at, t.id, ti.id
+  `).all(end);
+
+  const book = new Map();
+  for (const l of lines) {
+    const cur = String(l.currency_code || '').trim().slice(0, 3).toUpperCase();
+    if (!cur) continue;
+    if (!book.has(cur)) book.set(cur, { qty: 0, cost: 0, open: null, buyQty: 0, buyIdr: 0, sellQty: 0, sellIdr: 0 });
+    const b = book.get(cur);
+    if (l.day >= start && !b.open) b.open = { qty: b.qty, cost: b.cost };
+    const qty = Number(l.amount) || 0;
+    const idr = Number(l.subtotal_idr) || 0;
+    if (l.type === 'BELI') {
+      b.qty += qty;
+      b.cost += idr;
+    } else {
+      // stock leaves at the current average cost, not at the selling rate
+      const avg = b.qty > 0 ? b.cost / b.qty : 0;
+      b.qty -= qty;
+      b.cost = Math.abs(b.qty) < 1e-9 ? 0 : b.cost - qty * avg;
+    }
+    if (l.day >= start) {
+      if (l.type === 'BELI') { b.buyQty += qty; b.buyIdr += idr; } else { b.sellQty += qty; b.sellIdr += idr; }
+    }
+  }
+
+  const rows = [...book.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([cur, b]) => {
+    const open = b.open || { qty: b.qty, cost: b.cost };
+    return {
+      currency: `BN-${cur}`,
+      open_qty: open.qty, open_idr: open.cost,
+      buy_qty: b.buyQty, buy_idr: b.buyIdr,
+      sell_qty: b.sellQty, sell_idr: b.sellIdr,
+      close_qty: b.qty, close_rate: b.qty > 0 ? b.cost / b.qty : 0, close_idr: b.cost
+    };
+  }).filter(r => r.open_qty || r.buy_qty || r.sell_qty || r.close_qty);
+
+  const sum = key => rows.reduce((a, r) => a + r[key], 0);
+  return { rows, totals: { open_idr: sum('open_idr'), buy_idr: sum('buy_idr'), sell_idr: sum('sell_idr'), close_idr: sum('close_idr') } };
+}
+
+router.get('/api/reports/bi-summary', requireAuth, (req, res) => {
+  try {
+    const { startDate, endDate, date, all } = req.query;
+    let start = startDate || date || storeDate();
+    let end = endDate || startDate || date || storeDate();
+    if (all === '1' || all === 'true') {
+      const first = db.prepare(`SELECT MIN(${STORE_DAY_SQL}) AS d FROM transactions`).get().d;
+      start = first || storeDate();
+      end = storeDate();
+    }
+    if (start > end) [start, end] = [end, start];
+    const company = (db.prepare("SELECT value FROM settings WHERE key = 'store_company'").get() || {}).value || '';
+    res.json({ success: true, data: { company, startDate: start, endDate: end, ...buildBiSummary(start, end) } });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 router.get('/api/reports/summary', requireAuth, (req, res) => {
   try {
     const { date, startDate, endDate, start_date, end_date, date_from, date_to, all } = req.query;

@@ -4687,6 +4687,7 @@ function initEventListeners() {
   document.getElementById('btn-history-export-pdf')?.addEventListener('click', () => {
     exportPdf();
   });
+  document.getElementById('btn-history-bi-report')?.addEventListener('click', exportBiReport);
   document.getElementById('setting-sheets-url')?.addEventListener('change', (e) => {
     saveGoogleSheetsSettings(e.target.value.trim());
   });
@@ -5046,6 +5047,115 @@ function exportExcel() {
   showToast(state.appLang === 'en'
     ? `Exporting Excel (${filter.label})...`
     : `Mengunduh Excel (${filter.label})...`, 'info');
+}
+
+// "Laporan Summary Valas [By Currency]" for Bank Indonesia, laid out like the BI money changer program
+async function exportBiReport() {
+  const isEn = state.appLang === 'en';
+  const filter = getHistoryDateFilterState();
+  let url = '/api/reports/bi-summary';
+  if (filter.isAll) url += '?all=1';
+  else url += `?startDate=${encodeURIComponent(filter.startDate || filter.endDate || storeToday())}&endDate=${encodeURIComponent(filter.endDate || filter.startDate || storeToday())}`;
+
+  // open the window inside the click so the popup blocker allows it
+  const win = window.open('', '_blank');
+  if (!win) {
+    showToast(isEn ? 'Popup blocked. Please allow popups to print the report.' : 'Pop-up terblokir. Izinkan pop-up untuk mencetak laporan.', 'error');
+    return;
+  }
+  win.document.write('<p style="font-family:sans-serif">Menyiapkan laporan...</p>');
+
+  try {
+    const data = await (await authFetch(url)).json();
+    if (!data.success) throw new Error(data.message || 'Gagal memuat laporan');
+    const r = data.data;
+    const n2 = v => Number(v || 0).toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const n4 = v => Number(v || 0).toLocaleString('id-ID', { minimumFractionDigits: 4, maximumFractionDigits: 4 });
+    const dmy = iso => { const [y, m, d] = String(iso).split('-'); return `${d}/${m}/${y}`; };
+    const now = new Date();
+    const printed = `${now.toLocaleDateString('en-GB', { timeZone: 'Asia/Makassar' })} ${now.toLocaleTimeString('en-GB', { timeZone: 'Asia/Makassar', hour12: false })}`;
+    const company = r.company || state.settings.store_company || state.settings.store_name || '';
+
+    const body = r.rows.length
+      ? r.rows.map(x => `<tr>
+          <td class="l">${escapeHtml(x.currency)}</td>
+          <td>${n2(x.open_qty)}</td><td>${n2(x.open_idr)}</td>
+          <td>${n2(x.buy_qty)}</td><td>${n2(x.buy_idr)}</td>
+          <td>${n2(x.sell_qty)}</td><td>${n2(x.sell_idr)}</td>
+          <td class="red">${n2(x.close_qty)}</td><td>${n4(x.close_rate)}</td><td>${n2(x.close_idr)}</td>
+        </tr>`).join('')
+      : '<tr><td class="l" colspan="10">Tidak ada transaksi pada periode ini.</td></tr>';
+
+    win.document.open();
+    win.document.write(`<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <title>Laporan_Summary_Valas_${r.startDate}_${r.endDate}</title>
+  <style>
+    @page { size: A4 landscape; margin: 12mm 10mm; }
+    body { font-family: "Times New Roman", Times, serif; color: #000; background: #fff; margin: 0; padding: 16px; font-size: 11px; }
+    .company { font-weight: bold; font-size: 13px; text-transform: uppercase; }
+    h1 { font-weight: normal; font-size: 22px; margin: 14px 0 2px; }
+    .period { font-size: 12px; margin-bottom: 10px; }
+    table { width: 100%; border-collapse: collapse; }
+    thead th { font-size: 10px; font-weight: bold; padding: 2px 6px; text-align: right; }
+    thead tr:first-child th { border-top: 1px solid #000; padding-top: 6px; }
+    thead tr:last-child th { border-bottom: 1px solid #000; padding-bottom: 6px; }
+    th.grp { text-align: center; }
+    td { padding: 2px 6px; text-align: right; white-space: nowrap; }
+    tbody tr:first-child td { padding-top: 12px; }
+    tfoot td { font-weight: bold; padding-top: 10px; }
+    .l { text-align: left; }
+    .red { color: #d00; }
+    .foot { display: flex; justify-content: space-between; margin-top: 18px; font-size: 10px; }
+    .foot span:nth-child(2) { flex: 1; text-align: center; }
+    .actions { margin-bottom: 14px; }
+    .actions button { font: 600 13px sans-serif; padding: 8px 16px; border-radius: 6px; border: 0; background: #0f766e; color: #fff; cursor: pointer; }
+    @media print { .actions { display: none; } body { padding: 0; } }
+  </style>
+</head>
+<body>
+  <div class="actions"><button onclick="window.print()">Cetak / Simpan PDF</button></div>
+  <div class="company">${escapeHtml(company)}</div>
+  <h1>Laporan Summary Valas [ By Currency ]</h1>
+  <div class="period">Periode : &nbsp;${dmy(r.startDate)} S/D ${dmy(r.endDate)}</div>
+  <table>
+    <thead>
+      <tr>
+        <th class="l">CURRENCY</th>
+        <th class="grp" colspan="2">SALDO AWAL</th>
+        <th class="grp" colspan="2">VOLUME PEMBELIAN</th>
+        <th class="grp" colspan="2">VOLUME PENJUALAN</th>
+        <th class="grp" colspan="3">SALDO AKHIR</th>
+      </tr>
+      <tr>
+        <th></th>
+        <th>VALAS</th><th>RUPIAH</th>
+        <th>VALAS</th><th>RUPIAH</th>
+        <th>VALAS</th><th>RUPIAH</th>
+        <th>VALAS</th><th>KURS TGH</th><th>RUPIAH</th>
+      </tr>
+    </thead>
+    <tbody>${body}</tbody>
+    <tfoot>
+      <tr>
+        <td class="l">Grand Total</td>
+        <td></td><td>${n2(r.totals.open_idr)}</td>
+        <td></td><td>${n2(r.totals.buy_idr)}</td>
+        <td></td><td>${n2(r.totals.sell_idr)}</td>
+        <td></td><td></td><td>${n2(r.totals.close_idr)}</td>
+      </tr>
+    </tfoot>
+  </table>
+  <div class="foot"><span>Tgl Cetak : ${printed}</span><span>Page 1 of 1</span><span></span></div>
+</body>
+</html>`);
+    win.document.close();
+  } catch (err) {
+    win.close();
+    showToast(`${isEn ? 'BI report failed' : 'Gagal membuat laporan BI'}: ${err.message}`, 'error');
+  }
 }
 
 async function exportPdf() {
