@@ -1761,7 +1761,7 @@ function renderRatesTable() {
   state.rates.forEach((r) => {
     const spread = (r.sell_rate - r.buy_rate);
     const tag = r.code.trim().split(' ')[0].slice(0, 3).toUpperCase();
-    const isSmall = r.code.endsWith(' s') || r.code.includes('20') || r.code.includes('2, 1') || (r.denomination && r.denomination.toLowerCase().includes('small'));
+    const isSmall = !!splitRateCode(r.code)[1] || (r.denomination && r.denomination.toLowerCase().includes('small'));
     const tr = document.createElement('tr');
     tr.className = 'hover:bg-navy-700/40 transition-colors';
     tr.innerHTML = `
@@ -1948,7 +1948,18 @@ function setTransactionType(type) {
 
 // ==================== CURRENCY TILES ====================
 // Popular currencies as large tiles showing the rate for the active mode.
-const QUICK_CURRENCIES = ['USD', 'USD 20, 10, 5', 'USD 2, 1', 'AUD', 'SGD', 'EUR', 'GBP', 'JPY', 'MYR', 'HKD', 'THB', 'NTD', 'PHP', 'INR', 'CNY'];
+const QUICK_CURRENCIES = ['USD', 'USD 20, 10, 5', 'USD 2, 1', 'AUD', 'EUR', 'GBP', 'JPY', 'SGD', 'MYR', 'HKD', 'CNY', 'THB', 'PHP', 'INR', 'NTD'];
+
+// Split a rate code into currency + note size: USD 20, 10, 5 -> USD 20/10/5, MYRs -> MYR Small.
+// Older codes with a space ("USD 20, 10, 5", "MYR s") still work.
+function splitRateCode(code) {
+  const c = String(code || '').trim();
+  let m = /^([A-Z]{3})s$/.exec(c);
+  if (m) return [m[1], 'Small'];
+  m = /^([A-Z]{3})\s+(.+)$/.exec(c);
+  if (m) return [m[1], m[2] === 's' ? 'Small' : m[2].replace(/,\s*/g, '/')];
+  return [c, null];
+}
 
 function renderCurrencyTiles() {
   const wrap = document.getElementById('currency-tiles');
@@ -1961,14 +1972,7 @@ function renderCurrencyTiles() {
     .filter(Boolean)
     .map(r => {
       const rate = state.txType === 'BELI' ? r.buy_rate : r.sell_rate;
-      let curr = r.code;
-      let denom = null;
-      if (r.code.includes(' ')) {
-        const parts = r.code.split(' ');
-        curr = parts[0];
-        const rest = parts.slice(1).join(' ').trim();
-        denom = rest === 's' ? 'Small' : rest.replace(/,\s*/g, '/');
-      }
+      const [curr, denom] = splitRateCode(r.code);
       return `<button type="button" class="cur-tile" data-code="${escapeHtml(r.code)}" aria-pressed="${r.code === selected}">
         <span class="cur-tile__code">${escapeHtml(curr)}</span>
         ${denom ? `<span class="cur-tile__denom">${escapeHtml(denom)}</span>` : ''}
