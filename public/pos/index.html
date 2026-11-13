@@ -730,14 +730,17 @@
     html.light #sum-turnover-idr { color: #0f766e !important; }
 
     /* Tab 5 Settings Panels in Light Mode */
-    html.light #card-underlying-warning {
-      background-color: #eff6ff !important;
-      border-color: #93c5fd !important;
-      color: #1e3a8a !important;
-    }
-    html.light #card-underlying-warning p {
-      color: #1e293b !important;
-    }
+    #card-underlying-warning { scroll-margin-top: 8rem; }
+    #card-underlying-warning.is-complete { border-color: rgba(52, 211, 153, .55); background-color: rgba(6, 78, 59, .28); }
+    #card-underlying-warning.is-complete > div > svg { color: #34d399; }
+    html.light #card-underlying-warning { background-color: #fffbeb !important; border-color: #f59e0b !important; }
+    html.light #card-underlying-warning h2,
+    html.light #badge-usd-equiv { color: #78350f !important; }
+    html.light #badge-usd-equiv { background-color: #fde68a !important; }
+    html.light #card-underlying-warning p { color: #92400e !important; }
+    html.light #card-underlying-warning > div > svg { color: #d97706 !important; }
+    html.light #card-underlying-warning.is-complete { background-color: #ecfdf5 !important; border-color: #10b981 !important; }
+    html.light #card-underlying-warning.is-complete > div > svg { color: #059669 !important; }
     html.light #pep-edd-fields {
       background-color: #fffbeb !important;
       border-color: #fcd34d !important;
@@ -1307,6 +1310,39 @@
         <!-- LEFT: cashier workspace, edged in the active mode colour (BELI emerald / JUAL amber) -->
         <div class="lg:col-span-7 space-y-4 pos-workspace">
 
+          <!-- Underlying document: first thing in the workspace so the cashier sees it the moment the total reaches USD 10,000 -->
+          <div id="card-underlying-warning" role="alert" aria-live="assertive" class="hidden pos-card rounded-xl border-2 border-amber-400/70 bg-amber-950/40">
+            <div class="flex items-start gap-3 p-4 pb-3">
+              <svg class="w-6 h-6 shrink-0 mt-0.5 text-amber-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              <div class="min-w-0 flex-1">
+                <div class="flex flex-wrap items-center gap-x-2 gap-y-1.5">
+                  <h2 class="pos-h text-amber-100 mr-auto" id="lbl-underlying-title">Wajib dokumen underlying</h2>
+                  <span class="num shrink-0 text-[13px] font-bold text-amber-100 px-2.5 py-0.5 rounded-full bg-amber-500/25" id="badge-usd-equiv">≈ USD 0</span>
+                  <span id="underlying-status" class="set-status set-status--warn shrink-0">Belum lengkap</span>
+                </div>
+                <p class="mt-1 text-[13px] text-amber-100/80 leading-snug" id="txt-underlying-desc">Total transaksi mencapai batas USD 10.000 (PBI Transaksi Valas). Isi dokumen underlying sebelum menyimpan transaksi.</p>
+              </div>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 px-4 pb-4">
+              <div>
+                <label for="underlying-doc-type" class="pos-label" id="lbl-underlying-type">Jenis dokumen *</label>
+                <select id="underlying-doc-type" class="pos-input w-full bg-navy-900 border border-navy-600 rounded-lg text-slate-100">
+                  <option value="" id="opt-underlying-none">Pilih jenis dokumen</option>
+                  <option value="TIKET" id="opt-underlying-ticket">Tiket Perjalanan / Paspor & Visa</option>
+                  <option value="INVOICE" id="opt-underlying-invoice">Invoice / Dokumen Dagang Luar Negeri</option>
+                  <option value="PENDIDIKAN" id="opt-underlying-edu">Invoice / Surat Biaya Pendidikan LN</option>
+                  <option value="MEDIS" id="opt-underlying-med">Surat Rujukan / Tagihan Medis LN</option>
+                  <option value="KONTRAK" id="opt-underlying-contract">Perjanjian Kontrak / Tagihan Jasa</option>
+                  <option value="LAINNYA" id="opt-underlying-other">Dokumen Underlying Lainnya</option>
+                </select>
+              </div>
+              <div>
+                <label for="underlying-doc-no" class="pos-label" id="lbl-underlying-no">Nomor / keterangan dokumen *</label>
+                <input type="text" id="underlying-doc-no" placeholder="No. tiket, invoice, atau surat" class="pos-input w-full bg-navy-900 border border-navy-600 rounded-lg text-slate-100 placeholder-slate-500">
+              </div>
+            </div>
+          </div>
+
           <!-- 1. Customer: identify first (KYC + DTTOT screening) -->
           <div class="pos-card bg-navy-800 border border-navy-700 rounded-xl p-4">
             <h2 class="pos-h text-slate-100" id="lbl-cust-title">Customer</h2>
@@ -1513,32 +1549,6 @@
             </div>
           </div>
 
-          <!-- Underlying document (shown when the total reaches USD 10,000) -->
-          <div id="card-underlying-warning" class="hidden pos-card p-4 rounded-xl bg-blue-950/40 border border-blue-500/50 space-y-3">
-            <div class="flex items-start justify-between gap-3">
-              <h2 class="pos-h text-blue-200" id="lbl-underlying-title">Wajib dokumen underlying (≥ USD 10.000)</h2>
-              <span class="num shrink-0 text-[12px] font-semibold text-blue-200 px-2 py-0.5 rounded bg-blue-500/20" id="badge-usd-equiv">≈ USD 0</span>
-            </div>
-            <p class="text-[13px] text-slate-300 leading-relaxed" id="txt-underlying-desc">Sesuai Peraturan Bank Indonesia (PBI Transaksi Valas), pembelian valuta asing terhadap Rupiah mencapai atau melebihi <b>USD 10.000 (atau ekuivalennya)</b> wajib melampirkan Dokumen Underlying Transaksi yang sah.</p>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div>
-                <label for="underlying-doc-type" class="pos-label" id="lbl-underlying-type">Jenis dokumen *</label>
-                <select id="underlying-doc-type" class="pos-input w-full bg-navy-900 border border-navy-600 rounded-lg text-slate-100">
-                  <option value="" id="opt-underlying-none">Pilih jenis dokumen</option>
-                  <option value="TIKET" id="opt-underlying-ticket">Tiket Perjalanan / Paspor & Visa</option>
-                  <option value="INVOICE" id="opt-underlying-invoice">Invoice / Dokumen Dagang Luar Negeri</option>
-                  <option value="PENDIDIKAN" id="opt-underlying-edu">Invoice / Surat Biaya Pendidikan LN</option>
-                  <option value="MEDIS" id="opt-underlying-med">Surat Rujukan / Tagihan Medis LN</option>
-                  <option value="KONTRAK" id="opt-underlying-contract">Perjanjian Kontrak / Tagihan Jasa</option>
-                  <option value="LAINNYA" id="opt-underlying-other">Dokumen Underlying Lainnya</option>
-                </select>
-              </div>
-              <div>
-                <label for="underlying-doc-no" class="pos-label" id="lbl-underlying-no">Nomor / keterangan dokumen *</label>
-                <input type="text" id="underlying-doc-no" placeholder="No. tiket, invoice, atau surat" class="pos-input w-full bg-navy-900 border border-navy-600 rounded-lg text-slate-100 placeholder-slate-500">
-              </div>
-            </div>
-          </div>
         </div>
 
         <!-- RIGHT: sticky summary (the one loud element) + collapsible receipt preview -->
@@ -2874,11 +2884,11 @@
   <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col space-y-2 pointer-events-none"></div>
 
   <!-- Scripts -->
-  <script src="/pos/bluetooth-print.js?v=3.15"></script>
-  <script src="/pos/usb-print.js?v=3.15"></script>
-  <script src="/pos/serial-print.js?v=3.15"></script>
-  <script src="/pos/bridge-print.js?v=3.15"></script>
-  <script src="/pos/app.js?v=3.15"></script>
+  <script src="/pos/bluetooth-print.js?v=3.16"></script>
+  <script src="/pos/usb-print.js?v=3.16"></script>
+  <script src="/pos/serial-print.js?v=3.16"></script>
+  <script src="/pos/bridge-print.js?v=3.16"></script>
+  <script src="/pos/app.js?v=3.16"></script>
 
   <!-- Modal Tambah Data DTTOT -->
   <div id="modal-add-dttot" class="fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-3 hidden">

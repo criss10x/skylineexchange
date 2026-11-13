@@ -34,8 +34,8 @@ const i18n = {
     lblPepSource: 'Sumber Dana (Source of Funds)',
     lblPepPurpose: 'Tujuan Transaksi (Purpose)',
     lblPepApproval: 'Saya mengonfirmasi bahwa transaksi nasabah PEP ini telah mendapatkan Persetujuan Direksi / Senior Management sesuai standar kepatuhan Bank Indonesia.',
-    lblUnderlyingTitle: 'Wajib dokumen underlying (≥ USD 10.000)',
-    txtUnderlyingDesc: 'Sesuai Peraturan Bank Indonesia (PBI Transaksi Valas), pembelian valuta asing terhadap Rupiah mencapai atau melebihi USD 10.000 (atau ekuivalennya) wajib melampirkan Dokumen Underlying Transaksi yang sah.',
+    lblUnderlyingTitle: 'Wajib dokumen underlying',
+    txtUnderlyingDesc: 'Total transaksi mencapai batas USD 10.000 (PBI Transaksi Valas). Isi dokumen underlying sebelum menyimpan transaksi.',
     lblUnderlyingType: 'Jenis Dokumen Underlying',
     lblUnderlyingNo: 'Nomor Dokumen / Keterangan',
     dttotAlertTitle: 'PERINGATAN DTTOT / DPPSPM: TRANSAKSI DIBEKUKAN',
@@ -288,8 +288,8 @@ const i18n = {
     lblPepSource: 'Source of Funds',
     lblPepPurpose: 'Purpose of Transaction',
     lblPepApproval: 'I confirm that this PEP transaction has been formally approved by Senior Management / Board of Directors in compliance with Bank Indonesia regulations.',
-    lblUnderlyingTitle: 'Underlying document required (≥ USD 10,000)',
-    txtUnderlyingDesc: 'Under Bank Indonesia Foreign Exchange Regulations (PBI Transaksi Valas), foreign currency transactions reaching or exceeding USD 10,000 (or equivalent) require valid Underlying Documents.',
+    lblUnderlyingTitle: 'Underlying document required',
+    txtUnderlyingDesc: 'The total reached the USD 10,000 limit (PBI Transaksi Valas). Fill in the underlying document before saving.',
     lblUnderlyingType: 'Underlying Document Type',
     lblUnderlyingNo: 'Document Number / Reference',
     dttotAlertTitle: 'DTTOT / DPPSPM ALERT: TRANSACTION FROZEN',
@@ -1013,6 +1013,7 @@ function setAppLanguage(lang) {
   safeSet('lbl-pep-approval', t.lblPepApproval);
   safeSet('lbl-underlying-title', t.lblUnderlyingTitle);
   safeSet('txt-underlying-desc', t.txtUnderlyingDesc);
+  updateUnderlyingStatus();
   safeSet('lbl-underlying-type', t.lblUnderlyingType);
   safeSet('lbl-underlying-no', t.lblUnderlyingNo);
   safeSet('dttot-alert-title', t.dttotAlertTitle);
@@ -2179,9 +2180,14 @@ function renderCart() {
   const usdBadge = document.getElementById('badge-usd-equiv');
   
   if (usdEquiv >= 10000) {
+    const justCrossed = !state.isUnderlyingRequired;
     state.isUnderlyingRequired = true;
     if (underCard) underCard.classList.remove('hidden');
     if (usdBadge) usdBadge.textContent = '≈ USD ' + Math.round(usdEquiv).toLocaleString('en-US');
+    updateUnderlyingStatus();
+    // The notice sits above the item list; bring it into view the moment the limit is crossed
+    // next frame: after layout (and scroll anchoring) settle, or the smooth scroll gets cancelled
+    if (justCrossed && underCard) requestAnimationFrame(() => underCard.scrollIntoView({ behavior: 'smooth', block: 'start' }));
   } else {
     state.isUnderlyingRequired = false;
     if (underCard) underCard.classList.add('hidden');
@@ -2630,6 +2636,18 @@ async function processTransactionInner() {
   loadReportsSummary();
 }
 
+// Underlying notice: amber until both fields are filled, then green
+function updateUnderlyingStatus() {
+  const card = document.getElementById('card-underlying-warning');
+  const chip = document.getElementById('underlying-status');
+  if (!card || !chip) return;
+  const isEn = state.appLang === 'en';
+  const done = !!document.getElementById('underlying-doc-type')?.value && !!document.getElementById('underlying-doc-no')?.value.trim();
+  card.classList.toggle('is-complete', done);
+  chip.className = 'set-status shrink-0 ' + (done ? 'set-status--ok' : 'set-status--warn');
+  chip.textContent = done ? (isEn ? 'Complete' : 'Lengkap') : (isEn ? 'Incomplete' : 'Belum lengkap');
+}
+
 function resetForm() {
   state.cart = [];
   document.getElementById('cust-name').value = '';
@@ -2651,6 +2669,7 @@ function resetForm() {
   const underNo = document.getElementById('underlying-doc-no'); if (underNo) underNo.value = '';
   state.isUnderlyingRequired = false;
   const underCard = document.getElementById('card-underlying-warning'); if (underCard) underCard.classList.add('hidden');
+  updateUnderlyingStatus();
   clearDttotAlert();
   document.getElementById('input-payment').value = '';
   document.getElementById('input-signature-customer').value = '';
@@ -5745,6 +5764,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   initUsbUI();
   initSerialUI();
   initBridgeUI();
+  ['underlying-doc-type', 'underlying-doc-no'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.addEventListener('input', updateUnderlyingStatus); el.addEventListener('change', updateUnderlyingStatus); }
+  });
   initPrinterGuideModal();
   initUsbHelperModal();
   initTheme();
