@@ -2630,6 +2630,11 @@ async function processTransactionInner() {
   loadReportsSummary();
 }
 
+// YYYY-MM-DD of the store day in Bali (WITA); toISOString() would give the UTC day
+function storeToday() {
+  return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Makassar' });
+}
+
 function resetForm() {
   state.cart = [];
   document.getElementById('cust-name').value = '';
@@ -3278,7 +3283,7 @@ async function loadReportsSummary() {
       });
 
       // Update Card Headings according to period
-      const todayStr = new Date().toISOString().split('T')[0];
+      const todayStr = storeToday();
       const isToday = !filter.isAll && !filter.isRange && (filter.startDate === todayStr || (!filter.startDate && !filter.endDate));
       
       const buyCardLabel = document.getElementById('lbl-hist-buy-card');
@@ -3385,7 +3390,7 @@ async function downloadDatabaseBackup() {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    const dateStr = new Date().toISOString().split('T')[0];
+    const dateStr = storeToday();
     a.download = `Skyline_POS_FullBackup_${dateStr}.json`;
     document.body.appendChild(a);
     a.click();
@@ -4356,7 +4361,7 @@ function initEventListeners() {
   const startEl = document.getElementById('history-start-date');
   const endEl = document.getElementById('history-end-date');
   const legacyDateInput = document.getElementById('history-date-filter');
-  const todayIso = new Date().toISOString().split('T')[0];
+  const todayIso = storeToday();
 
   if (startEl && !startEl.value) startEl.value = todayIso;
   if (endEl && !endEl.value) endEl.value = todayIso;
@@ -4383,7 +4388,7 @@ function initEventListeners() {
   });
 
   document.getElementById('btn-history-today')?.addEventListener('click', () => {
-    const today = new Date().toISOString().split('T')[0];
+    const today = storeToday();
     if (startEl) startEl.value = today;
     if (endEl) endEl.value = today;
     showToast(state.appLang === 'en' ? 'Filtered to Today' : 'Menampilkan transaksi Hari Ini', 'info');
@@ -4395,7 +4400,7 @@ function initEventListeners() {
     const y = now.getFullYear();
     const m = String(now.getMonth() + 1).padStart(2, '0');
     const firstDay = `${y}-${m}-01`;
-    const today = now.toISOString().split('T')[0];
+    const today = storeToday();
     if (startEl) startEl.value = firstDay;
     if (endEl) endEl.value = today;
     showToast(state.appLang === 'en' ? `Filtered to This Month (${firstDay} to ${today})` : `Menampilkan transaksi Bulan Ini (${firstDay} s/d ${today})`, 'info');

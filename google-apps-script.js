@@ -173,7 +173,8 @@ function processSingleTransaction(sheet, tx) {
     }];
   }
 
-  var dateFormatted = formatSheetDate(tx.created_at);
+  // POS sends the store day (WITA) in tx.date; created_at fallback for older POS versions
+  var dateFormatted = tx.date || formatSheetDate(tx.created_at);
   var customerName = (tx.customer_name || 'CASH').toUpperCase().trim();
   var phone = String(tx.customer_phone || '').trim();
   var idNo = String(tx.customer_id_no || '').trim();
