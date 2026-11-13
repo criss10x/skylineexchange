@@ -22,7 +22,34 @@ function getSetting(key) {
 }
 
 // Helper: Send payload to Google Apps Script Web App with validation & timeout
+// The store is in Bali (WITA, UTC+8). created_at is stored in UTC, so "which day" must be computed
+// in store time or anything between 00:00 and 08:00 WITA lands on the previous day.
+const STORE_TZ = 'Asia/Makassar';
+const STORE_DAY_SQL = "date(created_at, '+8 hours')";
+const STORE_DAY_SQL_T = "date(t.created_at, '+8 hours')";
+const SHEET_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+// YYYY-MM-DD of the store day
+function storeDate(value = new Date()) {
+  return new Date(value).toLocaleDateString('en-CA', { timeZone: STORE_TZ });
+}
+
+// Store wall-clock time without offset, e.g. 2026-11-13T07:30:00
+function storeWallClock(value) {
+  return new Date(value).toLocaleString('sv-SE', { timeZone: STORE_TZ }).replace(' ', 'T');
+}
+
+// Google Sheets rows: "date" is the store day (13-Nov-2026). created_at goes as store wall-clock time, so
+// an Apps Script that still formats created_at itself (any script time zone) also lands on the right day.
+function forSheets(tx) {
+  if (!tx || !tx.created_at || isNaN(new Date(tx.created_at).getTime())) return tx;
+  const [y, m, d] = storeDate(tx.created_at).split('-');
+  return { ...tx, date: `${d}-${SHEET_MONTHS[Number(m) - 1]}-${y}`, created_at: storeWallClock(tx.created_at) };
+}
+
 async function sendToGoogleSheets(url, payload) {
+  if (payload && payload.transaction) payload = { ...payload, transaction: forSheets(payload.transaction) };
+  if (payload && Array.isArray(payload.transactions)) payload = { ...payload, transactions: payload.transactions.map(forSheets) };
   if (!url || typeof url !== 'string' || !url.trim().startsWith('http')) {
     throw new Error('URL Web App Google Sheets belum diatur atau tidak valid.');
   }
@@ -76,11 +103,7 @@ async function sendToGoogleSheets(url, payload) {
 
 // Helper: Generate Sequential Receipt Number
 function generateReceiptNo() {
-  const now = new Date();
-  const yyyy = now.getFullYear();
-  const mm = String(now.getMonth() + 1).padStart(2, '0');
-  const dd = String(now.getDate()).padStart(2, '0');
-  const datePrefix = `SE-${yyyy}${mm}${dd}`;
+  const datePrefix = `SE-${storeDate().replace(/-/g, '')}`;
 
   const rows = db.prepare('SELECT receipt_no FROM transactions WHERE receipt_no LIKE ?').all(`${datePrefix}-%`);
   let maxSeq = 0;
@@ -512,14 +535,14 @@ router.get('/api/transactions', requireAuth, (req, res) => {
       if (s && e) {
         const start = s < e ? s : e;
         const end = s < e ? e : s;
-        query += ' AND substr(created_at, 1, 10) BETWEEN ? AND ?';
+        query += ` AND ${STORE_DAY_SQL} BETWEEN ? AND ?`;
         params.push(start, end);
       } else if (s || e) {
         const target = s || e;
-        query += ' AND substr(created_at, 1, 10) = ?';
+        query += ` AND ${STORE_DAY_SQL} = ?`;
         params.push(target);
       } else if (date) {
-        query += ' AND substr(created_at, 1, 10) = ?';
+        query += ` AND ${STORE_DAY_SQL} = ?`;
         params.push(date);
       }
     }
@@ -1076,21 +1099,21 @@ router.get('/api/reports/summary', requireAuth, (req, res) => {
     } else if (s && e) {
       const start = s < e ? s : e;
       const end = s < e ? e : s;
-      whereClause = 'substr(created_at, 1, 10) BETWEEN ? AND ?';
+      whereClause = `${STORE_DAY_SQL} BETWEEN ? AND ?`;
       whereParams = [start, end];
       period = { startDate: start, endDate: end, isRange: start !== end, label: start === end ? start : `${start} s/d ${end}` };
     } else if (s || e) {
       const target = s || e;
-      whereClause = 'substr(created_at, 1, 10) = ?';
+      whereClause = `${STORE_DAY_SQL} = ?`;
       whereParams = [target];
       period = { startDate: target, endDate: target, isRange: false, label: target };
     } else if (date) {
-      whereClause = 'substr(created_at, 1, 10) = ?';
+      whereClause = `${STORE_DAY_SQL} = ?`;
       whereParams = [date];
       period = { startDate: date, endDate: date, isRange: false, label: date };
     } else {
-      const today = new Date().toISOString().split('T')[0];
-      whereClause = 'substr(created_at, 1, 10) = ?';
+      const today = storeDate();
+      whereClause = `${STORE_DAY_SQL} = ?`;
       whereParams = [today];
       period = { startDate: today, endDate: today, isRange: false, label: today };
     }
@@ -1186,17 +1209,17 @@ router.post('/api/sheets/sync', requireAuth, async (req, res) => {
     } else if (s && e) {
       const start = s < e ? s : e;
       const end = s < e ? e : s;
-      txQuery += ' AND substr(created_at, 1, 10) BETWEEN ? AND ?';
+      txQuery += ` AND ${STORE_DAY_SQL} BETWEEN ? AND ?`;
       params.push(start, end);
     } else if (s || e) {
-      txQuery += ' AND substr(created_at, 1, 10) = ?';
+      txQuery += ` AND ${STORE_DAY_SQL} = ?`;
       params.push(s || e);
     } else if (date) {
-      txQuery += ' AND substr(created_at, 1, 10) = ?';
+      txQuery += ` AND ${STORE_DAY_SQL} = ?`;
       params.push(date);
     } else {
-      const today = new Date().toISOString().split('T')[0];
-      txQuery += ' AND substr(created_at, 1, 10) = ?';
+      const today = storeDate();
+      txQuery += ` AND ${STORE_DAY_SQL} = ?`;
       params.push(today);
     }
 
@@ -1252,10 +1275,8 @@ function formatExportDate(isoString) {
   if (!isoString) return '';
   const d = new Date(isoString);
   if (isNaN(d.getTime())) return String(isoString).split('T')[0];
-  const dd = String(d.getDate()).padStart(2, '0');
-  const mmm = EXPORT_MONTHS[d.getMonth()];
-  const yyyy = d.getFullYear();
-  return `${dd}-${mmm}-${yyyy}`;
+  const [yyyy, mm, dd] = storeDate(d).split('-');
+  return `${dd}-${EXPORT_MONTHS[Number(mm) - 1]}-${yyyy}`;
 }
 
 // Helper: Query transactions with item lines for export (single date or date range)
@@ -1279,14 +1300,14 @@ function getTransactionsForExport({ date, startDate, endDate, isAll } = {}) {
     if (s && e) {
       const start = s < e ? s : e;
       const end = s < e ? e : s;
-      query += ' WHERE substr(t.created_at, 1, 10) BETWEEN ? AND ?';
+      query += ` WHERE ${STORE_DAY_SQL_T} BETWEEN ? AND ?`;
       params.push(start, end);
     } else if (s || e) {
-      query += ' WHERE substr(t.created_at, 1, 10) = ?';
+      query += ` WHERE ${STORE_DAY_SQL_T} = ?`;
       params.push(s || e);
     } else {
-      const targetDate = date || new Date().toISOString().split('T')[0];
-      query += ' WHERE substr(t.created_at, 1, 10) = ?';
+      const targetDate = date || storeDate();
+      query += ` WHERE ${STORE_DAY_SQL_T} = ?`;
       params.push(targetDate);
     }
   }
@@ -1508,7 +1529,7 @@ const handleExportCsv = (req, res) => {
       if (s && e && s !== e) {
         filename = `Skyline_POS_${s}_sd_${e}.csv`;
       } else {
-        const targetDate = s || e || date || new Date().toISOString().split('T')[0];
+        const targetDate = s || e || date || storeDate();
         filename = `Skyline_POS_${targetDate}.csv`;
       }
     }
@@ -1538,7 +1559,7 @@ const handleExportExcel = async (req, res) => {
         periodTitle = `Periode: ${s} s/d ${e}`;
         filename = `Skyline_POS_${s}_sd_${e}.xlsx`;
       } else {
-        const targetDate = s || e || date || new Date().toISOString().split('T')[0];
+        const targetDate = s || e || date || storeDate();
         periodTitle = `Periode: ${targetDate}`;
         filename = `Skyline_POS_${targetDate}.xlsx`;
       }
@@ -1675,7 +1696,7 @@ router.get('/api/system/backup/download', requireAuth, requireAdmin, (req, res) 
       return res.status(500).json({ success: false, message: 'Fungsi snapshot tidak tersedia.' });
     }
     const snapshot = db.getAllDataSnapshot();
-    const dateStr = new Date().toISOString().split('T')[0];
+    const dateStr = storeDate();
     res.setHeader('Content-Type', 'application/json');
     res.setHeader('Content-Disposition', `attachment; filename="Skyline_POS_FullBackup_${dateStr}.json"`);
     res.send(JSON.stringify(snapshot, null, 2));
