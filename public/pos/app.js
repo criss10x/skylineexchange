@@ -38,8 +38,9 @@ const i18n = {
     txtUnderlyingDesc: 'Total transaksi melewati batas threshold (setara USD 10.000, PBI Transaksi Valas). Isi dokumen underlying sebelum menyimpan transaksi.',
     lblUnderlyingType: 'Jenis Dokumen Underlying',
     lblUnderlyingNo: 'Nomor Dokumen / Keterangan',
-    dttotAlertTitle: 'PERINGATAN DTTOT / DPPSPM: TRANSAKSI DIBEKUKAN',
-    dttotAlertDesc: 'Nama nasabah terindikasi dalam Daftar Terduga Teroris & Organisasi Teroris (DTTOT). Sesuai regulasi Bank Indonesia (PBI APU PPT), transaksi WAJIB DIBEKUKAN serta-merta tanpa penundaan (Freeze Without Delay).',
+    dttotAlertTitle: 'Transaksi dibekukan',
+    dttotAlertDesc: 'Nama nasabah cocok dengan daftar terduga teroris (DTTOT/DPPSPM). Transaksi wajib dibekukan tanpa penundaan.',
+    dttotAlertNext: 'Jangan lanjutkan transaksi. Laporkan segera ke petugas kepatuhan (APU PPT).',
 
     // POS Cashier Form
     legendTitle: 'Petunjuk Kolom:',
@@ -292,8 +293,9 @@ const i18n = {
     txtUnderlyingDesc: 'The total is over the threshold (about USD 10,000, PBI Transaksi Valas). Fill in the underlying document before saving.',
     lblUnderlyingType: 'Underlying Document Type',
     lblUnderlyingNo: 'Document Number / Reference',
-    dttotAlertTitle: 'DTTOT / DPPSPM ALERT: TRANSACTION FROZEN',
-    dttotAlertDesc: 'Customer name matched official Terrorist / Extremist Watchlist (DTTOT). Under Bank Indonesia regulations (PBI APU PPT), this transaction MUST BE FROZEN WITHOUT DELAY.',
+    dttotAlertTitle: 'Transaction frozen',
+    dttotAlertDesc: 'Customer name matches the terrorist watchlist (DTTOT/DPPSPM). The transaction must be frozen without delay.',
+    dttotAlertNext: 'Do not continue. Report to the compliance officer (APU PPT) right away.',
 
     // POS Cashier Form
     legendTitle: 'Field Legend:',
@@ -1022,6 +1024,7 @@ function setAppLanguage(lang) {
   safeSet('lbl-underlying-no', t.lblUnderlyingNo);
   safeSet('dttot-alert-title', t.dttotAlertTitle);
   safeSet('dttot-alert-desc', t.dttotAlertDesc);
+  safeSet('dttot-alert-next', t.dttotAlertNext);
   safeSet('lbl-subtab-store', t.subtabStore);
 
   // POS Cashier Form
@@ -1766,6 +1769,14 @@ function updateItemRateInput() {
   }
 }
 
+// Currency code -> flagcdn country code. Unknown codes (or offline) keep the text tag.
+const CURRENCY_FLAGS = {
+  USD: 'us', AUD: 'au', EUR: 'eu', GBP: 'gb', CHF: 'ch', JPY: 'jp', SGD: 'sg', CAD: 'ca',
+  MYR: 'my', NZD: 'nz', HKD: 'hk', CNY: 'cn', BND: 'bn', SAR: 'sa', AED: 'ae', THB: 'th',
+  PHP: 'ph', KRW: 'kr', INR: 'in', NTD: 'tw', TWD: 'tw', IDR: 'id', SEK: 'se', NOK: 'no',
+  DKK: 'dk', QAR: 'qa', KWD: 'kw', VND: 'vn', RUB: 'ru', ZAR: 'za', TRY: 'tr', BHD: 'bh', OMR: 'om',
+};
+
 function renderRatesTable() {
   const tbody = document.getElementById('rates-table-body');
   if (!tbody) return;
@@ -1780,7 +1791,9 @@ function renderRatesTable() {
     tr.className = 'hover:bg-navy-700/40 transition-colors';
     tr.innerHTML = `
       <td class="py-3 px-4 font-bold text-white flex items-center gap-2">
-        <span class="w-7 h-7 rounded bg-navy-700 border border-navy-600 flex items-center justify-center text-xs font-mono text-brand">${tag}</span>
+        <span class="relative w-9 h-6 shrink-0 rounded overflow-hidden bg-navy-700 border border-navy-600 flex items-center justify-center text-[10px] font-mono text-brand">${tag}${CURRENCY_FLAGS[tag]
+          ? `<img src="https://flagcdn.com/w40/${CURRENCY_FLAGS[tag]}.png" srcset="https://flagcdn.com/w80/${CURRENCY_FLAGS[tag]}.png 2x" alt="" loading="lazy" class="absolute inset-0 w-full h-full object-cover" onerror="this.remove()">`
+          : ''}</span>
         <div>
           <div class="flex items-center gap-1.5">
             <span>${r.code}</span>
@@ -2421,7 +2434,14 @@ function showDttotAlert(matchData) {
   const btnSubmit = document.getElementById('btn-submit-tx');
   
   if (alertDetail) {
-    alertDetail.textContent = `[MATCH]: ${matchData.name} | Alias: ${matchData.aliases || '-'} | Daftar: ${matchData.list_type} | Info: ${matchData.notes || '-'}`;
+    const isEn = state.appLang === 'en';
+    const rows = [
+      [isEn ? 'Matched name' : 'Nama cocok', matchData.name],
+      ['Alias', matchData.aliases],
+      [isEn ? 'List' : 'Daftar', matchData.list_type],
+      [isEn ? 'Notes' : 'Keterangan', matchData.notes],
+    ];
+    alertDetail.innerHTML = rows.map(([k, v]) => `<dt>${k}</dt><dd>${escapeHtml(v) || '-'}</dd>`).join('');
   }
   if (alertBox) {
     alertBox.classList.remove('hidden');
