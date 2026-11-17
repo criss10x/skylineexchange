@@ -35,7 +35,7 @@ const i18n = {
     lblPepPurpose: 'Tujuan Transaksi (Purpose)',
     lblPepApproval: 'Saya mengonfirmasi bahwa transaksi nasabah PEP ini telah mendapatkan Persetujuan Direksi / Senior Management sesuai standar kepatuhan Bank Indonesia.',
     lblUnderlyingTitle: 'Wajib dokumen underlying',
-    txtUnderlyingDesc: 'Total transaksi mencapai batas USD 10.000 (PBI Transaksi Valas). Isi dokumen underlying sebelum menyimpan transaksi.',
+    txtUnderlyingDesc: 'Total transaksi melewati batas threshold (setara USD 10.000, PBI Transaksi Valas). Isi dokumen underlying sebelum menyimpan transaksi.',
     lblUnderlyingType: 'Jenis Dokumen Underlying',
     lblUnderlyingNo: 'Nomor Dokumen / Keterangan',
     dttotAlertTitle: 'PERINGATAN DTTOT / DPPSPM: TRANSAKSI DIBEKUKAN',
@@ -61,7 +61,7 @@ const i18n = {
     custNationalityLabel: 'Kewarganegaraan',
     custNationalityPlaceholder: 'Indonesia, Australia',
     custJobLabel: 'Pekerjaan',
-    custExtraLabel: 'Data tambahan (NPWP, kewarganegaraan, pekerjaan, alamat)',
+    custExtraLabel: 'Data tambahan (NPWP, kewarganegaraan, pekerjaan, alamat, tanggal lahir, kategori)',
     custJobPlaceholder: 'Pekerjaan',
     custGenderLabel: 'Jenis kelamin',
     optGenderNone: '- Pilih Gender -',
@@ -289,7 +289,7 @@ const i18n = {
     lblPepPurpose: 'Purpose of Transaction',
     lblPepApproval: 'I confirm that this PEP transaction has been formally approved by Senior Management / Board of Directors in compliance with Bank Indonesia regulations.',
     lblUnderlyingTitle: 'Underlying document required',
-    txtUnderlyingDesc: 'The total reached the USD 10,000 limit (PBI Transaksi Valas). Fill in the underlying document before saving.',
+    txtUnderlyingDesc: 'The total is over the threshold (about USD 10,000, PBI Transaksi Valas). Fill in the underlying document before saving.',
     lblUnderlyingType: 'Underlying Document Type',
     lblUnderlyingNo: 'Document Number / Reference',
     dttotAlertTitle: 'DTTOT / DPPSPM ALERT: TRANSACTION FROZEN',
@@ -315,7 +315,7 @@ const i18n = {
     custNationalityLabel: 'Nationality',
     custNationalityPlaceholder: 'Indonesia, Australia',
     custJobLabel: 'Occupation',
-    custExtraLabel: 'Additional details (tax ID, nationality, occupation, address)',
+    custExtraLabel: 'Additional details (tax ID, nationality, occupation, address, date of birth, category)',
     custJobPlaceholder: 'Occupation',
     custGenderLabel: 'Gender',
     optGenderNone: '- Select Gender -',
@@ -532,6 +532,10 @@ const state = {
     store_phone: '+6285-122-777-970',
     store_permit: '',
     show_permit: '0',
+    store_director: '',
+    store_city: '',
+    store_npwp: '',
+    threshold_idr: '180000000',
     default_teller: 'TELLER 01',
     disclaimer_1: 'Periksa fisik uang sebelum meninggalkan kasir.',
     disclaimer_2: 'Uang yang sudah ditukar tidak dapat dikembalikan.',
@@ -1457,6 +1461,16 @@ function applySettingsToUI() {
   if (sPermit) sPermit.value = s.store_permit || '';
   const sShowPermit = document.getElementById('setting-show-permit');
   if (sShowPermit) sShowPermit.checked = s.show_permit === '1';
+  [['setting-store-director', 'store_director'], ['setting-store-city', 'store_city'], ['setting-store-npwp', 'store_npwp']].forEach(([id, key]) => {
+    const el = document.getElementById(id);
+    if (el) el.value = s[key] || '';
+  });
+  const npwpEl = document.getElementById('rcpt-store-npwp');
+  if (npwpEl) {
+    npwpEl.textContent = s.store_npwp ? `NPWP: ${s.store_npwp}` : '';
+    npwpEl.classList.toggle('hidden', !s.store_npwp);
+  }
+  renderThresholdSetting();
   const sTeller = document.getElementById('setting-default-teller');
   if (sTeller) sTeller.value = activeTeller;
   const sDisc1 = document.getElementById('setting-disclaimer-1');
@@ -2183,7 +2197,7 @@ function renderCart() {
   const underCard = document.getElementById('card-underlying-warning');
   const usdBadge = document.getElementById('badge-usd-equiv');
   
-  if (usdEquiv >= 10000) {
+  if (total >= thresholdIdr()) {
     const justCrossed = !state.isUnderlyingRequired;
     state.isUnderlyingRequired = true;
     if (underCard) underCard.classList.remove('hidden');
@@ -2571,6 +2585,7 @@ async function processTransactionInner() {
     customer_job: custJob.toUpperCase(),
     customer_gender: custGender,
     customer_address: custAddress.toUpperCase(),
+    ...customerExtras(),
     is_pep: isPep ? 1 : 0,
     pep_institution: pepInstitution,
     source_of_funds: sourceOfFunds,
@@ -2657,6 +2672,687 @@ function storeToday() {
   return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Makassar' });
 }
 
+// ==================== BI PHASE 1: CUSTOMER DATA, THRESHOLD, COMPLIANCE REPORTS ====================
+function customerExtras() {
+  return {
+    customer_birth_date: document.getElementById('cust-birth-date')?.value || '',
+    customer_birth_place: (document.getElementById('cust-birth-place')?.value || '').trim().toUpperCase(),
+    customer_category: document.getElementById('cust-category')?.value || 'PERSONAL'
+  };
+}
+
+function thresholdIdr() {
+  const v = Number(state.settings.threshold_idr);
+  return v > 0 ? v : 180000000;
+}
+
+function renderThresholdSetting() {
+  const input = document.getElementById('setting-threshold-idr');
+  const status = document.getElementById('threshold-status');
+  const isAdmin = state.user && state.user.role === 'ADMIN';
+  if (input && document.activeElement !== input) input.value = thresholdIdr().toLocaleString('id-ID');
+  if (input) input.disabled = !isAdmin;
+  const btn = document.getElementById('btn-save-threshold');
+  if (btn) btn.disabled = !isAdmin;
+  if (status) status.textContent = 'Rp ' + thresholdIdr().toLocaleString('id-ID');
+}
+
+async function saveThresholdSetting() {
+  const isEn = state.appLang === 'en';
+  const value = Number(String(document.getElementById('setting-threshold-idr')?.value || '').replace(/\D/g, ''));
+  if (!(value > 0)) {
+    showToast(isEn ? 'Enter a threshold above 0' : 'Isi batas threshold lebih dari 0', 'warning');
+    return;
+  }
+  try {
+    const data = await (await authFetch('/api/settings', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ threshold_idr: String(value) })
+    })).json();
+    if (!data.success) throw new Error(data.message || 'Gagal menyimpan');
+    state.settings.threshold_idr = String(value);
+    renderThresholdSetting();
+    renderCart();
+    showToast(isEn ? 'Threshold saved' : 'Batas threshold disimpan', 'success');
+  } catch (err) {
+    showToast(`${isEn ? 'Failed to save' : 'Gagal menyimpan'}: ${err.message}`, 'error');
+  }
+}
+
+// Fill the customer form from the newest transaction of this ID
+function fillCustomerForm(c) {
+  const set = (id, v) => { const el = document.getElementById(id); if (el && v != null) el.value = v; };
+  set('cust-id', c.customer_id_no);
+  set('cust-name', (c.customer_name || '').toUpperCase());
+  set('cust-phone', c.customer_phone || '');
+  set('cust-npwp', c.customer_npwp || '');
+  set('cust-nationality', c.customer_nationality || '');
+  set('cust-job', c.customer_job || '');
+  set('cust-gender', c.customer_gender || '');
+  set('cust-address', c.customer_address || '');
+  set('cust-birth-date', c.customer_birth_date || '');
+  set('cust-birth-place', c.customer_birth_place || '');
+  set('cust-category', c.customer_category === 'CORPORATE' ? 'CORPORATE' : 'PERSONAL');
+  const pep = document.getElementById('cust-pep-toggle');
+  if (pep && Number(c.is_pep) === 1 && !pep.checked) pep.click();
+  const nameEl = document.getElementById('cust-name');
+  if (nameEl) nameEl.dispatchEvent(new Event('input', { bubbles: true })); // re-run DTTOT screening + receipt preview
+}
+
+let lastLookedUpId = '';
+async function lookupCustomerById() {
+  const idNo = (document.getElementById('cust-id')?.value || '').trim();
+  if (idNo.length < 3 || idNo === lastLookedUpId) return;
+  lastLookedUpId = idNo;
+  try {
+    const data = await (await authFetch(`/api/customers/${encodeURIComponent(idNo)}`)).json();
+    if (!data.success || !data.data) return;
+    fillCustomerForm(data.data);
+    showToast(state.appLang === 'en' ? 'Returning customer: data filled in' : 'Customer lama: data terisi otomatis', 'info');
+  } catch { /* offline: cashier types the data */ }
+}
+
+let customerSearchTarget = 'form';
+function openCustomerSearch(target) {
+  customerSearchTarget = target;
+  const modal = document.getElementById('modal-customer-search');
+  const input = document.getElementById('cust-search-input');
+  document.getElementById('cust-search-results').innerHTML = '';
+  modal.classList.remove('hidden');
+  input.value = '';
+  input.focus();
+}
+
+let customerSearchTimer = null;
+async function runCustomerSearch() {
+  const q = document.getElementById('cust-search-input').value.trim();
+  const list = document.getElementById('cust-search-results');
+  if (q.length < 2) { list.innerHTML = ''; return; }
+  try {
+    const data = await (await authFetch(`/api/customers?q=${encodeURIComponent(q)}`)).json();
+    const rows = data.success ? data.data : [];
+    list.innerHTML = rows.length
+      ? rows.map((c, i) => `<li><button type="button" data-i="${i}" class="w-full text-left px-3 py-2 hover:bg-navy-700 flex justify-between gap-3">
+          <span class="font-semibold text-slate-100">${escapeHtml((c.customer_name || '').toUpperCase())}</span>
+          <span class="num text-slate-400">${escapeHtml(c.customer_id_no)}</span></button></li>`).join('')
+      : `<li class="px-3 py-2 text-slate-400">${state.appLang === 'en' ? 'No customer found' : 'Customer tidak ditemukan'}</li>`;
+    list.querySelectorAll('button[data-i]').forEach(b => b.addEventListener('click', () => {
+      const c = rows[Number(b.dataset.i)];
+      document.getElementById('modal-customer-search').classList.add('hidden');
+      if (customerSearchTarget === 'report') {
+        document.getElementById('compliance-cust-id').value = c.customer_id_no;
+      } else {
+        lastLookedUpId = c.customer_id_no;
+        fillCustomerForm(c);
+      }
+    }));
+  } catch { list.innerHTML = ''; }
+}
+
+// Authenticated file download (links cannot carry the Authorization header)
+async function downloadAuthed(url, fallbackName) {
+  try {
+    const res = await authFetch(url);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || `HTTP ${res.status}`);
+    }
+    const name = (/filename="([^"]+)"/.exec(res.headers.get('Content-Disposition') || '') || [])[1] || fallbackName;
+    const href = URL.createObjectURL(await res.blob());
+    const a = document.createElement('a');
+    a.href = href;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(href), 10000);
+  } catch (err) {
+    showToast(`${state.appLang === 'en' ? 'Download failed' : 'Gagal mengunduh'}: ${err.message}`, 'error');
+  }
+}
+
+function reportPeriodQuery() {
+  const f = getHistoryDateFilterState();
+  if (f.isAll) return { qs: 'all=1', label: state.appLang === 'en' ? 'All dates' : 'Semua tanggal' };
+  const s = f.startDate || f.endDate || storeToday();
+  const e = f.endDate || f.startDate || storeToday();
+  return { qs: `startDate=${encodeURIComponent(s)}&endDate=${encodeURIComponent(e)}`, label: s === e ? s : `${s} s/d ${e}` };
+}
+
+async function openComplianceReports() {
+  document.getElementById('compliance-period').textContent = reportPeriodQuery().label;
+  document.getElementById('modal-compliance-report').classList.remove('hidden');
+  try {
+    const data = await (await authFetch('/api/reports/nationalities')).json();
+    const sel = document.getElementById('compliance-nationality');
+    const keep = sel.value;
+    sel.innerHTML = '<option value="">Pilih kewarganegaraan</option>' + (data.data || []).map(n => `<option>${escapeHtml(n)}</option>`).join('');
+    sel.value = keep;
+  } catch { /* list stays as it was */ }
+}
+
+// Printable report window in the same style as the BI summary report
+function openReportWindow(title, bodyHtml) {
+  const win = window.open('', '_blank');
+  if (!win) {
+    showToast(state.appLang === 'en' ? 'Popup blocked. Please allow popups.' : 'Pop-up terblokir. Izinkan pop-up untuk laporan.', 'error');
+    return null;
+  }
+  win.document.write(`<!DOCTYPE html><html lang="id"><head><meta charset="utf-8"><title>${escapeHtml(title)}</title><style>
+    @page { size: A4 landscape; margin: 12mm 10mm; }
+    body { font-family: Arial, Helvetica, sans-serif; color: #000; background: #fff; margin: 0; padding: 16px; font-size: 11px; }
+    .company { font-weight: bold; font-size: 13px; text-transform: uppercase; }
+    h1 { font-size: 16px; margin: 4px 0 8px; }
+    .meta td { padding: 1px 8px 1px 0; }
+    table.data { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    table.data th { border-top: 1px solid #000; border-bottom: 1px solid #000; padding: 4px 6px; font-size: 10px; text-align: right; }
+    table.data td { padding: 3px 6px; text-align: right; white-space: nowrap; }
+    table.data .l { text-align: left; }
+    tr.group td { font-weight: bold; padding-top: 10px; text-align: left; }
+    tr.sub td { border-top: 1px solid #999; font-weight: bold; }
+    tr.grand td { border-top: 2px solid #000; font-weight: bold; }
+    .flash { margin-top: 12px; font-weight: 800; font-size: 14px; text-align: center; padding: 6px; border: 2px solid #dc2626; color: #dc2626; animation: b 1s steps(1, end) infinite; }
+    @keyframes b { 50% { background: #dc2626; color: #fff; } }
+    .chart { margin-top: 16px; } .bar-row { display: flex; align-items: center; gap: 8px; margin: 4px 0; }
+    .bar-row span:first-child { width: 70px; } .bar { height: 14px; } .buy { background: #6366f1; } .sell { background: #f59e0b; }
+    .actions { margin-bottom: 14px; } .actions button { font: 600 13px sans-serif; padding: 8px 16px; border-radius: 6px; border: 0; background: #0f766e; color: #fff; cursor: pointer; }
+    .foot { margin-top: 16px; font-size: 10px; }
+    @media print { .actions { display: none; } body { padding: 0; } .flash { animation: none; } }
+  </style></head><body><div class="actions"><button onclick="window.print()">Cetak / Simpan PDF</button></div>${bodyHtml}
+  <div class="foot">Tgl Cetak : ${new Date().toLocaleString('en-GB', { timeZone: 'Asia/Makassar', hour12: false })}</div></body></html>`);
+  win.document.close();
+  return win;
+}
+
+const fmtIdr2 = v => Number(v || 0).toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const fmtQty = v => Number(v || 0).toLocaleString('id-ID', { maximumFractionDigits: 2 });
+const fmtDmy = iso => { const [y, m, d] = String(iso || '').split('-'); return y ? `${d}/${m}/${y}` : ''; };
+
+async function showCustomerThresholdReport() {
+  const idNo = document.getElementById('compliance-cust-id').value.trim();
+  if (!idNo) { showToast(state.appLang === 'en' ? 'Enter the customer ID number' : 'Isi No. ID customer', 'warning'); return; }
+  const { qs } = reportPeriodQuery();
+  try {
+    const data = await (await authFetch(`/api/reports/customer?id_no=${encodeURIComponent(idNo)}&${qs}`)).json();
+    if (!data.success) throw new Error(data.message);
+    const r = data.data;
+    const c = r.customer || {};
+    const company = state.settings.store_company || state.settings.store_name || '';
+    const rows = r.rows.map(x => `<tr><td class="l">${fmtDmy(x.day)}</td><td class="l">${escapeHtml(x.receipt_no)}</td><td class="l">${x.currency}</td>
+      <td>${fmtQty(x.buy_qty)}</td><td>${fmtIdr2(x.buy_idr)}</td><td>${fmtQty(x.sell_qty)}</td><td>${fmtIdr2(x.sell_idr)}</td></tr>`).join('')
+      || '<tr><td class="l" colspan="7">Tidak ada transaksi pada periode ini.</td></tr>';
+    const max = Math.max(1, ...Object.values(r.by_currency).flatMap(v => [v.buy_idr, v.sell_idr]));
+    const chart = Object.entries(r.by_currency).map(([cur, v]) => `
+      <div class="bar-row"><span>${cur}</span><span class="bar buy" style="width:${Math.round(v.buy_idr / max * 420)}px"></span><span>Beli ${fmtIdr2(v.buy_idr)}</span></div>
+      <div class="bar-row"><span></span><span class="bar sell" style="width:${Math.round(v.sell_idr / max * 420)}px"></span><span>Jual ${fmtIdr2(v.sell_idr)}</span></div>`).join('');
+    const flash = [r.exceeded_buy ? 'Jumlah Transaksi Pembelian Melebihi Threshold' : '', r.exceeded_sell ? 'Jumlah Transaksi Penjualan Melebihi Threshold' : '']
+      .filter(Boolean).map(t => `<div class="flash">${t}</div>`).join('');
+    openReportWindow(`Threshold_By_Customer_${idNo}`, `
+      <div class="company">${escapeHtml(company)}</div><h1>TRANSAKSI CUSTOMER BY ID</h1>
+      <table class="meta"><tr><td>Periode</td><td>: ${fmtDmy(r.startDate)} S/D ${fmtDmy(r.endDate)}</td></tr>
+      <tr><td>ID No</td><td>: ${escapeHtml(idNo)} [ ${escapeHtml((c.customer_name || '-').toUpperCase())} ]</td></tr>
+      <tr><td>Kewarganegaraan</td><td>: ${escapeHtml((c.customer_nationality || '-').toUpperCase())}</td></tr>
+      <tr><td>Threshold</td><td>: Rp ${fmtIdr2(r.threshold)}</td></tr></table>
+      <table class="data"><thead><tr><th class="l">DATE</th><th class="l">NO TRX</th><th class="l">CURRENCY</th><th>QTY BELI</th><th>PEMBELIAN</th><th>QTY JUAL</th><th>PENJUALAN</th></tr></thead>
+      <tbody>${rows}</tbody><tfoot><tr class="grand"><td class="l" colspan="3">TOTAL</td><td></td><td>${fmtIdr2(r.totals.buy_idr)}</td><td></td><td>${fmtIdr2(r.totals.sell_idr)}</td></tr></tfoot></table>
+      ${flash}<div class="chart"><b>Transaksi By ID</b>${chart}</div>`);
+  } catch (err) {
+    showToast(`${state.appLang === 'en' ? 'Report failed' : 'Gagal membuat laporan'}: ${err.message}`, 'error');
+  }
+}
+
+async function showNationalityReport() {
+  const nat = document.getElementById('compliance-nationality').value;
+  if (!nat) { showToast(state.appLang === 'en' ? 'Choose a nationality' : 'Pilih kewarganegaraan', 'warning'); return; }
+  const { qs } = reportPeriodQuery();
+  try {
+    const data = await (await authFetch(`/api/reports/nationality?nationality=${encodeURIComponent(nat)}&${qs}`)).json();
+    if (!data.success) throw new Error(data.message);
+    const r = data.data;
+    const company = state.settings.store_company || state.settings.store_name || '';
+    const body = r.customers.map(c => `<tr class="group"><td colspan="7">${escapeHtml(c.id_no || '-')} [ ${escapeHtml((c.name || '').toUpperCase())} ]</td></tr>`
+      + c.rows.map(x => `<tr><td class="l">${x.currency}</td><td class="l">${fmtDmy(x.day)}</td><td class="l">${escapeHtml(x.receipt_no)}</td>
+        <td>${fmtQty(x.buy_qty)}</td><td>${fmtIdr2(x.buy_idr)}</td><td>${fmtQty(x.sell_qty)}</td><td>${fmtIdr2(x.sell_idr)}</td></tr>`).join('')
+      + `<tr class="sub"><td class="l" colspan="3">TOTAL PER CUSTOMER</td><td></td><td>${fmtIdr2(c.buy_idr)}</td><td></td><td>${fmtIdr2(c.sell_idr)}</td></tr>`).join('')
+      || '<tr><td class="l" colspan="7">Tidak ada transaksi pada periode ini.</td></tr>';
+    openReportWindow(`Transaksi_By_Negara_${nat}`, `
+      <div class="company">${escapeHtml(company)}</div><h1>TRANSAKSI CUSTOMER BY NATIONALITY</h1>
+      <table class="meta"><tr><td>Periode</td><td>: ${fmtDmy(r.startDate)} S/D ${fmtDmy(r.endDate)}</td></tr><tr><td>Nationality</td><td>: ${escapeHtml(r.nationality)}</td></tr></table>
+      <table class="data"><thead><tr><th class="l">CURRENCY</th><th class="l">TGL TRANSAKSI</th><th class="l">NO TRX</th><th>QTY BELI</th><th>PEMBELIAN</th><th>QTY JUAL</th><th>PENJUALAN</th></tr></thead>
+      <tbody>${body}</tbody><tfoot><tr class="grand"><td class="l" colspan="3">TOTAL SELURUH TRANSAKSI</td><td></td><td>${fmtIdr2(r.totals.buy_idr)}</td><td></td><td>${fmtIdr2(r.totals.sell_idr)}</td></tr></tfoot></table>`);
+  } catch (err) {
+    showToast(`${state.appLang === 'en' ? 'Report failed' : 'Gagal membuat laporan'}: ${err.message}`, 'error');
+  }
+}
+
+// ==================== BI PHASE 2: STOK VALAS + VOLUME REPORTS ====================
+const parseNum = v => {
+  const t = String(v || '').trim().replace(/\./g, '').replace(',', '.');
+  return t === '' ? 0 : Number(t) || 0;
+};
+const fmtInput = (v, dec = 2) => Number(v || 0) ? Number(v).toLocaleString('id-ID', { maximumFractionDigits: dec }) : '';
+const isAdminUser = () => state.user && state.user.role === 'ADMIN';
+
+function recalcOpeningStock() {
+  let total = 0;
+  document.querySelectorAll('#opening-stock-body tr').forEach(tr => {
+    const qty = parseNum(tr.querySelector('.os-qty').value);
+    const rate = parseNum(tr.querySelector('.os-rate').value);
+    const idr = qty * rate;
+    tr.querySelector('.os-idr').textContent = idr ? 'Rp ' + idr.toLocaleString('id-ID', { maximumFractionDigits: 0 }) : '-';
+    total += idr;
+  });
+  document.getElementById('opening-stock-total').textContent = 'Rp ' + total.toLocaleString('id-ID', { maximumFractionDigits: 0 });
+}
+
+async function loadOpeningStock() {
+  try {
+    const data = await (await authFetch('/api/opening-stock')).json();
+    if (!data.success) throw new Error(data.message);
+    const { date, rows } = data.data;
+    const dis = isAdminUser() ? '' : 'disabled';
+    document.getElementById('opening-stock-date').value = date || storeToday();
+    document.getElementById('opening-stock-date').disabled = !isAdminUser();
+    const status = document.getElementById('opening-stock-status');
+    status.textContent = date ? `Berlaku mulai ${fmtDmy(date)}` : 'Belum diisi';
+    status.className = 'set-status ' + (date ? 'set-status--ok' : 'set-status--warn');
+    document.getElementById('opening-stock-body').innerHTML = rows.map(r => `<tr data-cur="${escapeHtml(r.currency)}">
+      <td class="py-1.5 pr-3 font-semibold text-slate-100">BN-${escapeHtml(r.currency)}</td>
+      <td class="py-1.5 px-3"><input type="text" inputmode="decimal" class="os-qty ${'pos-input w-full bg-navy-900 border border-navy-600 rounded-lg text-slate-100 placeholder-slate-500'} text-right !py-1.5" value="${fmtInput(r.qty)}" ${dis} aria-label="Jumlah valas ${escapeHtml(r.currency)}"></td>
+      <td class="py-1.5 px-3"><input type="text" inputmode="decimal" class="os-rate ${'pos-input w-full bg-navy-900 border border-navy-600 rounded-lg text-slate-100 placeholder-slate-500'} text-right !py-1.5" value="${r.qty ? fmtInput(r.idr / r.qty, 4) : ''}" ${dis} aria-label="Kurs ${escapeHtml(r.currency)}"></td>
+      <td class="py-1.5 pl-3 text-right os-idr">-</td></tr>`).join('');
+    document.querySelectorAll('#opening-stock-body input').forEach(i => i.addEventListener('input', recalcOpeningStock));
+    document.getElementById('btn-save-opening-stock').disabled = !isAdminUser();
+    recalcOpeningStock();
+  } catch (err) {
+    showToast(`Saldo awal: ${err.message}`, 'error');
+  }
+}
+
+async function saveOpeningStock() {
+  const date = document.getElementById('opening-stock-date').value;
+  const rows = [...document.querySelectorAll('#opening-stock-body tr')].map(tr => {
+    const qty = parseNum(tr.querySelector('.os-qty').value);
+    return { currency: tr.dataset.cur, qty, idr: qty * parseNum(tr.querySelector('.os-rate').value) };
+  });
+  if (!confirm(`Simpan saldo awal valas per ${fmtDmy(date)}? Laporan BI akan menghitung stok mulai tanggal ini.`)) return;
+  try {
+    const data = await (await authFetch('/api/opening-stock', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ date, rows }) })).json();
+    if (!data.success) throw new Error(data.message);
+    showToast(`Saldo awal disimpan (${data.saved} mata uang)`, 'success');
+    loadOpeningStock();
+  } catch (err) {
+    showToast(`Gagal menyimpan saldo awal: ${err.message}`, 'error');
+  }
+}
+
+const MIDDLE_SOURCE = { SAVED: 'Tersimpan', PREVIOUS: 'Kurs tengah sebelumnya', BOARD: 'Papan Kurs (tengah beli/jual)' };
+async function loadMiddleRates(fromBoard = false) {
+  const dateEl = document.getElementById('middle-rate-date');
+  if (!dateEl.value) dateEl.value = storeToday();
+  dateEl.disabled = !isAdminUser();
+  try {
+    const data = await (await authFetch(`/api/middle-rates?day=${encodeURIComponent(dateEl.value)}`)).json();
+    if (!data.success) throw new Error(data.message);
+    const board = fromBoard ? new Map(state.rates.filter(r => r.code.trim().length === 3).map(r => [r.code.trim().toUpperCase(), (r.buy_rate + r.sell_rate) / 2])) : null;
+    const dis = isAdminUser() ? '' : 'disabled';
+    document.getElementById('middle-rate-body').innerHTML = data.data.rows.map(r => {
+      const rate = board && board.has(r.currency) ? board.get(r.currency) : r.rate;
+      const src = board && board.has(r.currency) ? 'BOARD' : r.source;
+      return `<tr data-cur="${escapeHtml(r.currency)}"><td class="py-1.5 pr-3 font-semibold text-slate-100">BN-${escapeHtml(r.currency)}</td>
+        <td class="py-1.5 px-3"><input type="text" inputmode="decimal" class="mr-rate ${'pos-input w-full bg-navy-900 border border-navy-600 rounded-lg text-slate-100 placeholder-slate-500'} text-right !py-1.5 !w-40 ml-auto block" value="${fmtInput(rate, 4)}" ${dis} aria-label="Kurs tengah ${escapeHtml(r.currency)}"></td>
+        <td class="py-1.5 pl-3 text-[12px] ${src === 'SAVED' ? 'text-emerald-400' : 'text-slate-400'}">${MIDDLE_SOURCE[src] || src}</td></tr>`;
+    }).join('');
+    document.getElementById('btn-save-middle-rates').disabled = !isAdminUser();
+    document.getElementById('btn-middle-from-board').disabled = !isAdminUser();
+  } catch (err) {
+    showToast(`Kurs tengah: ${err.message}`, 'error');
+  }
+}
+
+async function saveMiddleRates() {
+  const day = document.getElementById('middle-rate-date').value;
+  const rows = [...document.querySelectorAll('#middle-rate-body tr')].map(tr => ({ currency: tr.dataset.cur, rate: parseNum(tr.querySelector('.mr-rate').value) }));
+  try {
+    const data = await (await authFetch('/api/middle-rates', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ day, rows }) })).json();
+    if (!data.success) throw new Error(data.message);
+    showToast(`Kurs tengah ${fmtDmy(day)} disimpan (${data.saved} mata uang)`, 'success');
+    loadMiddleRates();
+  } catch (err) {
+    showToast(`Gagal menyimpan kurs tengah: ${err.message}`, 'error');
+  }
+}
+
+async function showVolumeReport(type) {
+  const { qs } = reportPeriodQuery();
+  try {
+    const data = await (await authFetch(`/api/reports/volume?type=${type}&${qs}`)).json();
+    if (!data.success) throw new Error(data.message);
+    const r = data.data;
+    const title = type === 'BELI' ? 'PEMBELIAN VALAS BANK NOTE / BN' : 'PENJUALAN VALAS BANK NOTE / BN';
+    const rows = r.rows.map(x => `<tr><td style="text-align:center">${x.currency}</td><td>${fmtQty(x.qty)}</td><td>${fmtIdr2(x.idr)}</td></tr>`).join('')
+      || '<tr><td colspan="3" style="text-align:center">Tidak ada transaksi pada periode ini.</td></tr>';
+    openReportWindow(`${type === 'BELI' ? 'Pembelian' : 'Penjualan'}_Valas_${r.startDate}_${r.endDate}`, `
+      <style>table.vol{border-collapse:collapse;margin-top:10px;min-width:520px}table.vol th,table.vol td{border:1px solid #000;padding:5px 10px;text-align:right}table.vol th{text-align:center;font-weight:normal}</style>
+      <div class="company">${escapeHtml(r.company)}</div>
+      <p style="margin:14px 0 2px">PERIODE : ${fmtDmy(r.startDate)} S/D ${fmtDmy(r.endDate)}</p><p style="margin:0">${title}</p>
+      <table class="vol"><thead><tr><th rowspan="2" style="text-align:left">JENIS VALUTA</th><th colspan="2">TRANSAKSI DALAM</th></tr><tr><th>VALUTA</th><th>RUPIAH</th></tr></thead>
+      <tbody>${rows}</tbody><tfoot><tr><td style="text-align:center;font-weight:bold">TOTAL</td><td></td><td style="font-weight:bold">${fmtIdr2(r.total_idr)}</td></tr></tfoot></table>`);
+  } catch (err) {
+    showToast(`Gagal membuat laporan: ${err.message}`, 'error');
+  }
+}
+
+function initPhase2Stock() {
+  document.getElementById('btn-save-opening-stock')?.addEventListener('click', saveOpeningStock);
+  document.getElementById('middle-rate-date')?.addEventListener('change', () => loadMiddleRates());
+  document.getElementById('btn-middle-from-board')?.addEventListener('click', () => loadMiddleRates(true));
+  document.getElementById('btn-save-middle-rates')?.addEventListener('click', saveMiddleRates);
+  document.getElementById('btn-volume-buy')?.addEventListener('click', () => showVolumeReport('BELI'));
+  document.getElementById('btn-volume-sell')?.addEventListener('click', () => showVolumeReport('JUAL'));
+}
+
+// ==================== BI PHASE 3: KEUANGAN ====================
+const FIN_CAT_LABELS = {
+  GAJI: 'Gaji / tunjangan', SEWA: 'Sewa', IKLAN: 'Iklan dan promosi', LISTRIK: 'Telepon, listrik, air', TRANSPORT: 'Transport / BBM',
+  PEMELIHARAAN: 'Pemeliharaan', PENYUSUTAN: 'Penyusutan aset (tanpa uang keluar)', ASURANSI: 'Asuransi', ADM_UMUM: 'Adm. umum / ATK',
+  LAIN: 'Lain-lain', PAJAK_PPH: 'Pajak penghasilan', PAJAK: 'Pajak dibayar di muka', DAGANG: 'Dagang / lain-lain', BANK: 'Bank',
+  AKTIVA: 'Aktiva', INVENTARIS: 'Inventaris'
+};
+const FIN_KIND_LABELS = {
+  BIAYA: 'Biaya', MODAL_MASUK: 'Tambah cash', MODAL_KELUAR: 'Kurang cash', SETOR_BANK: 'Setor ke bank', TARIK_BANK: 'Tarik dari bank',
+  BANK_BUNGA: 'Bunga bank', BANK_ADMIN: 'Adm. bank', HUTANG_MASUK: 'Terima pinjaman', HUTANG_KELUAR: 'Bayar hutang',
+  PIUTANG_KELUAR: 'Piutang keluar', PIUTANG_MASUK: 'Piutang masuk', AKTIVA: 'Beli aktiva', PENDAPATAN_LAIN: 'Pendapatan lain'
+};
+const FIN_KIND_HINT = {
+  BIAYA: 'Mengurangi kas (kecuali penyusutan) dan masuk ke beban di Laba / (Rugi).',
+  MODAL_MASUK: 'Kas bertambah dari pemilik; menambah modal di Neraca.', MODAL_KELUAR: 'Kas diambil pemilik; mengurangi modal di Neraca.',
+  SETOR_BANK: 'Kas berkurang, saldo bank bertambah.', TARIK_BANK: 'Saldo bank berkurang, kas bertambah.',
+  BANK_BUNGA: 'Saldo bank bertambah; pendapatan lain-lain.', BANK_ADMIN: 'Saldo bank berkurang; beban lain-lain.',
+  HUTANG_MASUK: 'Kas bertambah, hutang bertambah.', HUTANG_KELUAR: 'Kas berkurang, hutang berkurang.',
+  PIUTANG_KELUAR: 'Kas berkurang, piutang / pajak di muka bertambah.', PIUTANG_MASUK: 'Kas bertambah, piutang berkurang.',
+  AKTIVA: 'Kas berkurang, aset tetap bertambah. Catat penyusutannya sebagai biaya Penyusutan.', PENDAPATAN_LAIN: 'Kas bertambah; pendapatan lain-lain.'
+};
+let finMeta = null;
+
+function finPeriod() {
+  return { start: document.getElementById('fin-start').value, end: document.getElementById('fin-end').value };
+}
+
+function setFinRange(range) {
+  const t = storeToday();
+  const start = range === 'today' ? t : range === 'year' ? t.slice(0, 4) + '-01-01' : t.slice(0, 8) + '01';
+  document.getElementById('fin-start').value = start;
+  document.getElementById('fin-end').value = t;
+  loadFinanceEntries();
+}
+
+function renderFinCategories() {
+  const kind = document.getElementById('fin-kind').value;
+  const cats = (finMeta?.kinds?.[kind]) || [''];
+  const sel = document.getElementById('fin-category');
+  sel.innerHTML = cats.map(c => `<option value="${c}">${FIN_CAT_LABELS[c] || '-'}</option>`).join('');
+  document.getElementById('fin-category-wrap').classList.toggle('hidden', cats.length === 1 && cats[0] === '');
+  document.getElementById('fin-kind-hint').textContent = FIN_KIND_HINT[kind] || '';
+}
+
+async function loadFinance() {
+  if (!document.getElementById('fin-day').value) document.getElementById('fin-day').value = storeToday();
+  if (!document.getElementById('fin-start').value) setFinRange('month');
+  try {
+    const data = await (await authFetch('/api/finance/meta')).json();
+    if (!data.success) throw new Error(data.message);
+    finMeta = data.data;
+    renderFinCategories();
+    document.getElementById('fin-opening-date').textContent = fmtDmy(finMeta.opening.start);
+    const admin = isAdminUser();
+    document.querySelectorAll('[data-fin-open]').forEach(el => {
+      el.value = fmtInput(finMeta.opening[el.dataset.finOpen], 0);
+      el.disabled = !admin;
+    });
+    document.getElementById('btn-save-fin-opening').disabled = !admin;
+  } catch (err) {
+    showToast(`Keuangan: ${err.message}`, 'error');
+  }
+  loadFinanceEntries();
+}
+
+async function loadFinanceEntries() {
+  const { start, end } = finPeriod();
+  if (!start || !end) return;
+  const body = document.getElementById('fin-entries-body');
+  try {
+    const data = await (await authFetch(`/api/finance/entries?startDate=${start}&endDate=${end}`)).json();
+    if (!data.success) throw new Error(data.message);
+    const admin = isAdminUser();
+    body.innerHTML = data.data.rows.length ? data.data.rows.map(e => `<tr>
+      <td class="py-2 px-3 num whitespace-nowrap">${fmtDmy(e.day)}</td>
+      <td class="py-2 px-3">${escapeHtml(FIN_KIND_LABELS[e.kind] || e.kind)}${e.category ? ` <span class="text-slate-400">/ ${escapeHtml(FIN_CAT_LABELS[e.category] || e.category)}</span>` : ''}</td>
+      <td class="py-2 px-3 text-slate-300">${escapeHtml(e.description || '')}</td>
+      <td class="py-2 px-3 text-right num whitespace-nowrap">Rp ${Number(e.amount).toLocaleString('id-ID')}</td>
+      <td class="py-2 px-2 text-right">${admin ? `<button type="button" class="text-rose-400 hover:text-rose-300 text-[12px] js-fin-del" data-id="${e.id}" aria-label="Hapus catatan">Hapus</button>` : ''}</td>
+    </tr>`).join('') : '<tr><td colspan="5" class="py-6 text-center text-slate-400">Belum ada catatan pada periode ini.</td></tr>';
+    body.querySelectorAll('.js-fin-del').forEach(b => b.addEventListener('click', async () => {
+      if (!confirm('Hapus catatan ini? Laporan keuangan akan dihitung ulang.')) return;
+      const r = await (await authFetch(`/api/finance/entries/${b.dataset.id}`, { method: 'DELETE' })).json();
+      if (r.success) { showToast('Catatan dihapus', 'info'); loadFinanceEntries(); } else showToast(r.message || 'Gagal menghapus', 'error');
+    }));
+  } catch (err) {
+    body.innerHTML = '';
+    showToast(`Catatan keuangan: ${err.message}`, 'error');
+  }
+}
+
+async function saveFinanceEntry(e) {
+  e.preventDefault();
+  const payload = {
+    day: document.getElementById('fin-day').value,
+    kind: document.getElementById('fin-kind').value,
+    category: document.getElementById('fin-category').value,
+    description: document.getElementById('fin-desc').value.trim(),
+    amount: parseNum(document.getElementById('fin-amount').value)
+  };
+  if (!(payload.amount > 0)) { showToast('Isi jumlah lebih dari 0', 'warning'); document.getElementById('fin-amount').focus(); return; }
+  try {
+    const data = await (await authFetch('/api/finance/entries', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })).json();
+    if (!data.success) throw new Error(data.message);
+    showToast('Catatan disimpan', 'success');
+    document.getElementById('fin-amount').value = '';
+    document.getElementById('fin-desc').value = '';
+    loadFinanceEntries();
+  } catch (err) {
+    showToast(`Gagal menyimpan: ${err.message}`, 'error');
+  }
+}
+
+async function saveFinanceOpening() {
+  const body = {};
+  document.querySelectorAll('[data-fin-open]').forEach(el => { body[el.dataset.finOpen] = parseNum(el.value); });
+  if (!confirm('Simpan saldo awal keuangan? Kas Harian, Neraca dan Laba / (Rugi) dihitung dari angka ini.')) return;
+  try {
+    const data = await (await authFetch('/api/finance/opening', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })).json();
+    if (!data.success) throw new Error(data.message);
+    showToast('Saldo awal keuangan disimpan', 'success');
+    loadFinance();
+  } catch (err) {
+    showToast(`Gagal menyimpan saldo awal: ${err.message}`, 'error');
+  }
+}
+
+const rp0 = v => Number(v || 0).toLocaleString('id-ID', { maximumFractionDigits: 0 });
+const longDate = iso => new Date(iso + 'T12:00:00Z').toLocaleDateString('id-ID', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric', timeZone: 'UTC' });
+const FIN_REPORT_CSS = `<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  table.fin { border-collapse: collapse; width: 100%; max-width: 900px; margin-top: 8px; }
+  table.fin th, table.fin td { border: 1px solid #000; padding: 4px 8px; }
+  table.fin th { font-weight: normal; text-align: center; }
+  table.fin td.n { text-align: right; white-space: nowrap; }
+  table.fin tr.g td { font-weight: bold; }
+  table.fin tr.sub td { font-weight: bold; }
+  .lr { width: 100%; max-width: 820px; border: 1px solid #000; padding: 10px 14px; margin-top: 8px; }
+  .lr table { width: 100%; border-collapse: collapse; }
+  .lr td { padding: 2px 4px; } .lr td.n { text-align: right; width: 170px; white-space: nowrap; }
+  .lr .h td { font-weight: bold; padding-top: 8px; } .lr .i td:first-child { padding-left: 24px; }
+  .lr .t td.n { border-top: 1px solid #000; } .lr .tt td { font-weight: bold; } .lr .tt td.n { border-top: 1px solid #000; border-bottom: 3px double #000; }
+  .center { text-align: center; } .sign { margin-top: 24px; } .sign .name { margin-top: 56px; text-decoration: underline; }
+  .nrc { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid #000; max-width: 900px; margin-top: 8px; }
+  .nrc > div { padding: 8px 12px; } .nrc > div + div { border-left: 1px solid #000; }
+  .nrc table { width: 100%; border-collapse: collapse; } .nrc td { padding: 2px 2px; } .nrc td.n { text-align: right; white-space: nowrap; }
+  .nrc .h td { font-weight: bold; padding-top: 8px; } .nrc .i td:first-child { padding-left: 16px; } .nrc .s td.n { font-weight: bold; border-top: 1px solid #000; }
+  .nrc .tt td { font-weight: bold; border-top: 2px solid #000; padding-top: 4px; }
+  .warn { color: #b91c1c; font-weight: bold; margin-top: 8px; }
+</style>`;
+
+function finSignature(r) {
+  return `<div class="sign">${escapeHtml(r.city ? r.city.toUpperCase() + ' , ' : '')}${longDate(r.endDate)}<br><br>${escapeHtml(r.company)}
+    ${r.director ? `<div class="name">${escapeHtml(r.director.toUpperCase())}</div>` : ''}</div>`;
+}
+
+async function fetchFin(path) {
+  const { start, end } = finPeriod();
+  if (!start || !end) throw new Error('Pilih periode');
+  const data = await (await authFetch(`/api/finance/${path}?startDate=${start}&endDate=${end}`)).json();
+  if (!data.success) throw new Error(data.message);
+  return data.data;
+}
+
+async function showKasHarian() {
+  try {
+    const r = await fetchFin('kas-harian');
+    const rows = r.groups.map(g => `<tr class="g"><td>${g.code}</td><td colspan="4">${g.name}</td></tr>`
+      + g.lines.map(l => `<tr><td>${l.code}</td><td style="padding-left:24px">${l.name}</td><td class="n">${l.debet ? rp0(l.debet) : ''}</td><td class="n">${l.kredit ? rp0(l.kredit) : (l.debet ? '' : '0')}</td><td class="n">${rp0(l.saldo)}</td></tr>`).join('')
+      + `<tr class="sub"><td></td><td style="text-align:center">Sub Total</td><td class="n">${g.debet ? rp0(g.debet) : ''}</td><td class="n">${g.kredit ? rp0(g.kredit) : ''}</td><td></td></tr>`).join('');
+    openReportWindow(`Kas_Harian_${r.startDate}_${r.endDate}`, `${FIN_REPORT_CSS}
+      <div class="company">${escapeHtml(r.company)}</div>
+      <div style="display:flex;justify-content:space-between;max-width:900px;margin-top:10px"><b>KAS HARIAN</b><span>PERIODE : ${fmtDmy(r.startDate)} S/D ${fmtDmy(r.endDate)}</span></div>
+      <table class="fin"><thead><tr><th rowspan="2" style="width:50px">KODE</th><th rowspan="2">KETERANGAN</th><th colspan="3">PERIODE INI</th></tr><tr><th>DEBET</th><th>KREDIT</th><th>SALDO KAS</th></tr></thead>
+      <tbody><tr class="g"><td>100</td><td>SALDO AWAL</td><td class="n">${rp0(r.opening)}</td><td class="n">0</td><td class="n">${rp0(r.opening)}</td></tr>${rows}
+      <tr class="g"><td colspan="2">SALDO AKHIR</td><td></td><td></td><td class="n">${rp0(r.closing)}</td></tr></tbody></table>`);
+  } catch (err) { showToast(`Kas Harian: ${err.message}`, 'error'); }
+}
+
+async function showBukuBank() {
+  try {
+    const r = await fetchFin('buku-bank');
+    const rows = r.rows.map(x => `<tr><td>${fmtDmy(x.day)}</td><td>${escapeHtml(x.name)}${x.description ? ' - ' + escapeHtml(x.description) : ''}</td><td class="n">${x.debet ? rp0(x.debet) : ''}</td><td class="n">${x.kredit ? rp0(x.kredit) : ''}</td><td class="n">${rp0(x.saldo)}</td></tr>`).join('')
+      || '<tr><td colspan="5" class="center">Tidak ada mutasi bank pada periode ini.</td></tr>';
+    openReportWindow(`Buku_Bank_${r.startDate}_${r.endDate}`, `${FIN_REPORT_CSS}
+      <div class="company">${escapeHtml(r.company)}</div>
+      <div style="display:flex;justify-content:space-between;max-width:900px;margin-top:10px"><b>BUKU BANK</b><span>PERIODE : ${fmtDmy(r.startDate)} S/D ${fmtDmy(r.endDate)}</span></div>
+      <table class="fin"><thead><tr><th>TANGGAL</th><th>KETERANGAN</th><th>DEBET</th><th>KREDIT</th><th>SALDO</th></tr></thead>
+      <tbody><tr class="g"><td></td><td>SALDO AWAL</td><td></td><td></td><td class="n">${rp0(r.opening)}</td></tr>${rows}
+      <tr class="g"><td></td><td>SALDO AKHIR</td><td></td><td></td><td class="n">${rp0(r.closing)}</td></tr></tbody></table>`);
+  } catch (err) { showToast(`Buku Bank: ${err.message}`, 'error'); }
+}
+
+async function showLabaRugi() {
+  try {
+    const r = await fetchFin('laba-rugi');
+    const b = r.beban;
+    const i = (label, v) => `<tr class="i"><td>${label}</td><td class="n">${fmtIdr2(v)}</td><td class="n"></td></tr>`;
+    const t = (label, v, cls = 'h') => `<tr class="${cls}"><td>${label}</td><td></td><td class="n">${fmtIdr2(v)}</td></tr>`;
+    openReportWindow(`Laba_Rugi_${r.startDate}_${r.endDate}`, `${FIN_REPORT_CSS}
+      <div class="lr"><div class="center">${escapeHtml(r.company)}<br>LAPORAN LABA / (RUGI)<br>Periode : ${longDate(r.startDate)} S/D ${longDate(r.endDate)}</div><table>
+      <tr class="h"><td colspan="3">Pendapatan dan Beban</td></tr><tr class="h"><td colspan="3">Pendapatan Operasional</td></tr>
+      ${i('Penjualan UKA', r.penjualan)}${i('Pencairan TC', 0)}<tr class="t"><td></td><td></td><td class="n">${fmtIdr2(r.penjualan)}</td></tr>
+      <tr class="h"><td colspan="3">Harga Pokok Penjualan</td></tr>
+      ${i('Saldo Awal UKA', r.saldo_awal)}${i('Saldo Awal TC', 0)}${i('Pembelian UKA', r.pembelian)}${i('Pembelian TC', 0)}${i('Saldo Akhir UKA', r.saldo_akhir)}${i('Saldo Akhir TC', 0)}
+      <tr class="t"><td></td><td></td><td class="n">${fmtIdr2(r.hpp)}</td></tr>
+      ${t('Pendapatan/(Rugi) Operasional Kotor UKA-TC', r.kotor)}${t('Pendapatan Pengiriman Uang', 0)}${t('Pendapatan/(Rugi) Operasional Kotor', r.kotor)}
+      <tr class="h"><td colspan="3">Beban Operasional</td></tr>
+      ${i('Gaji, Bonus, THR, Dan Tunjangan', b.GAJI)}${i('Sewa', b.SEWA)}${i('Iklan dan Promosi', b.IKLAN)}${i('Air, listrik, dan Telepon', b.LISTRIK)}
+      ${i('Transportasi / BBM', b.TRANSPORT)}${i('Pemeliharaan', b.PEMELIHARAAN)}${i('Penyusutan Asset Tetap', b.PENYUSUTAN)}${i('Asuransi', b.ASURANSI)}
+      ${i('Adm Umum / ATK', b.ADM_UMUM)}${i('Lain-lain', b.LAIN)}<tr class="t"><td></td><td></td><td class="n">${fmtIdr2(r.total_beban)}</td></tr>
+      ${t('Pendapatan/(Rugi) Operasional Bersih', r.operasional_bersih)}
+      <tr class="h"><td colspan="3">Pendapatan/(Beban) Lain-lain</td></tr>
+      ${i('Pendapatan Lain-lain', r.pendapatan_lain)}${i('Pendapatan Bunga Bank', r.bunga_bank)}${i('Beban Administrasi Bank', -r.admin_bank)}${i('Laba/(Rugi) Selisih Kurs (net)', 0)}${i('Biaya Lain-lain', 0)}
+      <tr class="t"><td></td><td></td><td class="n">${fmtIdr2(r.total_lain)}</td></tr>
+      ${t('Laba/(Rugi) Sebelum Pajak Penghasilan', r.sebelum_pajak)}
+      <tr><td>Taksiran Pajak Penghasilan</td><td></td><td class="n">${fmtIdr2(r.pajak)}</td></tr>
+      ${t('Laba/(Rugi) Bersih', r.bersih, 'tt')}</table></div>${finSignature(r)}`);
+  } catch (err) { showToast(`Laba / (Rugi): ${err.message}`, 'error'); }
+}
+
+async function showNeraca() {
+  try {
+    const r = await fetchFin('neraca');
+    const a = r.aktiva, p = r.pasiva;
+    const row = (label, v, cls = 'i') => `<tr class="${cls}"><td>${label}</td><td class="n">${v == null ? '' : fmtIdr2(v)}</td></tr>`;
+    openReportWindow(`Neraca_${r.endDate}`, `${FIN_REPORT_CSS}
+      <div style="max-width:900px;border:1px solid #000;border-bottom:0;padding:8px" class="center">${escapeHtml(r.company)}<br>NERACA<br>Periode : ${fmtDmy(r.startDate)} S/D ${fmtDmy(r.endDate)}</div>
+      <div class="nrc" style="margin-top:0"><div><table>
+        <tr class="h"><td colspan="2">AKTIVA</td></tr><tr class="h"><td colspan="2">Kas dan Bank dalam Rp</td></tr>
+        ${row('Kas', a.kas)}${row('Bank', a.bank)}${row('', a.kas + a.bank, 's')}
+        <tr class="h"><td colspan="2">Kas dan Bank dalam UKA</td></tr>${row('Kas', a.valas_kas)}${row('Bank', a.valas_bank)}${row('', a.valas_kas + a.valas_bank, 's')}
+        ${row('Piutang Dagang', a.piutang_dagang, '')}${row('Piutang TC', a.piutang_tc, '')}${row('Pajak dibayar di muka', a.pajak_dimuka, '')}
+        ${row('Sewa dibayar di muka', a.sewa_dimuka, '')}${row('Asuransi dibayar di muka', a.asuransi_dimuka, '')}
+        <tr><td colspan="2">Aset Tetap / Inventaris</td></tr>${row('Harga Perolehan', a.harga_perolehan)}${row('Akum. Penyusutan (-/-)', a.akum_penyusutan)}${row('', a.aset_tetap, 's')}
+        ${row('Aset Lain-lain', a.lain, '')}${row('Jumlah Aset', a.total, 'tt')}
+      </table></div><div><table>
+        <tr class="h"><td colspan="2">KEWAJIBAN DAN EKUITAS</td></tr><tr class="h"><td colspan="2">KEWAJIBAN</td></tr>
+        ${row('Hutang Bank', p.hutang_bank, '')}${row('Hutang Dagang', p.hutang_dagang, '')}${row('Hutang Sewa', p.hutang_sewa, '')}
+        ${row('Kewajiban Pengiriman Uang', p.kewajiban_pengiriman, '')}${row('Kewajiban Lain lain', p.kewajiban_lain, '')}${row('', p.total_kewajiban, 's')}
+        <tr class="h"><td colspan="2">EKUITAS</td></tr>${row('Modal Disetor', p.modal, '')}<tr><td colspan="2">Laba ditahan/(akum.rugi) - net</td></tr>
+        ${row('- Laba ditahan', p.laba_ditahan)}${row('- Laba / Rugi periode ini', p.laba_tahun_ini)}${row('', p.total_ekuitas, 's')}
+        ${row('Jumlah Kewajiban dan Ekuitas', p.total, 'tt')}
+      </table></div></div>
+      ${Math.abs(r.selisih) >= 1 ? `<p class="warn">Selisih ${fmtIdr2(r.selisih)}: periksa saldo awal keuangan dan saldo awal valas (Aset harus sama dengan Kewajiban + Ekuitas pada tanggal mulai).</p>` : ''}
+      ${finSignature(r)}`);
+  } catch (err) { showToast(`Neraca: ${err.message}`, 'error'); }
+}
+
+function initPhase3Finance() {
+  document.getElementById('fin-kind')?.addEventListener('change', renderFinCategories);
+  document.getElementById('fin-entry-form')?.addEventListener('submit', saveFinanceEntry);
+  ['fin-start', 'fin-end'].forEach(id => document.getElementById(id)?.addEventListener('change', loadFinanceEntries));
+  document.querySelectorAll('.js-fin-range').forEach(b => b.addEventListener('click', () => setFinRange(b.dataset.range)));
+  document.getElementById('btn-save-fin-opening')?.addEventListener('click', saveFinanceOpening);
+  document.getElementById('btn-fin-kas')?.addEventListener('click', showKasHarian);
+  document.getElementById('btn-fin-bank')?.addEventListener('click', showBukuBank);
+  document.getElementById('btn-fin-lr')?.addEventListener('click', showLabaRugi);
+  document.getElementById('btn-fin-neraca')?.addEventListener('click', showNeraca);
+  if (typeof attachNumFormatter === 'function') {
+    ['fin-amount', ...document.querySelectorAll('[data-fin-open]')].forEach(el => {
+      const node = typeof el === 'string' ? document.getElementById(el) : el;
+      if (node) attachNumFormatter(node);
+    });
+  }
+}
+
+function initPhase1Compliance() {
+  const custId = document.getElementById('cust-id');
+  custId?.addEventListener('blur', lookupCustomerById);
+  custId?.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); lookupCustomerById(); } });
+  document.getElementById('btn-cust-search')?.addEventListener('click', () => openCustomerSearch('form'));
+  document.getElementById('cust-search-input')?.addEventListener('input', () => {
+    clearTimeout(customerSearchTimer);
+    customerSearchTimer = setTimeout(runCustomerSearch, 250);
+  });
+  document.querySelectorAll('#modal-customer-search .js-close-modal, #modal-compliance-report .js-close-modal').forEach(b =>
+    b.addEventListener('click', () => b.closest('[role="dialog"]').classList.add('hidden')));
+  ['modal-customer-search', 'modal-compliance-report'].forEach(id => {
+    const m = document.getElementById(id);
+    m?.addEventListener('click', e => { if (e.target === m) m.classList.add('hidden'); });
+    m?.addEventListener('keydown', e => { if (e.key === 'Escape') m.classList.add('hidden'); });
+  });
+
+  document.getElementById('btn-save-threshold')?.addEventListener('click', saveThresholdSetting);
+  const thr = document.getElementById('setting-threshold-idr');
+  if (thr && typeof attachNumFormatter === 'function') attachNumFormatter(thr);
+
+  document.getElementById('btn-history-compliance')?.addEventListener('click', openComplianceReports);
+  document.getElementById('btn-compliance-cust-search')?.addEventListener('click', () => openCustomerSearch('report'));
+  document.getElementById('btn-compliance-cust-show')?.addEventListener('click', showCustomerThresholdReport);
+  document.getElementById('btn-compliance-nat-show')?.addEventListener('click', showNationalityReport);
+  document.getElementById('btn-compliance-nat-excel')?.addEventListener('click', () => {
+    const nat = document.getElementById('compliance-nationality').value;
+    if (!nat) { showToast(state.appLang === 'en' ? 'Choose a nationality' : 'Pilih kewarganegaraan', 'warning'); return; }
+    downloadAuthed(`/api/reports/nationality/excel?nationality=${encodeURIComponent(nat)}&${reportPeriodQuery().qs}`, 'Transaksi_By_Negara.xlsx');
+  });
+  document.getElementById('btn-ppatk-buy')?.addEventListener('click', () => downloadAuthed(`/api/reports/ppatk/excel?type=BELI&${reportPeriodQuery().qs}`, 'PPATK_Pembelian.xlsx'));
+  document.getElementById('btn-ppatk-sell')?.addEventListener('click', () => downloadAuthed(`/api/reports/ppatk/excel?type=JUAL&${reportPeriodQuery().qs}`, 'PPATK_Penjualan.xlsx'));
+}
+
 function resetForm() {
   state.cart = [];
   document.getElementById('cust-name').value = '';
@@ -2667,6 +3363,8 @@ function resetForm() {
   const jobInp = document.getElementById('cust-job'); if (jobInp) jobInp.value = '';
   const genInp = document.getElementById('cust-gender'); if (genInp) genInp.value = '';
   const addrInp = document.getElementById('cust-address'); if (addrInp) addrInp.value = '';
+  ['cust-birth-date', 'cust-birth-place'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  const catInp = document.getElementById('cust-category'); if (catInp) catInp.value = 'PERSONAL';
   const extraDetails = document.getElementById('cust-extra-details'); if (extraDetails) extraDetails.open = false;
   const pepToggle = document.getElementById('cust-pep-toggle'); if (pepToggle) pepToggle.checked = false;
   const pepFields = document.getElementById('pep-edd-fields'); if (pepFields) pepFields.classList.add('hidden');
@@ -3003,6 +3701,7 @@ function buildCurrentFormReceiptData() {
     customer_job: custJob.toUpperCase(),
     customer_gender: custGender,
     customer_address: custAddress.toUpperCase(),
+    ...customerExtras(),
     is_pep: isPep ? 1 : 0,
     pep_institution: pepInstitution,
     source_of_funds: sourceOfFunds,
@@ -3484,6 +4183,8 @@ function switchSubtab(subtabName) {
   const panelUsers = document.getElementById('subtab-panel-users');
   const panelDatabase = document.getElementById('subtab-panel-database');
   const panelCompliance = document.getElementById('subtab-panel-compliance');
+  const panelStock = document.getElementById('subtab-panel-stock');
+  const btnStock = document.getElementById('subtab-btn-stock');
   const btnSheets = document.getElementById('subtab-btn-sheets');
   const btnStore = document.getElementById('subtab-btn-store');
   const btnUsers = document.getElementById('subtab-btn-users');
@@ -3495,9 +4196,10 @@ function switchSubtab(subtabName) {
   if (panelUsers) panelUsers.classList.add('hidden');
   if (panelDatabase) panelDatabase.classList.add('hidden');
   if (panelCompliance) panelCompliance.classList.add('hidden');
+  if (panelStock) panelStock.classList.add('hidden');
 
   // Active look comes from .set-tab[aria-selected="true"] in index.html
-  [btnSheets, btnStore, btnUsers, btnDatabase, btnCompliance].forEach(b => b?.setAttribute('aria-selected', 'false'));
+  [btnSheets, btnStore, btnUsers, btnDatabase, btnCompliance, btnStock].forEach(b => b?.setAttribute('aria-selected', 'false'));
 
   if (subtabName === 'sheets') {
     if (panelSheets) panelSheets.classList.remove('hidden');
@@ -3513,6 +4215,11 @@ function switchSubtab(subtabName) {
     if (panelDatabase) panelDatabase.classList.remove('hidden');
     btnDatabase?.setAttribute('aria-selected', 'true');
     loadDatabaseInfo();
+  } else if (subtabName === 'stock') {
+    if (panelStock) panelStock.classList.remove('hidden');
+    btnStock?.setAttribute('aria-selected', 'true');
+    loadOpeningStock();
+    loadMiddleRates();
   } else if (subtabName === 'compliance') {
     if (panelCompliance) panelCompliance.classList.remove('hidden');
     btnCompliance?.setAttribute('aria-selected', 'true');
@@ -3707,6 +4414,7 @@ function switchTab(tabId) {
 
   if (tabId === 'tab-rates') loadRates();
   if (tabId === 'tab-history') { loadHistory(); loadReportsSummary(); }
+  if (tabId === 'tab-finance') loadFinance();
   // "Google Sheets" has its own nav tab, so Pengaturan opens on the store profile
   if (tabId === 'tab-settings') {
     switchSubtab('store');
@@ -4453,6 +5161,9 @@ function initEventListeners() {
       paper_size: document.querySelector('input[name="setting-paper-size"]:checked')?.value || '76',
       store_permit: document.getElementById('setting-store-permit').value.trim(),
       show_permit: document.getElementById('setting-show-permit').checked ? '1' : '0',
+      store_director: document.getElementById('setting-store-director').value.trim(),
+      store_city: document.getElementById('setting-store-city').value.trim(),
+      store_npwp: document.getElementById('setting-store-npwp').value.trim(),
       default_teller: document.getElementById('setting-default-teller').value.trim() || 'TELLER 01',
       disclaimer_1: document.getElementById('setting-disclaimer-1').value.trim(),
       disclaimer_2: document.getElementById('setting-disclaimer-2').value.trim(),
@@ -4601,6 +5312,7 @@ function initEventListeners() {
   document.getElementById('subtab-btn-users')?.addEventListener('click', () => switchSubtab('users'));
   document.getElementById('subtab-btn-database')?.addEventListener('click', () => switchSubtab('database'));
   document.getElementById('subtab-btn-compliance')?.addEventListener('click', () => switchSubtab('compliance'));
+  document.getElementById('subtab-btn-stock')?.addEventListener('click', () => switchSubtab('stock'));
 
   // DTTOT Screening input in Kasir
   document.getElementById('cust-name')?.addEventListener('input', (e) => {
@@ -5013,12 +5725,7 @@ function exportGoogleSheetsCsv() {
     filename = `Skyline_POS_${d}.csv`;
   }
 
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+  downloadAuthed(url, filename);
 
   showToast(state.appLang === 'en'
     ? `Exporting CSV (${filter.label})...`
@@ -5041,12 +5748,7 @@ function exportExcel() {
     filename = `Skyline_POS_${d}.xlsx`;
   }
 
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+  downloadAuthed(url, filename);
 
   showToast(state.appLang === 'en'
     ? `Exporting Excel (${filter.label})...`
@@ -5152,6 +5854,8 @@ async function exportBiReport() {
       </tr>
     </tfoot>
   </table>
+  ${r.rows.some(x => x.rate_source === 'RATA_RATA') ? '<p style="font-size:10px;margin-top:10px">* Kurs tengah belum diisi untuk sebagian mata uang; saldo dinilai dengan kurs rata-rata pembelian (Pengaturan &gt; Stok Valas).</p>' : ''}
+  ${r.opening_date ? `<p style="font-size:10px;margin:2px 0 0">Saldo awal valas berlaku mulai ${dmy(r.opening_date)}.</p>` : ''}
   <div class="foot"><span>Tgl Cetak : ${printed}</span><span>Page 1 of 1</span><span></span></div>
 </body>
 </html>`);
@@ -5883,6 +6587,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   initUsbUI();
   initSerialUI();
   initBridgeUI();
+  initPhase1Compliance();
+  initPhase2Stock();
+  initPhase3Finance();
   ['underlying-doc-type', 'underlying-doc-no'].forEach(id => {
     const el = document.getElementById(id);
     if (el) { el.addEventListener('input', updateUnderlyingStatus); el.addEventListener('change', updateUnderlyingStatus); }

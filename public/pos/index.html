@@ -85,6 +85,7 @@
       #tab-rates,
       #tab-history,
       #tab-settings,
+      #tab-finance,
       .lg\:col-span-7,
       #btn-direct-bt-print,
       #btn-browser-print,
@@ -97,6 +98,8 @@
       #modal-sheets-guide,
       #modal-user-mgmt,
       #modal-usb-helper,
+      #modal-customer-search,
+      #modal-compliance-report,
       #modal-printer-guide {
         display: none !important;
       }
@@ -731,6 +734,9 @@
 
     /* Tab 5 Settings Panels in Light Mode */
     #card-underlying-warning { scroll-margin-top: 8rem; }
+    .threshold-flash { font-weight: 800; font-size: 13px; text-align: center; padding: 6px 10px; border-radius: 8px; animation: threshold-blink 1s steps(1, end) infinite; }
+    @keyframes threshold-blink { 0% { background: #dc2626; color: #fff; } 50% { background: #fff; color: #dc2626; } }
+    @media (prefers-reduced-motion: reduce) { .threshold-flash { animation: none; background: #dc2626; color: #fff; } }
     #card-underlying-warning.is-complete { border-color: rgba(52, 211, 153, .55); background-color: rgba(6, 78, 59, .28); }
     #card-underlying-warning.is-complete > div > svg { color: #34d399; }
     html.light #card-underlying-warning { background-color: #fffbeb !important; border-color: #f59e0b !important; }
@@ -764,6 +770,8 @@
     html.light #modal-reset-user-pwd > div,
     html.light #modal-printer-guide > div,
     html.light #modal-usb-helper > div,
+    html.light #modal-customer-search > div,
+    html.light #modal-compliance-report > div,
     html.light #modal-add-dttot > div {
       background-color: #ffffff !important;
       border-color: #e2e8f0 !important;
@@ -1293,6 +1301,10 @@
         <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
         <span id="i18n-tab-history">Riwayat & Laporan</span>
       </button>
+      <button class="nav-tab px-3 sm:px-4 py-2.5 font-medium text-slate-400 hover:text-slate-200 border-b-2 border-transparent flex items-center gap-1.5 whitespace-nowrap" data-target="tab-finance">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg>
+        <span>Keuangan</span>
+      </button>
       <button class="nav-tab px-3 sm:px-4 py-2.5 font-medium text-slate-400 hover:text-slate-200 border-b-2 border-transparent flex items-center gap-1.5 whitespace-nowrap" data-target="tab-settings">
         <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         <span id="i18n-tab-settings">Pengaturan</span>
@@ -1320,7 +1332,8 @@
                   <span class="num shrink-0 text-[13px] font-bold text-amber-100 px-2.5 py-0.5 rounded-full bg-amber-500/25" id="badge-usd-equiv">≈ USD 0</span>
                   <span id="underlying-status" class="set-status set-status--warn shrink-0">Belum lengkap</span>
                 </div>
-                <p class="mt-1 text-[13px] text-amber-100/80 leading-snug" id="txt-underlying-desc">Total transaksi mencapai batas USD 10.000 (PBI Transaksi Valas). Isi dokumen underlying sebelum menyimpan transaksi.</p>
+                <div id="threshold-flash" class="threshold-flash mt-2" role="status">Jumlah Transaksi Melebihi Threshold</div>
+                <p class="mt-1 text-[13px] text-amber-100/80 leading-snug" id="txt-underlying-desc">Total transaksi melewati batas threshold (setara USD 10.000, PBI Transaksi Valas). Isi dokumen underlying sebelum menyimpan transaksi.</p>
               </div>
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 px-4 pb-4">
@@ -1357,7 +1370,10 @@
                 <input type="tel" id="cust-phone" placeholder="+62…" class="pos-input w-full bg-navy-900 border border-navy-600 rounded-lg text-slate-100 placeholder-slate-500">
               </div>
               <div>
-                <label for="cust-id" class="pos-label" id="lbl-cust-id">No. KTP / paspor</label>
+                <div class="flex items-center justify-between gap-2">
+                  <label for="cust-id" class="pos-label" id="lbl-cust-id">No. KTP / paspor</label>
+                  <button type="button" id="btn-cust-search" class="set-link text-[12px] mb-1" title="Cari customer lama berdasarkan nama atau No. ID">Cari</button>
+                </div>
                 <input type="text" id="cust-id" placeholder="Nomor identitas" class="pos-input w-full uppercase bg-navy-900 border border-navy-600 rounded-lg text-slate-100 placeholder-slate-500">
               </div>
             </div>
@@ -1376,7 +1392,7 @@
             <details id="cust-extra-details" class="mt-3 group">
               <summary class="cursor-pointer select-none list-none inline-flex items-center gap-1.5 text-[13px] font-medium text-slate-400 hover:text-slate-200">
                 <svg class="w-3.5 h-3.5 transition-transform group-open:rotate-90" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="9 6 15 12 9 18"/></svg>
-                <span id="lbl-cust-extra">Data tambahan (NPWP, kewarganegaraan, pekerjaan, alamat)</span>
+                <span id="lbl-cust-extra">Data tambahan (NPWP, kewarganegaraan, pekerjaan, alamat, tanggal lahir, kategori)</span>
               </summary>
               <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
                 <div>
@@ -1402,6 +1418,21 @@
                 <div class="sm:col-span-2">
                   <label for="cust-address" class="pos-label" id="lbl-cust-address">Alamat tinggal</label>
                   <input type="text" id="cust-address" placeholder="Alamat domisili atau hotel" class="pos-input w-full uppercase bg-navy-900 border border-navy-600 rounded-lg text-slate-100 placeholder-slate-500">
+                </div>
+                <div>
+                  <label for="cust-birth-date" class="pos-label" id="lbl-cust-birth-date">Tanggal lahir</label>
+                  <input type="date" id="cust-birth-date" class="pos-input w-full bg-navy-900 border border-navy-600 rounded-lg text-slate-100 placeholder-slate-500">
+                </div>
+                <div>
+                  <label for="cust-birth-place" class="pos-label" id="lbl-cust-birth-place">Tempat lahir</label>
+                  <input type="text" id="cust-birth-place" placeholder="Kota / negara" class="pos-input w-full bg-navy-900 border border-navy-600 rounded-lg text-slate-100 placeholder-slate-500 uppercase">
+                </div>
+                <div>
+                  <label for="cust-category" class="pos-label" id="lbl-cust-category">Kategori konsumen</label>
+                  <select id="cust-category" class="pos-input w-full bg-navy-900 border border-navy-600 rounded-lg text-slate-100 placeholder-slate-500">
+                    <option value="PERSONAL">Personal</option>
+                    <option value="CORPORATE">Corporate</option>
+                  </select>
                 </div>
               </div>
             </details>
@@ -1655,6 +1686,7 @@
                   </div>
                   <!-- Permit (Hidden by default) -->
                   <div id="rcpt-store-permit" class="hidden text-center text-[9px] text-gray-600"></div>
+                  <div id="rcpt-store-npwp" class="hidden text-center text-[9px] text-gray-600"></div>
 
                   <div class="my-1.5 text-center text-gray-400 font-mono rcpt-div-dash">------------------------------------------------</div>
 
@@ -1930,6 +1962,12 @@
               <span>Laporan BI</span>
             </button>
 
+            <!-- Threshold by Customer, by Negara, PPATK exports -->
+            <button type="button" id="btn-history-compliance" title="Threshold by Customer, Transaksi by Negara, export PPATK (periode sesuai filter tanggal)" class="py-1.5 px-3 rounded-lg bg-red-700 hover:bg-red-600 text-white font-semibold flex items-center gap-1.5 transition-all shadow-sm">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              <span>Laporan Kepatuhan</span>
+            </button>
+
             <!-- Sync Google Sheets -->
             <button type="button" id="btn-history-sync-sheets" title="Kirim data langsung ke Google Sheets online" class="py-1.5 px-3 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold flex items-center gap-1.5 transition-all shadow-sm">
               <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg>
@@ -1960,6 +1998,151 @@
     </section>
 
     <!-- ==================== TAB 4: PENGATURAN (SETTINGS) ==================== -->
+    <!-- ==================== TAB: KEUANGAN (LKU BI) ==================== -->
+    <section id="tab-finance" class="tab-content hidden space-y-4">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+        <!-- Entry form -->
+        <form id="fin-entry-form" class="lg:col-span-5 bg-navy-800 border border-navy-700 rounded-xl p-4 sm:p-5 space-y-4" novalidate>
+          <div>
+            <h2 class="pos-h text-slate-100">Catat kas & biaya</h2>
+            <p class="set-desc">Biaya operasional, tambah / kurang cash, hutang, piutang, aktiva dan mutasi bank.</p>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label for="fin-day" class="pos-label">Tanggal</label>
+              <input type="date" id="fin-day" class="pos-input w-full bg-navy-900 border border-navy-600 rounded-lg text-slate-100 placeholder-slate-500" required>
+            </div>
+            <div>
+              <label for="fin-kind" class="pos-label">Jenis</label>
+              <select id="fin-kind" class="pos-input w-full bg-navy-900 border border-navy-600 rounded-lg text-slate-100 placeholder-slate-500">
+                <option value="BIAYA">Biaya operasional</option>
+                <option value="MODAL_MASUK">Tambah cash (setoran pemilik)</option>
+                <option value="MODAL_KELUAR">Kurang cash (pengambilan pemilik)</option>
+                <option value="SETOR_BANK">Setor kas ke bank</option>
+                <option value="TARIK_BANK">Tarik bank ke kas</option>
+                <option value="BANK_BUNGA">Bunga bank (masuk ke bank)</option>
+                <option value="BANK_ADMIN">Biaya administrasi bank</option>
+                <option value="HUTANG_MASUK">Terima pinjaman (hutang bertambah)</option>
+                <option value="HUTANG_KELUAR">Bayar hutang</option>
+                <option value="PIUTANG_KELUAR">Beri piutang / bayar pajak di muka</option>
+                <option value="PIUTANG_MASUK">Terima pelunasan piutang</option>
+                <option value="AKTIVA">Beli aktiva / inventaris</option>
+                <option value="PENDAPATAN_LAIN">Pendapatan lain-lain</option>
+              </select>
+            </div>
+            <div id="fin-category-wrap" class="sm:col-span-2">
+              <label for="fin-category" class="pos-label">Kategori</label>
+              <select id="fin-category" class="pos-input w-full bg-navy-900 border border-navy-600 rounded-lg text-slate-100 placeholder-slate-500"></select>
+            </div>
+            <div class="sm:col-span-2">
+              <label for="fin-amount" class="pos-label">Jumlah (Rp)</label>
+              <input type="text" inputmode="numeric" id="fin-amount" class="pos-input w-full bg-navy-900 border border-navy-600 rounded-lg text-slate-100 placeholder-slate-500 num text-right" placeholder="0" required>
+            </div>
+            <div class="sm:col-span-2">
+              <label for="fin-desc" class="pos-label">Keterangan</label>
+              <input type="text" id="fin-desc" maxlength="200" class="pos-input w-full bg-navy-900 border border-navy-600 rounded-lg text-slate-100 placeholder-slate-500" placeholder="Contoh: listrik November, nota no. 123">
+            </div>
+          </div>
+          <p id="fin-kind-hint" class="set-hint !mt-0"></p>
+          <div class="flex justify-end"><button type="submit" class="set-btn set-btn--primary">Simpan catatan</button></div>
+        </form>
+
+        <!-- Period, reports, entries -->
+        <div class="lg:col-span-7 bg-navy-800 border border-navy-700 rounded-xl p-4 sm:p-5 space-y-4">
+          <div class="flex flex-wrap items-end gap-3">
+            <div>
+              <label for="fin-start" class="pos-label">Dari</label>
+              <input type="date" id="fin-start" class="pos-input w-full bg-navy-900 border border-navy-600 rounded-lg text-slate-100 placeholder-slate-500 !w-44">
+            </div>
+            <div>
+              <label for="fin-end" class="pos-label">Sampai</label>
+              <input type="date" id="fin-end" class="pos-input w-full bg-navy-900 border border-navy-600 rounded-lg text-slate-100 placeholder-slate-500 !w-44">
+            </div>
+            <div class="flex gap-1">
+              <button type="button" class="set-btn set-btn--secondary set-btn--sm js-fin-range" data-range="today">Hari ini</button>
+              <button type="button" class="set-btn set-btn--secondary set-btn--sm js-fin-range" data-range="month">Bulan ini</button>
+              <button type="button" class="set-btn set-btn--secondary set-btn--sm js-fin-range" data-range="year">Tahun ini</button>
+            </div>
+          </div>
+          <div>
+            <h3 class="text-sm font-semibold text-slate-100 mb-2">Laporan keuangan (format LKU BI)</h3>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <button type="button" id="btn-fin-kas" class="set-btn set-btn--secondary">Kas Harian</button>
+              <button type="button" id="btn-fin-bank" class="set-btn set-btn--secondary">Buku Bank</button>
+              <button type="button" id="btn-fin-lr" class="set-btn set-btn--secondary">Laba / (Rugi)</button>
+              <button type="button" id="btn-fin-neraca" class="set-btn set-btn--secondary">Neraca</button>
+            </div>
+          </div>
+          <div>
+            <h3 class="text-sm font-semibold text-slate-100 mb-2">Catatan pada periode ini</h3>
+            <div class="overflow-x-auto border border-navy-700 rounded-lg">
+              <table class="w-full text-[13px]">
+                <thead class="text-slate-400 text-[12px] bg-navy-900 border-b border-navy-700">
+                  <tr><th class="py-2 px-3 text-left font-medium">Tanggal</th><th class="py-2 px-3 text-left font-medium">Jenis / kategori</th><th class="py-2 px-3 text-left font-medium">Keterangan</th><th class="py-2 px-3 text-right font-medium">Jumlah</th><th class="py-2 px-2 w-10"><span class="sr-only">Hapus</span></th></tr>
+                </thead>
+                <tbody id="fin-entries-body" class="divide-y divide-navy-700/50"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Opening balances -->
+      <details id="fin-opening" class="bg-navy-800 border border-navy-700 rounded-xl p-4 sm:p-5 space-y-4 group">
+        <summary class="cursor-pointer select-none list-none flex items-center justify-between gap-2">
+          <span>
+            <span class="pos-h text-slate-100 block">Saldo awal keuangan (isi sekali di awal)</span>
+            <span class="set-desc block">Berlaku mulai tanggal saldo awal valas: <b id="fin-opening-date" class="num">-</b> (ubah di Pengaturan &gt; Stok Valas).</span>
+          </span>
+          <svg class="w-4 h-4 text-slate-400 transition-transform group-open:rotate-90 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="9 6 15 12 9 18"/></svg>
+        </summary>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+          <div>
+            <label for="fin_cash_open" class="pos-label">Kas (Rupiah)</label>
+            <input type="text" inputmode="numeric" id="fin_cash_open" data-fin-open="fin_cash_open" class="pos-input w-full bg-navy-900 border border-navy-600 rounded-lg text-slate-100 placeholder-slate-500 num text-right" placeholder="0">
+          </div>
+          <div>
+            <label for="fin_bank_open" class="pos-label">Bank (Rupiah)</label>
+            <input type="text" inputmode="numeric" id="fin_bank_open" data-fin-open="fin_bank_open" class="pos-input w-full bg-navy-900 border border-navy-600 rounded-lg text-slate-100 placeholder-slate-500 num text-right" placeholder="0">
+          </div>
+          <div>
+            <label for="fin_capital" class="pos-label">Modal disetor</label>
+            <input type="text" inputmode="numeric" id="fin_capital" data-fin-open="fin_capital" class="pos-input w-full bg-navy-900 border border-navy-600 rounded-lg text-slate-100 placeholder-slate-500 num text-right" placeholder="0">
+          </div>
+          <div>
+            <label for="fin_retained" class="pos-label">Laba ditahan (laba awal)</label>
+            <input type="text" inputmode="numeric" id="fin_retained" data-fin-open="fin_retained" class="pos-input w-full bg-navy-900 border border-navy-600 rounded-lg text-slate-100 placeholder-slate-500 num text-right" placeholder="0">
+          </div>
+          <div>
+            <label for="fin_fixed_cost_open" class="pos-label">Aset tetap / inventaris: harga perolehan</label>
+            <input type="text" inputmode="numeric" id="fin_fixed_cost_open" data-fin-open="fin_fixed_cost_open" class="pos-input w-full bg-navy-900 border border-navy-600 rounded-lg text-slate-100 placeholder-slate-500 num text-right" placeholder="0">
+          </div>
+          <div>
+            <label for="fin_accum_dep_open" class="pos-label">Akumulasi penyusutan</label>
+            <input type="text" inputmode="numeric" id="fin_accum_dep_open" data-fin-open="fin_accum_dep_open" class="pos-input w-full bg-navy-900 border border-navy-600 rounded-lg text-slate-100 placeholder-slate-500 num text-right" placeholder="0">
+          </div>
+          <div>
+            <label for="fin_receivable_open" class="pos-label">Piutang dagang / lain-lain</label>
+            <input type="text" inputmode="numeric" id="fin_receivable_open" data-fin-open="fin_receivable_open" class="pos-input w-full bg-navy-900 border border-navy-600 rounded-lg text-slate-100 placeholder-slate-500 num text-right" placeholder="0">
+          </div>
+          <div>
+            <label for="fin_prepaid_tax_open" class="pos-label">Pajak dibayar di muka</label>
+            <input type="text" inputmode="numeric" id="fin_prepaid_tax_open" data-fin-open="fin_prepaid_tax_open" class="pos-input w-full bg-navy-900 border border-navy-600 rounded-lg text-slate-100 placeholder-slate-500 num text-right" placeholder="0">
+          </div>
+          <div>
+            <label for="fin_payable_bank_open" class="pos-label">Hutang bank</label>
+            <input type="text" inputmode="numeric" id="fin_payable_bank_open" data-fin-open="fin_payable_bank_open" class="pos-input w-full bg-navy-900 border border-navy-600 rounded-lg text-slate-100 placeholder-slate-500 num text-right" placeholder="0">
+          </div>
+          <div>
+            <label for="fin_payable_trade_open" class="pos-label">Hutang dagang</label>
+            <input type="text" inputmode="numeric" id="fin_payable_trade_open" data-fin-open="fin_payable_trade_open" class="pos-input w-full bg-navy-900 border border-navy-600 rounded-lg text-slate-100 placeholder-slate-500 num text-right" placeholder="0">
+          </div>
+        </div>
+        <p class="set-hint">Neraca seimbang jika: kas + bank + stok valas (saldo awal valas) + piutang + pajak di muka + aset tetap bersih = hutang + modal disetor + laba ditahan.</p>
+        <div class="flex justify-end"><button type="button" id="btn-save-fin-opening" class="set-btn set-btn--primary">Simpan saldo awal</button></div>
+      </details>
+    </section>
+
     <section id="tab-settings" class="tab-content hidden">
      <div class="max-w-4xl mx-auto space-y-4">
 
@@ -1980,6 +2163,10 @@
         <button type="button" id="subtab-btn-compliance" class="set-tab" role="tab" aria-selected="false" aria-controls="subtab-panel-compliance">
           <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
           <span id="lbl-subtab-compliance">Kepatuhan BI</span>
+        </button>
+        <button type="button" id="subtab-btn-stock" class="set-tab" role="tab" aria-selected="false" aria-controls="subtab-panel-stock">
+          <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01M18 12h.01"/></svg>
+          <span>Stok Valas</span>
         </button>
         <button type="button" id="subtab-btn-sheets" class="set-tab" role="tab" aria-selected="false" aria-controls="subtab-panel-sheets">
           <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>
@@ -2082,12 +2269,25 @@
                 <input type="text" id="setting-default-teller" value="TELLER 01" class="pos-input w-full uppercase bg-navy-900 border border-navy-600 rounded-lg text-slate-100 font-mono font-bold">
               </div>
               <div class="sm:col-span-2">
-                <label for="setting-store-permit" class="pos-label" id="lbl-set-permit">Nomor Izin KUPVA / Bank Indonesia</label>
+                <label for="setting-store-permit" class="pos-label" id="lbl-set-permit">No. Registrasi / Izin KUPVA Bank Indonesia</label>
                 <input type="text" id="setting-store-permit" placeholder="Contoh: KUPVA BB No. 12/34/BI/2026 (boleh kosong)" class="pos-input w-full bg-navy-900 border border-navy-600 rounded-lg text-slate-100 placeholder-slate-500">
                 <div class="flex items-center gap-2.5 mt-2">
                   <input type="checkbox" id="setting-show-permit" class="w-5 h-5 shrink-0 text-brand bg-navy-900 border-navy-600 rounded focus:ring-brand cursor-pointer">
                   <label for="setting-show-permit" class="text-sm text-slate-300 cursor-pointer select-none" id="lbl-set-show-permit">Tampilkan di Struk (Saat ini disembunyikan)</label>
                 </div>
+              </div>
+              <div>
+                <label for="setting-store-npwp" class="pos-label">NPWP perusahaan</label>
+                <input type="text" id="setting-store-npwp" placeholder="Boleh kosong" class="pos-input w-full bg-navy-900 border border-navy-600 rounded-lg text-slate-100 placeholder-slate-500 num">
+                <p class="set-hint">Dicetak di struk jika diisi.</p>
+              </div>
+              <div>
+                <label for="setting-store-city" class="pos-label">Kota</label>
+                <input type="text" id="setting-store-city" placeholder="Contoh: Badung" class="pos-input w-full bg-navy-900 border border-navy-600 rounded-lg text-slate-100 placeholder-slate-500">
+              </div>
+              <div class="sm:col-span-2">
+                <label for="setting-store-director" class="pos-label">Nama Direktur</label>
+                <input type="text" id="setting-store-director" placeholder="Untuk tanda tangan laporan" class="pos-input w-full bg-navy-900 border border-navy-600 rounded-lg text-slate-100 placeholder-slate-500">
               </div>
             </div>
           </div>
@@ -2484,6 +2684,56 @@
       </div>
 
       <!-- PANEL 5: Kepatuhan Bank Indonesia (KUPVA BB) -->
+      <!-- PANEL: Stok Valas (BI: Saldo Awal Valas + Kurs Tengah BN) -->
+      <div id="subtab-panel-stock" role="tabpanel" aria-labelledby="subtab-btn-stock" class="hidden set-panel bg-navy-800 border border-navy-700 rounded-xl">
+        <div class="set-section space-y-4">
+          <div>
+            <h2 class="pos-h text-slate-100">Saldo awal valas</h2>
+            <p class="set-desc max-w-prose">Isi sekali di awal pemakaian POS: stok uang kertas per mata uang dan nilai rupiahnya pada tanggal mulai. Laporan BI menghitung saldo dari tanggal ini; transaksi sebelum tanggal ini dianggap sudah termasuk di saldo awal.</p>
+          </div>
+          <div class="flex flex-wrap items-end gap-3">
+            <div>
+              <label for="opening-stock-date" class="pos-label">Tanggal mulai</label>
+              <input type="date" id="opening-stock-date" class="pos-input w-full bg-navy-900 border border-navy-600 rounded-lg text-slate-100 placeholder-slate-500 !w-48">
+            </div>
+            <span id="opening-stock-status" class="set-status">Belum diisi</span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-[13px]">
+              <thead class="text-slate-400 text-[12px] border-b border-navy-700">
+                <tr><th class="py-2 pr-3 text-left font-medium">Mata uang</th><th class="py-2 px-3 text-right font-medium">Jumlah valas</th><th class="py-2 px-3 text-right font-medium">Kurs rata-rata</th><th class="py-2 pl-3 text-right font-medium">Nilai rupiah</th></tr>
+              </thead>
+              <tbody id="opening-stock-body" class="divide-y divide-navy-700/50 num"></tbody>
+              <tfoot><tr class="border-t border-navy-700 font-semibold"><td class="py-2 pr-3">Total</td><td></td><td></td><td class="py-2 pl-3 text-right num" id="opening-stock-total">Rp 0</td></tr></tfoot>
+            </table>
+          </div>
+          <div class="flex justify-end"><button type="button" id="btn-save-opening-stock" class="set-btn set-btn--primary">Simpan saldo awal</button></div>
+        </div>
+
+        <div class="set-section space-y-4">
+          <div>
+            <h2 class="pos-h text-slate-100">Kurs tengah BN</h2>
+            <p class="set-desc max-w-prose">Kurs penutupan untuk menilai stok valas di saldo akhir Laporan BI. Jika tanggal ini belum diisi, terisi dari kurs tengah sebelumnya atau titik tengah kurs beli/jual di Papan Kurs.</p>
+          </div>
+          <div class="flex flex-wrap items-end gap-3">
+            <div>
+              <label for="middle-rate-date" class="pos-label">Tanggal</label>
+              <input type="date" id="middle-rate-date" class="pos-input w-full bg-navy-900 border border-navy-600 rounded-lg text-slate-100 placeholder-slate-500 !w-48">
+            </div>
+            <button type="button" id="btn-middle-from-board" class="set-btn set-btn--secondary set-btn--sm">Isi dari Papan Kurs</button>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-[13px]">
+              <thead class="text-slate-400 text-[12px] border-b border-navy-700">
+                <tr><th class="py-2 pr-3 text-left font-medium">Mata uang</th><th class="py-2 px-3 text-right font-medium">Kurs tengah</th><th class="py-2 pl-3 text-left font-medium">Sumber</th></tr>
+              </thead>
+              <tbody id="middle-rate-body" class="divide-y divide-navy-700/50 num"></tbody>
+            </table>
+          </div>
+          <div class="flex justify-end"><button type="button" id="btn-save-middle-rates" class="set-btn set-btn--primary">Simpan kurs tengah</button></div>
+        </div>
+      </div>
+
       <div id="subtab-panel-compliance" role="tabpanel" aria-labelledby="subtab-btn-compliance" class="hidden set-panel bg-navy-800 border border-navy-700 rounded-xl">
         <div class="set-section space-y-4">
           <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
@@ -2501,10 +2751,18 @@
           <ul class="divide-y divide-navy-700 border-y border-navy-700">
             <li class="grid sm:grid-cols-[13rem_1fr] gap-x-4 gap-y-1 py-3">
               <div class="flex flex-wrap items-center gap-2">
-                <span class="text-sm font-semibold text-slate-100">Ambang batas valas</span>
-                <span class="set-status num">≥ USD 10.000</span>
+                <span class="text-sm font-semibold text-slate-100">Ambang batas (threshold)</span>
+                <span class="set-status num" id="threshold-status">Rp 180.000.000</span>
               </div>
-              <p class="text-[13px] text-slate-300 max-w-prose">Transaksi setara USD 10.000 ke atas wajib melampirkan nomor dokumen underlying (tiket, invoice, medis, pendidikan).</p>
+              <div class="space-y-2">
+                <p class="text-[13px] text-slate-300 max-w-prose">Transaksi sebesar atau di atas batas ini (setara USD 10.000) wajib melampirkan dokumen underlying, dan dipakai untuk laporan Threshold by Customer.</p>
+                <div class="flex flex-wrap items-center gap-2">
+                  <label for="setting-threshold-idr" class="sr-only">Batas threshold dalam Rupiah</label>
+                  <span class="text-[13px] text-slate-400">Rp</span>
+                  <input type="text" inputmode="numeric" id="setting-threshold-idr" class="pos-input w-full bg-navy-900 border border-navy-600 rounded-lg text-slate-100 placeholder-slate-500 num !w-44" value="180.000.000">
+                  <button type="button" id="btn-save-threshold" class="set-btn set-btn--secondary set-btn--sm">Simpan batas</button>
+                </div>
+              </div>
             </li>
             <li class="grid sm:grid-cols-[13rem_1fr] gap-x-4 gap-y-1 py-3">
               <div class="flex flex-wrap items-center gap-2">
@@ -2886,15 +3144,77 @@
     </div>
   </div>
 
+  <!-- Modal: returning customer search (name or ID number) -->
+  <div id="modal-customer-search" class="fixed inset-0 z-50 bg-black/75 flex items-start sm:items-center justify-center p-3 hidden" role="dialog" aria-modal="true" aria-labelledby="cust-search-title">
+    <div class="bg-navy-800 border border-navy-700 rounded-2xl w-full p-5 sm:p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto max-w-lg">
+      <div class="flex items-center justify-between pb-3 border-b border-navy-700">
+        <h3 class="font-bold text-white text-base" id="cust-search-title">Cari customer</h3>
+        <button type="button" class="js-close-modal text-slate-400 hover:text-white text-2xl font-bold leading-none" aria-label="Tutup">&times;</button>
+      </div>
+      <input type="search" id="cust-search-input" placeholder="Ketik nama atau No. ID" autocomplete="off" class="pos-input w-full bg-navy-900 border border-navy-600 rounded-lg text-slate-100 placeholder-slate-500">
+      <ul id="cust-search-results" class="divide-y divide-navy-700 border border-navy-700 rounded-lg max-h-80 overflow-y-auto text-[13px]"></ul>
+    </div>
+  </div>
+
+  <!-- Modal: compliance reports (period from the History date filter) -->
+  <div id="modal-compliance-report" class="fixed inset-0 z-50 bg-black/75 flex items-start sm:items-center justify-center p-3 hidden" role="dialog" aria-modal="true" aria-labelledby="compliance-title">
+    <div class="bg-navy-800 border border-navy-700 rounded-2xl w-full p-5 sm:p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto max-w-xl">
+      <div class="flex items-center justify-between pb-3 border-b border-navy-700">
+        <div>
+          <h3 class="font-bold text-white text-base" id="compliance-title">Laporan Kepatuhan</h3>
+          <p class="text-[12px] text-slate-400">Periode: <span id="compliance-period" class="num">-</span> (ubah lewat filter tanggal Riwayat)</p>
+        </div>
+        <button type="button" class="js-close-modal text-slate-400 hover:text-white text-2xl font-bold leading-none" aria-label="Tutup">&times;</button>
+      </div>
+
+      <section class="space-y-2">
+        <h4 class="text-sm font-semibold text-slate-100">Threshold by Customer</h4>
+        <p class="text-[12px] text-slate-400">Total transaksi satu customer dalam periode, dibandingkan dengan batas threshold.</p>
+        <div class="flex gap-2">
+          <input type="text" id="compliance-cust-id" placeholder="No. ID customer" class="pos-input w-full bg-navy-900 border border-navy-600 rounded-lg text-slate-100 placeholder-slate-500 uppercase">
+          <button type="button" id="btn-compliance-cust-search" class="set-btn set-btn--secondary shrink-0">Cari</button>
+          <button type="button" id="btn-compliance-cust-show" class="set-btn set-btn--primary shrink-0">Tampilkan</button>
+        </div>
+      </section>
+
+      <section class="space-y-2 pt-3 border-t border-navy-700">
+        <h4 class="text-sm font-semibold text-slate-100">Transaksi by Negara</h4>
+        <div class="flex flex-wrap gap-2">
+          <select id="compliance-nationality" class="pos-input w-full bg-navy-900 border border-navy-600 rounded-lg text-slate-100 placeholder-slate-500 !w-auto flex-1 min-w-[12rem]"><option value="">Pilih kewarganegaraan</option></select>
+          <button type="button" id="btn-compliance-nat-show" class="set-btn set-btn--primary shrink-0">Tampilkan</button>
+          <button type="button" id="btn-compliance-nat-excel" class="set-btn set-btn--secondary shrink-0">Excel</button>
+        </div>
+      </section>
+
+      <section class="space-y-2 pt-3 border-t border-navy-700">
+        <h4 class="text-sm font-semibold text-slate-100">Laporan valas BN</h4>
+        <p class="text-[12px] text-slate-400">Total valas dan rupiah per mata uang (by date: pilih satu hari di filter; by periode: pilih rentang).</p>
+        <div class="flex flex-wrap gap-2">
+          <button type="button" id="btn-volume-buy" class="set-btn set-btn--secondary">Pembelian Valas BN</button>
+          <button type="button" id="btn-volume-sell" class="set-btn set-btn--secondary">Penjualan Valas BN</button>
+        </div>
+      </section>
+
+      <section class="space-y-2 pt-3 border-t border-navy-700">
+        <h4 class="text-sm font-semibold text-slate-100">Export PPATK (Excel)</h4>
+        <p class="text-[12px] text-slate-400">Satu baris per valas, lengkap dengan tanggal lahir, kategori konsumen dan status PEP.</p>
+        <div class="flex flex-wrap gap-2">
+          <button type="button" id="btn-ppatk-buy" class="set-btn set-btn--secondary">Pembelian Valas (PPATK)</button>
+          <button type="button" id="btn-ppatk-sell" class="set-btn set-btn--secondary">Penjualan Valas (PPATK)</button>
+        </div>
+      </section>
+    </div>
+  </div>
+
   <!-- Notification Toast Container -->
   <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col space-y-2 pointer-events-none"></div>
 
   <!-- Scripts -->
-  <script src="/pos/bluetooth-print.js?v=3.19"></script>
-  <script src="/pos/usb-print.js?v=3.19"></script>
-  <script src="/pos/serial-print.js?v=3.19"></script>
-  <script src="/pos/bridge-print.js?v=3.19"></script>
-  <script src="/pos/app.js?v=3.19"></script>
+  <script src="/pos/bluetooth-print.js?v=3.22"></script>
+  <script src="/pos/usb-print.js?v=3.22"></script>
+  <script src="/pos/serial-print.js?v=3.22"></script>
+  <script src="/pos/bridge-print.js?v=3.22"></script>
+  <script src="/pos/app.js?v=3.22"></script>
 
   <!-- Modal Tambah Data DTTOT -->
   <div id="modal-add-dttot" class="fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-3 hidden">
