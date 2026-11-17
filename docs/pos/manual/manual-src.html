@@ -1,0 +1,822 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Panduan Sistem POS Skyline</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0f2530; --ink-2:#36505c; --muted:#5d707a; --line:#dbe4e8; --soft:#f3f7f8;
+  --brand:#00c9c4; --brand-ink:#047c79; --brand-tint:#e3faf9;
+  --mark:#e8590c; --mark-tint:#fff1e8;
+  --warn:#b45309; --warn-tint:#fff7e6; --danger:#b42318; --danger-tint:#fdeceb;
+  --page-w:210mm; --page-h:297mm;
+}
+*{box-sizing:border-box}
+html{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+body{margin:0;background:#e6ecef;color:var(--ink);font:400 10.5pt/1.55 "Plus Jakarta Sans","Segoe UI",system-ui,sans-serif}
+.doc{padding:72px 0 48px}
+.page{width:var(--page-w);height:var(--page-h);margin:0 auto 28px;background:#fff;position:relative;overflow:hidden;
+  padding:13mm 16mm 16mm;display:flex;flex-direction:column;box-shadow:0 1px 2px rgba(15,37,48,.08),0 12px 32px rgba(15,37,48,.10);counter-increment:pg}
+.doc{counter-reset:pg}
+
+/* ---------- kop (letterhead) ---------- */
+.kop{display:flex;align-items:center;gap:4mm;padding-bottom:3.2mm;margin-bottom:7mm;border-bottom:.35mm solid var(--line);position:relative}
+.kop::after{content:"";position:absolute;left:0;bottom:-.35mm;width:28mm;height:.9mm;background:var(--brand);border-radius:1mm}
+.kop img{width:10mm;height:10mm}
+.kop .co{font-weight:800;font-size:10pt;letter-spacing:.02em}
+.kop .addr{font-size:7.6pt;color:var(--muted);line-height:1.4}
+.kop .doc-name{margin-left:auto;text-align:right;font-size:7.6pt;color:var(--muted);line-height:1.4}
+.kop .doc-name b{color:var(--brand-ink);font-weight:700}
+
+.foot{position:absolute;left:16mm;right:16mm;bottom:8mm;display:flex;justify-content:space-between;font-size:7.4pt;color:var(--muted)}
+.foot .pg::after{content:"Halaman " counter(pg)}
+
+/* ---------- type ---------- */
+.chap{display:flex;align-items:baseline;gap:3mm;margin:0 0 1.5mm}
+.chap .no{font-weight:800;font-size:9pt;color:var(--brand-ink);background:var(--brand-tint);padding:.6mm 2.4mm;border-radius:10mm;white-space:nowrap}
+h2{font-size:20pt;line-height:1.15;margin:0 0 2mm;font-weight:800;letter-spacing:-.01em;text-wrap:balance}
+h3{font-size:13.5pt;margin:6mm 0 2.2mm;font-weight:700;display:flex;align-items:center;gap:2.4mm}
+h3 .sub{font-size:8.5pt;font-weight:700;color:var(--brand-ink);border:.3mm solid #9fe3e1;border-radius:1.6mm;padding:.1mm 1.6mm}
+.lead{font-size:10.5pt;color:var(--ink-2);margin:0 0 4mm;max-width:150mm;text-wrap:pretty}
+p{margin:0 0 2.5mm;text-wrap:pretty}
+b,strong{font-weight:700}
+.ui{font-weight:700;color:var(--ink);background:var(--soft);border:.25mm solid var(--line);border-radius:1.2mm;padding:0 1.3mm;white-space:nowrap}
+
+/* ---------- figures ---------- */
+figure{margin:0 0 3mm}
+figure img{display:block;width:100%;height:auto;border:.3mm solid var(--line);border-radius:2.2mm;box-shadow:0 1.5mm 4mm rgba(15,37,48,.07);background:#fff}
+figure.contain img{max-height:var(--h,120mm);width:auto;max-width:100%;margin:0 auto}
+figcaption{font-size:7.8pt;color:var(--muted);margin-top:1.6mm}
+figcaption b{color:var(--ink-2)}
+
+/* ---------- steps (numbers match orange markers in screenshots) ---------- */
+ol.steps{list-style:none;margin:0 0 3mm;padding:0;counter-reset:st var(--start,0)}
+ol.steps>li{counter-increment:st;position:relative;padding:.4mm 0 .4mm 9mm;margin:0 0 2.1mm;min-height:6mm}
+ol.steps>li::before{content:counter(st);position:absolute;left:0;top:.2mm;width:6mm;height:6mm;border-radius:50%;background:var(--mark);color:#fff;
+  font-weight:800;font-size:8.5pt;line-height:6mm;text-align:center}
+ol.flow>li::before{background:var(--ink);}
+ul.ticks{margin:0 0 3mm;padding:0;list-style:none}
+ul.ticks>li{position:relative;padding-left:6mm;margin-bottom:1.6mm}
+ul.ticks>li::before{content:"";position:absolute;left:1mm;top:2mm;width:2.2mm;height:2.2mm;border-radius:50%;background:var(--brand)}
+
+/* ---------- callouts ---------- */
+.note,.warn,.danger{border-radius:2.4mm;padding:3mm 4mm 3mm 11mm;margin:2mm 0 3.5mm;position:relative;font-size:9.6pt}
+.note{background:var(--brand-tint);color:#0b4744}
+.warn{background:var(--warn-tint);color:#7a3a06}
+.danger{background:var(--danger-tint);color:#7a1d15}
+.note::before,.warn::before,.danger::before{position:absolute;left:3.6mm;top:3mm;width:5mm;height:5mm;border-radius:50%;color:#fff;font-weight:800;font-size:8pt;line-height:5mm;text-align:center}
+.note::before{content:"i";background:var(--brand-ink)}
+.warn::before{content:"!";background:var(--warn)}
+.danger::before{content:"!";background:var(--danger)}
+.note b,.warn b,.danger b{color:inherit}
+
+/* ---------- layout ---------- */
+.split{display:grid;grid-template-columns:var(--cols,1.1fr 1fr);gap:7mm;align-items:start;margin-bottom:2mm}
+.grow{flex:1}
+table.kv{width:100%;border-collapse:collapse;font-size:9pt;margin:1mm 0 3mm}
+table.kv th,table.kv td{text-align:left;padding:1.7mm 2.2mm;border-bottom:.25mm solid var(--line);vertical-align:top}
+table.kv th{font-size:7.8pt;color:var(--muted);font-weight:700;background:var(--soft)}
+table.kv td:first-child{font-weight:700;white-space:nowrap}
+
+/* ---------- cover ---------- */
+.cover{padding:0;background:#fff}
+.cover .bg{position:absolute;inset:0;background:
+  radial-gradient(120mm 90mm at 100% 0%,#d5f8f6 0%,rgba(213,248,246,0) 70%),
+  radial-gradient(90mm 80mm at 0% 100%,#eef4f6 0%,rgba(238,244,246,0) 70%)}
+.cover .in{position:relative;padding:20mm 18mm 0;display:flex;flex-direction:column;height:100%}
+.cover .brand{display:flex;align-items:center;gap:4mm}
+.cover .brand img{width:15mm;height:15mm}
+.cover .brand .n{font-weight:800;font-size:15pt;letter-spacing:-.01em}
+.cover .brand .s{font-size:8.5pt;color:var(--muted)}
+.cover .tag{margin-top:30mm;display:inline-block;font-size:9pt;font-weight:700;color:var(--brand-ink);background:var(--brand-tint);padding:1mm 3mm;border-radius:10mm;align-self:flex-start}
+.cover h1{font-size:36pt;line-height:1.04;letter-spacing:-.025em;margin:5mm 0 4mm;font-weight:800;max-width:150mm;text-wrap:balance}
+.cover h1 span{color:var(--brand-ink)}
+.cover .desc{font-size:11.5pt;color:var(--ink-2);max-width:135mm;margin:0}
+.cover .shot{margin:14mm -6mm 0 0;align-self:flex-end;width:166mm;border-radius:3mm 3mm 0 0;overflow:hidden;border:.35mm solid var(--line);border-bottom:0;
+  box-shadow:0 -2mm 10mm rgba(15,37,48,.10);background:#fff}
+.cover .shot .bar{height:6mm;background:#f2f5f7;border-bottom:.3mm solid var(--line);display:flex;align-items:center;gap:1.4mm;padding:0 3mm}
+.cover .shot .bar i{width:2mm;height:2mm;border-radius:50%;background:#cfd8dd;display:block}
+.cover .shot img{display:block;width:100%}
+.cover .meta{position:absolute;left:18mm;right:18mm;bottom:12mm;display:flex;justify-content:space-between;align-items:flex-end;font-size:8.5pt;color:var(--muted);
+  background:#fff;padding-top:5mm}
+.cover .meta .co{font-weight:800;color:var(--ink);font-size:10pt}
+
+/* ---------- toc ---------- */
+.toc{margin-top:2mm}
+.toc a{display:flex;align-items:baseline;gap:2mm;color:var(--ink);text-decoration:none;padding:2.1mm 0;border-bottom:.25mm dashed var(--line)}
+.toc a .t{font-weight:600}
+.toc a .c{font-size:8.5pt;font-weight:800;color:var(--brand-ink);min-width:15mm}
+.toc a .p{margin-left:auto;font-variant-numeric:tabular-nums;color:var(--muted);font-weight:600}
+
+/* ---------- edit mode (screen only) ---------- */
+.tools{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:20;display:flex;gap:6px;align-items:center;background:#0f2530;color:#fff;
+  padding:7px;border-radius:12px;box-shadow:0 8px 28px rgba(15,37,48,.28);font-size:13px}
+.tools button{font:600 13px/1 "Plus Jakarta Sans",system-ui,sans-serif;border:0;border-radius:8px;padding:9px 12px;cursor:pointer;background:#21404d;color:#fff}
+.tools button:hover{background:#2c5162}
+.tools button.primary{background:var(--brand);color:#04302f}
+.tools button.primary:hover{background:#3fe0dc}
+.tools button[aria-pressed="true"]{background:#fff;color:#0f2530}
+.tools .hint{padding:0 8px;color:#a8bec7;font-size:12px;max-width:260px;line-height:1.3}
+.pagebar{display:none}
+body.editing .pagebar{display:flex;position:absolute;top:3mm;right:3mm;gap:4px;z-index:5}
+.pagebar button{font:600 11px/1 "Plus Jakarta Sans",system-ui,sans-serif;border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:6px;padding:5px 7px;cursor:pointer}
+.pagebar button:hover{border-color:var(--brand-ink);color:var(--brand-ink)}
+.pagebar button.del:hover{border-color:var(--danger);color:var(--danger)}
+body.editing [contenteditable="true"]:hover{outline:1px dashed #9fd9d7;outline-offset:2px}
+body.editing [contenteditable="true"]:focus{outline:2px solid var(--brand);outline-offset:2px}
+body.editing figure img{cursor:pointer}
+body.editing figure:hover img{outline:2px solid var(--mark);outline-offset:2px}
+body.editing .page.overflow{box-shadow:0 0 0 3px var(--danger),0 12px 32px rgba(15,37,48,.10)}
+body.editing .page.overflow::after{content:"Isi halaman terlalu penuh: perkecil foto atau pindahkan sebagian ke halaman baru";position:absolute;left:0;right:0;bottom:0;
+  background:var(--danger);color:#fff;font-size:11px;font-weight:700;padding:5px 10px;text-align:center}
+
+@media print{
+  @page{size:A4;margin:0}
+  body{background:#fff}
+  .doc{padding:0}
+  .page{margin:0;box-shadow:none;break-after:page}
+  .tools,.pagebar{display:none!important}
+}
+@media screen and (max-width:900px){.doc{zoom:.55}}
+</style>
+</head>
+<body>
+<div class="tools" data-ui>
+  <button type="button" id="t-edit" aria-pressed="false">Edit</button>
+  <button type="button" id="t-save" class="primary">Simpan</button>
+  <button type="button" id="t-print">Cetak / PDF</button>
+  <span class="hint" id="t-hint">Klik Edit, lalu klik teks untuk mengubah atau klik foto untuk mengganti.</span>
+</div>
+
+<main class="doc" id="doc">
+
+<!-- ================= COVER ================= -->
+<section class="page cover">
+  <div class="bg"></div>
+  <div class="in">
+    <div class="brand">
+      <img src="{{logo}}" alt="">
+      <div><div class="n">Skyline Exchange</div><div class="s">Authorized Money Changer</div></div>
+    </div>
+    <span class="tag">Sistem Pencatatan Transaksi Valuta Asing</span>
+    <h1>Panduan Penggunaan <span>Sistem POS</span> Money Changer</h1>
+    <p class="desc">Langkah demi langkah memakai aplikasi kasir Skyline: transaksi beli dan jual valas, kepatuhan Bank Indonesia, laporan, dan keuangan.</p>
+    <div class="shot"><div class="bar"><i></i><i></i><i></i></div><img src="{{img:menu-full}}" alt="Tampilan aplikasi POS Skyline"></div>
+  </div>
+  <div class="meta">
+    <div><div class="co" data-sync="co">PT. UNIVERSAL VALUTA PRIMA</div><div data-sync="addr">Jl. Bypass Ngurah Rai No. 4X, Kuta, Bali · +6285-122-777-970</div></div>
+    <div style="text-align:right">Versi 1.0<br>November 2026</div>
+  </div>
+</section>
+
+<!-- ================= TOC ================= -->
+<section class="page" data-notoc>
+  <header class="kop"><img src="{{logo}}" alt=""><div><div class="co" data-sync="co">PT. UNIVERSAL VALUTA PRIMA</div><div class="addr" data-sync="addr">Jl. Bypass Ngurah Rai No. 4X, Kuta, Bali · +6285-122-777-970</div></div><div class="doc-name"><b>Panduan Sistem POS</b><br>Skyline Exchange</div></header>
+  <h2>Daftar Isi</h2>
+  <nav class="toc" id="toc"></nav>
+  <h3 style="margin-top:9mm">Tentang panduan ini</h3>
+  <p>Panduan ini menjelaskan cara memakai aplikasi POS Skyline Exchange di <b>skylinemoneychanger.com/pos</b>, mulai dari pengaturan awal sampai laporan untuk Bank Indonesia.</p>
+  <ul class="ticks">
+    <li>Angka bulat <span style="display:inline-block;width:5mm;height:5mm;border-radius:50%;background:var(--mark);color:#fff;font-weight:800;font-size:7.5pt;line-height:5mm;text-align:center;vertical-align:-.6mm">1</span> pada gambar sama dengan nomor langkah di sebelahnya.</li>
+    <li>Nama tombol dan menu ditulis seperti di layar, misalnya <span class="ui">Simpan</span>.</li>
+    <li>Data customer pada gambar adalah data contoh.</li>
+  </ul>
+  <div class="note">Aplikasi bisa dibuka dari komputer kasir, laptop, atau tablet dengan browser Chrome. Pastikan internet tersambung agar transaksi langsung tersimpan di server.</div>
+  <div class="foot"><span>Panduan Sistem POS · Skyline Exchange</span><span class="pg"></span></div>
+</section>
+
+<!-- ================= BAB 1 ================= -->
+<section class="page" data-title="Masuk ke aplikasi" data-chap="Bab 1">
+  <header class="kop"><img src="{{logo}}" alt=""><div><div class="co" data-sync="co">PT. UNIVERSAL VALUTA PRIMA</div><div class="addr" data-sync="addr">Jl. Bypass Ngurah Rai No. 4X, Kuta, Bali · +6285-122-777-970</div></div><div class="doc-name"><b>Panduan Sistem POS</b><br>Skyline Exchange</div></header>
+  <div class="chap"><span class="no">Bab 1</span></div>
+  <h2>Masuk ke aplikasi</h2>
+  <p class="lead">Setiap kasir punya akun sendiri. Nama kasir yang masuk akan tercetak di struk dan tercatat di setiap transaksi.</p>
+  <div class="split" style="--cols:.75fr 1fr">
+    <figure><img src="{{img:login}}" alt=""><figcaption><b>Gambar 1.1</b> Halaman masuk</figcaption></figure>
+    <div>
+      <ol class="steps">
+        <li>Ketik <b>username</b> kasir atau admin.</li>
+        <li>Ketik <b>password</b>. Klik ikon mata untuk melihat password yang diketik.</li>
+        <li>Klik <span class="ui">Masuk Kasir</span>.</li>
+      </ol>
+      <div class="note">Centang <b>Ingat Saya</b> hanya di komputer kasir milik toko. Di perangkat umum, jangan dicentang.</div>
+      <p>Setiap selesai shift, klik ikon keluar di pojok kanan atas supaya kasir berikutnya masuk dengan akunnya sendiri.</p>
+    </div>
+  </div>
+  <h3>Akun kasir dan password</h3>
+  <figure class="contain" style="--h:66mm"><img src="{{img:set-users}}" alt=""><figcaption><b>Gambar 1.2</b> Pengaturan → Akun Kasir</figcaption></figure>
+  <div class="split" style="--cols:1fr 1fr;gap:6mm">
+    <ol class="steps">
+      <li>Buka <span class="ui">Pengaturan</span> → <span class="ui">Akun Kasir</span>.</li>
+      <li>Untuk mengganti password sendiri, ketik <b>password saat ini</b>.</li>
+      <li>Ketik <b>password baru</b> (minimal 6 karakter), lalu <span class="ui">Simpan password</span>.</li>
+    </ol>
+    <ol class="steps" style="--start:3">
+      <li>Admin: klik <span class="ui">Tambah kasir</span> untuk membuat akun kasir baru.</li>
+      <li>Admin: <span class="ui">Reset Sandi</span> jika kasir lupa password, atau <span class="ui">Hapus</span> untuk akun yang tidak dipakai.</li>
+    </ol>
+  </div>
+  <div class="foot"><span>Panduan Sistem POS · Skyline Exchange</span><span class="pg"></span></div>
+</section>
+
+<section class="page" data-title="Tampilan menu utama" data-chap="Bab 1">
+  <header class="kop"><img src="{{logo}}" alt=""><div><div class="co" data-sync="co">PT. UNIVERSAL VALUTA PRIMA</div><div class="addr" data-sync="addr">Jl. Bypass Ngurah Rai No. 4X, Kuta, Bali · +6285-122-777-970</div></div><div class="doc-name"><b>Panduan Sistem POS</b><br>Skyline Exchange</div></header>
+  <div class="chap"><span class="no">Bab 1</span></div>
+  <h2>Tampilan menu utama</h2>
+  <p class="lead">Setelah masuk, aplikasi langsung membuka halaman kasir. Lima menu utama ada di bagian atas.</p>
+  <figure><img src="{{img:menu-full}}" alt=""><figcaption><b>Gambar 1.3</b> Menu utama dan halaman Kasir Transaksi</figcaption></figure>
+  <table class="kv">
+    <tr><th style="width:9mm">No.</th><th style="width:42mm">Menu</th><th>Fungsi</th></tr>
+    <tr><td>1</td><td>Kasir Transaksi</td><td>Mencatat transaksi beli dan jual valas, lalu mencetak struk.</td></tr>
+    <tr><td>2</td><td>Papan Kurs</td><td>Mengatur kurs beli dan jual harian, serta tampilan kurs di TV toko.</td></tr>
+    <tr><td>3</td><td>Riwayat &amp; Laporan</td><td>Daftar transaksi, cetak ulang struk, Laporan BI, Laporan Kepatuhan, export Excel.</td></tr>
+    <tr><td>4</td><td>Keuangan</td><td>Catat biaya dan mutasi kas/bank, laporan Kas Harian, Buku Bank, Laba/Rugi, Neraca.</td></tr>
+    <tr><td>5</td><td>Pengaturan</td><td>Profil perusahaan, printer, akun kasir, kepatuhan BI, stok valas, backup.</td></tr>
+    <tr><td>6</td><td>Terang / Gelap</td><td>Mengganti tema tampilan.</td></tr>
+    <tr><td>7</td><td>Keluar</td><td>Keluar dari akun kasir.</td></tr>
+  </table>
+  <div class="foot"><span>Panduan Sistem POS · Skyline Exchange</span><span class="pg"></span></div>
+</section>
+
+<!-- ================= BAB 2 ================= -->
+<section class="page" data-title="Langkah awal: profil perusahaan" data-chap="Bab 2">
+  <header class="kop"><img src="{{logo}}" alt=""><div><div class="co" data-sync="co">PT. UNIVERSAL VALUTA PRIMA</div><div class="addr" data-sync="addr">Jl. Bypass Ngurah Rai No. 4X, Kuta, Bali · +6285-122-777-970</div></div><div class="doc-name"><b>Panduan Sistem POS</b><br>Skyline Exchange</div></header>
+  <div class="chap"><span class="no">Bab 2</span></div>
+  <h2>Langkah awal sebelum transaksi</h2>
+  <p class="lead">Lakukan sekali saja saat pertama memakai aplikasi, oleh akun <b>admin</b>. Data ini muncul di struk dan di semua laporan.</p>
+  <h3><span class="sub">2.1</span> Profil perusahaan</h3>
+  <div class="split" style="--cols:2fr 1fr">
+    <figure><img src="{{img:set-store}}" alt=""><figcaption><b>Gambar 2.1</b> Pengaturan → Profil Toko</figcaption></figure>
+    <div>
+      <ol class="steps">
+        <li>Buka <span class="ui">Pengaturan</span> → <span class="ui">Profil Toko</span>.</li>
+        <li>Isi <b>Nama PT</b> sesuai akta perusahaan.</li>
+        <li>Isi <b>alamat outlet</b>.</li>
+        <li>Isi <b>nomor WhatsApp / telepon</b>.</li>
+        <li>Isi <b>NPWP perusahaan</b> dan <b>kota</b>. Kota dipakai di tanda tangan laporan.</li>
+        <li>Isi <b>nama direktur</b> untuk tanda tangan Laba/Rugi dan Neraca.</li>
+      </ol>
+      <p>Gulir ke bawah, lalu klik <span class="ui">Simpan Pengaturan</span>.</p>
+      <div class="note">Nomor izin KUPVA BB dari Bank Indonesia bisa diisi juga. Centang <b>Tampilkan di Struk</b> bila ingin nomor izin tercetak.</div>
+    </div>
+  </div>
+  <div class="foot"><span>Panduan Sistem POS · Skyline Exchange</span><span class="pg"></span></div>
+</section>
+
+<section class="page" data-title="Langkah awal: printer struk" data-chap="Bab 2">
+  <header class="kop"><img src="{{logo}}" alt=""><div><div class="co" data-sync="co">PT. UNIVERSAL VALUTA PRIMA</div><div class="addr" data-sync="addr">Jl. Bypass Ngurah Rai No. 4X, Kuta, Bali · +6285-122-777-970</div></div><div class="doc-name"><b>Panduan Sistem POS</b><br>Skyline Exchange</div></header>
+  <div class="chap"><span class="no">Bab 2</span></div>
+  <h3 style="margin-top:0"><span class="sub">2.2</span> Printer struk 76 mm</h3>
+  <p>Aplikasi mencetak struk langsung ke printer kasir iWare DM-76H (atau printer ESC/POS lain) melalui program kecil <b>Skyline Print Bridge</b>.</p>
+  <figure><img src="{{img:set-printer-paper}}" alt=""><figcaption><b>Gambar 2.2</b> Pilihan ukuran kertas</figcaption></figure>
+  <figure class="contain" style="--h:112mm"><img src="{{img:set-printer}}" alt=""><figcaption><b>Gambar 2.3</b> Pengaturan printer struk</figcaption></figure>
+  <ol class="steps">
+    <li>Di <span class="ui">Pengaturan</span> → <span class="ui">Profil Toko</span>, pilih kertas <b>76 mm (Dot Matrix / Pita)</b>.</li>
+    <li>Unduh dan jalankan <b>SkylinePrintBridge.cmd</b> di PC kasir (sekali saja), lalu klik <span class="ui">Cek koneksi</span>. Pilih printer kasir dari daftar.</li>
+    <li>Klik <span class="ui">Tes cetak ESC/POS</span>. Printer mencetak struk percobaan.</li>
+    <li>Klik <span class="ui">Simpan Pengaturan</span>.</li>
+  </ol>
+  <div class="foot"><span>Panduan Sistem POS · Skyline Exchange</span><span class="pg"></span></div>
+</section>
+
+<section class="page" data-title="Langkah awal: threshold dan papan kurs" data-chap="Bab 2">
+  <header class="kop"><img src="{{logo}}" alt=""><div><div class="co" data-sync="co">PT. UNIVERSAL VALUTA PRIMA</div><div class="addr" data-sync="addr">Jl. Bypass Ngurah Rai No. 4X, Kuta, Bali · +6285-122-777-970</div></div><div class="doc-name"><b>Panduan Sistem POS</b><br>Skyline Exchange</div></header>
+  <div class="chap"><span class="no">Bab 2</span></div>
+  <h3 style="margin-top:0"><span class="sub">2.3</span> Batas threshold</h3>
+  <figure class="contain" style="--h:66mm"><img src="{{img:set-threshold}}" alt=""><figcaption><b>Gambar 2.4</b> Pengaturan → Kepatuhan BI</figcaption></figure>
+  <ol class="steps">
+    <li>Buka <span class="ui">Pengaturan</span> → <span class="ui">Kepatuhan BI</span>.</li>
+    <li>Isi <b>batas threshold</b> dalam Rupiah, setara USD 10.000 (contoh: Rp 180.000.000).</li>
+    <li>Klik <span class="ui">Simpan batas</span>. Batas ini langsung berlaku untuk semua kasir.</li>
+  </ol>
+  <h3><span class="sub">2.4</span> Papan kurs harian</h3>
+  <figure class="contain" style="--h:58mm"><img src="{{img:rates}}" alt=""><figcaption><b>Gambar 2.5</b> Menu Papan Kurs</figcaption></figure>
+  <ol class="steps">
+    <li><span class="ui">Tampilan TV</span> membuka papan kurs untuk layar TV di toko.</li>
+    <li><span class="ui">Edit kurs beli sekaligus</span> untuk mengubah semua kurs beli dalam satu kali simpan.</li>
+    <li><span class="ui">Tambah Mata Uang</span> untuk mata uang baru.</li>
+    <li><span class="ui">Edit Kurs</span> untuk mengubah kurs beli/jual satu mata uang.</li>
+  </ol>
+  <div class="foot"><span>Panduan Sistem POS · Skyline Exchange</span><span class="pg"></span></div>
+</section>
+
+<section class="page" data-title="Langkah awal: saldo awal valas dan kurs tengah" data-chap="Bab 2">
+  <header class="kop"><img src="{{logo}}" alt=""><div><div class="co" data-sync="co">PT. UNIVERSAL VALUTA PRIMA</div><div class="addr" data-sync="addr">Jl. Bypass Ngurah Rai No. 4X, Kuta, Bali · +6285-122-777-970</div></div><div class="doc-name"><b>Panduan Sistem POS</b><br>Skyline Exchange</div></header>
+  <div class="chap"><span class="no">Bab 2</span></div>
+  <h3 style="margin-top:0"><span class="sub">2.5</span> Saldo awal valas</h3>
+  <div class="split" style="--cols:1.9fr 1fr">
+    <figure><img src="{{img:set-stock}}" alt=""><figcaption><b>Gambar 2.6</b> Pengaturan → Stok Valas</figcaption></figure>
+    <div>
+      <ol class="steps">
+        <li>Buka <span class="ui">Pengaturan</span> → <span class="ui">Stok Valas</span>.</li>
+        <li>Pilih <b>tanggal mulai</b> pemakaian aplikasi.</li>
+        <li>Isi <b>jumlah valas</b> yang ada di brankas dan <b>kurs rata-rata</b> pembeliannya. Nilai Rupiah terhitung otomatis.</li>
+        <li>Klik <span class="ui">Simpan saldo awal</span>.</li>
+      </ol>
+      <div class="note">Saldo awal menjadi titik mulai Laporan Summary Valas BI dan laporan keuangan.</div>
+    </div>
+  </div>
+  <h3><span class="sub">2.6</span> Kurs tengah BN</h3>
+  <div class="split" style="--cols:1.9fr 1fr">
+    <figure><img src="{{img:set-middle}}" alt=""><figcaption><b>Gambar 2.7</b> Kurs tengah untuk menilai saldo akhir</figcaption></figure>
+    <div>
+      <ol class="steps">
+        <li>Pilih <b>tanggal</b>, biasanya hari terakhir periode laporan.</li>
+        <li>Klik <span class="ui">Isi dari Papan Kurs</span> untuk mengisi titik tengah kurs beli dan jual.</li>
+        <li>Ubah angka bila perlu.</li>
+        <li>Klik <span class="ui">Simpan kurs tengah</span>.</li>
+      </ol>
+    </div>
+  </div>
+  <div class="foot"><span>Panduan Sistem POS · Skyline Exchange</span><span class="pg"></span></div>
+</section>
+
+<section class="page" data-title="Langkah awal: saldo awal keuangan" data-chap="Bab 2">
+  <header class="kop"><img src="{{logo}}" alt=""><div><div class="co" data-sync="co">PT. UNIVERSAL VALUTA PRIMA</div><div class="addr" data-sync="addr">Jl. Bypass Ngurah Rai No. 4X, Kuta, Bali · +6285-122-777-970</div></div><div class="doc-name"><b>Panduan Sistem POS</b><br>Skyline Exchange</div></header>
+  <div class="chap"><span class="no">Bab 2</span></div>
+  <h3 style="margin-top:0"><span class="sub">2.7</span> Saldo awal keuangan</h3>
+  <p>Diisi sekali oleh admin di menu <span class="ui">Keuangan</span>, bagian paling bawah. Tanggalnya mengikuti tanggal saldo awal valas.</p>
+  <figure><img src="{{img:fin-opening}}" alt=""><figcaption><b>Gambar 2.8</b> Keuangan → Saldo awal keuangan</figcaption></figure>
+  <ol class="steps">
+    <li>Isi saldo <b>kas</b> (uang Rupiah di laci dan brankas) dan saldo <b>bank</b>.</li>
+    <li>Isi <b>modal disetor</b> dan <b>laba ditahan</b> sampai tanggal mulai.</li>
+    <li>Isi <b>aset tetap</b> (harga perolehan) dan akumulasi penyusutannya, juga piutang dan hutang bila ada.</li>
+    <li>Klik <span class="ui">Simpan saldo awal</span>.</li>
+  </ol>
+  <div class="note"><b>Agar Neraca seimbang:</b> kas + bank + stok valas + piutang + pajak dibayar di muka + aset tetap bersih harus sama dengan hutang + modal disetor + laba ditahan.</div>
+  <div class="foot"><span>Panduan Sistem POS · Skyline Exchange</span><span class="pg"></span></div>
+</section>
+
+<!-- ================= BAB 3 ================= -->
+<section class="page" data-title="Transaksi pembelian valas" data-chap="Bab 3">
+  <header class="kop"><img src="{{logo}}" alt=""><div><div class="co" data-sync="co">PT. UNIVERSAL VALUTA PRIMA</div><div class="addr" data-sync="addr">Jl. Bypass Ngurah Rai No. 4X, Kuta, Bali · +6285-122-777-970</div></div><div class="doc-name"><b>Panduan Sistem POS</b><br>Skyline Exchange</div></header>
+  <div class="chap"><span class="no">Bab 3</span></div>
+  <h2>Transaksi pembelian valas</h2>
+  <p class="lead">Customer menyerahkan valas, kasir membayar Rupiah. Mulai dari data customer, lalu valasnya.</p>
+  <h3><span class="sub">Langkah 1</span> Data customer</h3>
+  <figure><img src="{{img:pos-customer}}" alt=""><figcaption><b>Gambar 3.1</b> Kartu Customer di menu Kasir Transaksi</figcaption></figure>
+  <div class="split" style="--cols:1fr 1fr;gap:6mm">
+    <ol class="steps">
+      <li>Ketik <b>No. KTP / paspor</b> (wajib), lalu tekan Enter. Customer lama terisi otomatis.</li>
+      <li>Atau klik <span class="ui">Cari</span> untuk mencari customer lama berdasarkan nama.</li>
+      <li>Isi <b>nama lengkap</b> sesuai identitas.</li>
+    </ol>
+    <ol class="steps" style="--start:3">
+      <li>Isi <b>telepon / WhatsApp</b>.</li>
+      <li>Buka <b>Data tambahan</b>: NPWP, kewarganegaraan, pekerjaan, jenis kelamin, alamat, tanggal dan tempat lahir, kategori.</li>
+      <li>Centang <b>PEP</b> hanya jika customer pejabat publik (lihat Bab 6).</li>
+    </ol>
+  </div>
+  <div class="foot"><span>Panduan Sistem POS · Skyline Exchange</span><span class="pg"></span></div>
+</section>
+
+<section class="page" data-title="Pembelian: pilih valas dan cetak struk" data-chap="Bab 3">
+  <header class="kop"><img src="{{logo}}" alt=""><div><div class="co" data-sync="co">PT. UNIVERSAL VALUTA PRIMA</div><div class="addr" data-sync="addr">Jl. Bypass Ngurah Rai No. 4X, Kuta, Bali · +6285-122-777-970</div></div><div class="doc-name"><b>Panduan Sistem POS</b><br>Skyline Exchange</div></header>
+  <div class="chap"><span class="no">Bab 3</span></div>
+  <h3 style="margin-top:0"><span class="sub">Langkah 2</span> Pilih valas</h3>
+  <div class="split" style="--cols:1.15fr 1fr">
+    <figure><img src="{{img:pos-buy-items}}" alt=""><figcaption><b>Gambar 3.2</b> Memilih valas dan jumlah</figcaption></figure>
+    <ol class="steps">
+      <li>Pastikan tombol <span class="ui">Beli valas</span> aktif (hijau).</li>
+      <li>Klik kotak <b>mata uang</b>. Kurs beli hari ini terisi otomatis.</li>
+      <li>Ketik <b>jumlah</b> lembar valas.</li>
+      <li>Klik <span class="ui">Tambah</span>. Ulangi langkah 2–4 untuk mata uang lain.</li>
+      <li>Periksa <b>Rincian</b>. Klik ikon tempat sampah untuk menghapus baris yang salah.</li>
+    </ol>
+  </div>
+  <h3><span class="sub">Langkah 3</span> Simpan dan cetak struk</h3>
+  <div class="split" style="--cols:1fr .6fr">
+    <div>
+      <figure class="contain" style="--h:60mm"><img src="{{img:pos-receipt}}" alt=""><figcaption><b>Gambar 3.3</b> Total dan tombol cetak</figcaption></figure>
+      <ol class="steps">
+        <li>Cek total, lalu klik <span class="ui">Proses &amp; cetak struk</span>. Nomor struk dibuat otomatis dan struk langsung tercetak.</li>
+        <li><b>Pratinjau struk</b> menampilkan struk sebelum dicetak.</li>
+        <li><span class="ui">Cetak USB</span> mencetak ulang ke printer kasir.</li>
+      </ol>
+    </div>
+    <figure><img src="{{img:receipt}}" alt=""><figcaption><b>Gambar 3.4</b> Contoh struk 76 mm</figcaption></figure>
+  </div>
+  <div class="foot"><span>Panduan Sistem POS · Skyline Exchange</span><span class="pg"></span></div>
+</section>
+
+<!-- ================= BAB 4 ================= -->
+<section class="page" data-title="Notifikasi threshold" data-chap="Bab 4">
+  <header class="kop"><img src="{{logo}}" alt=""><div><div class="co" data-sync="co">PT. UNIVERSAL VALUTA PRIMA</div><div class="addr" data-sync="addr">Jl. Bypass Ngurah Rai No. 4X, Kuta, Bali · +6285-122-777-970</div></div><div class="doc-name"><b>Panduan Sistem POS</b><br>Skyline Exchange</div></header>
+  <div class="chap"><span class="no">Bab 4</span></div>
+  <h2>Notifikasi threshold</h2>
+  <p class="lead">Jika total transaksi mencapai batas threshold, kartu peringatan muncul di bagian paling atas halaman kasir. Tulisan <b>Jumlah Transaksi Melebihi Threshold</b> berkedip merah-putih.</p>
+  <figure><img src="{{img:pos-threshold}}" alt=""><figcaption><b>Gambar 4.1</b> Peringatan threshold dan dokumen underlying</figcaption></figure>
+  <ol class="steps">
+    <li>Notifikasi berkedip merah-putih sampai dokumen underlying dilengkapi.</li>
+    <li>Pilih <b>jenis dokumen underlying</b>: tiket, invoice, biaya pendidikan, pengobatan, kontrak, atau lainnya.</li>
+    <li>Isi <b>nomor dokumen</b>, lalu lanjutkan transaksi seperti biasa.</li>
+  </ol>
+  <div class="warn">Transaksi di atas threshold tidak bisa disimpan sebelum dokumen underlying diisi. Simpan salinan dokumennya bersama arsip struk.</div>
+  <h3>Threshold per customer</h3>
+  <p>Beberapa transaksi kecil dari customer yang sama juga bisa melewati batas jika dijumlahkan. Cek dengan laporan <b>Threshold by Customer</b> (Bab 9). Bila melewati batas, laporan menampilkan tulisan merah <b>Jumlah Transaksi Melebihi Threshold</b>.</p>
+  <div class="foot"><span>Panduan Sistem POS · Skyline Exchange</span><span class="pg"></span></div>
+</section>
+
+<!-- ================= BAB 5 ================= -->
+<section class="page" data-title="Transaksi penjualan valas" data-chap="Bab 5">
+  <header class="kop"><img src="{{logo}}" alt=""><div><div class="co" data-sync="co">PT. UNIVERSAL VALUTA PRIMA</div><div class="addr" data-sync="addr">Jl. Bypass Ngurah Rai No. 4X, Kuta, Bali · +6285-122-777-970</div></div><div class="doc-name"><b>Panduan Sistem POS</b><br>Skyline Exchange</div></header>
+  <div class="chap"><span class="no">Bab 5</span></div>
+  <h2>Transaksi penjualan valas</h2>
+  <p class="lead">Customer membayar Rupiah, kasir menyerahkan valas. Data customer diisi sama seperti pembelian (Bab 3, Langkah 1).</p>
+  <div class="split" style="--cols:1.15fr 1fr">
+    <figure><img src="{{img:pos-sell}}" alt=""><figcaption><b>Gambar 5.1</b> Mode Jual valas</figcaption></figure>
+    <ol class="steps">
+      <li>Klik <span class="ui">Jual valas</span> (oranye).</li>
+      <li>Klik <b>mata uang</b>, ketik jumlah, lalu klik <span class="ui">Tambah</span>. Kurs jual terisi otomatis.</li>
+      <li>Periksa <b>Rincian</b> transaksi.</li>
+    </ol>
+  </div>
+  <div class="split" style="--cols:1fr 1.15fr">
+    <ol class="steps" style="--start:3">
+      <li>Ketik <b>uang diterima</b> dari customer. Kembalian dihitung otomatis.</li>
+      <li>Atau klik tombol cepat: <span class="ui">Uang pas</span>, <span class="ui">+50rb</span>, <span class="ui">+100rb</span>, dan seterusnya.</li>
+      <li>Klik <span class="ui">Proses &amp; cetak struk</span>.</li>
+    </ol>
+    <figure><img src="{{img:pos-sell-pay}}" alt=""><figcaption><b>Gambar 5.2</b> Pembayaran dan kembalian</figcaption></figure>
+  </div>
+  <div class="note">Stok valas berkurang otomatis setiap penjualan. Sisa stok terlihat di Laporan Summary Valas (Bab 10).</div>
+  <div class="foot"><span>Panduan Sistem POS · Skyline Exchange</span><span class="pg"></span></div>
+</section>
+
+<!-- ================= BAB 6 & 7 ================= -->
+<section class="page" data-title="Customer PEP" data-chap="Bab 6">
+  <header class="kop"><img src="{{logo}}" alt=""><div><div class="co" data-sync="co">PT. UNIVERSAL VALUTA PRIMA</div><div class="addr" data-sync="addr">Jl. Bypass Ngurah Rai No. 4X, Kuta, Bali · +6285-122-777-970</div></div><div class="doc-name"><b>Panduan Sistem POS</b><br>Skyline Exchange</div></header>
+  <div class="chap"><span class="no">Bab 6</span></div>
+  <h2>Customer PEP (pejabat publik)</h2>
+  <p class="lead">PEP (<i>Politically Exposed Person</i>) wajib menjalani uji tuntas lanjut (EDD) dan mendapat persetujuan direksi sebelum transaksi.</p>
+  <figure><img src="{{img:pos-pep}}" alt=""><figcaption><b>Gambar 6.1</b> Form EDD untuk customer PEP</figcaption></figure>
+  <ol class="steps">
+    <li>Centang <b>Customer adalah PEP (pejabat publik)</b>. Form EDD muncul.</li>
+    <li>Isi <b>institusi / jabatan</b>, misalnya Kepala Dinas atau anggota DPRD.</li>
+    <li>Pilih <b>sumber dana</b>.</li>
+    <li>Pilih <b>tujuan transaksi</b>.</li>
+    <li>Centang konfirmasi <b>persetujuan direksi / senior management</b>.</li>
+  </ol>
+  <div class="note">Transaksi PEP diberi tanda <b>PEP</b> di Riwayat dan ikut tercantum di export PPATK.</div>
+  <div class="foot"><span>Panduan Sistem POS · Skyline Exchange</span><span class="pg"></span></div>
+</section>
+
+<section class="page" data-title="Skrining DTTOT" data-chap="Bab 7">
+  <header class="kop"><img src="{{logo}}" alt=""><div><div class="co" data-sync="co">PT. UNIVERSAL VALUTA PRIMA</div><div class="addr" data-sync="addr">Jl. Bypass Ngurah Rai No. 4X, Kuta, Bali · +6285-122-777-970</div></div><div class="doc-name"><b>Panduan Sistem POS</b><br>Skyline Exchange</div></header>
+  <div class="chap"><span class="no">Bab 7</span></div>
+  <h2>Skrining DTTOT / DPPSPM</h2>
+  <p class="lead">Setiap nama customer dicek otomatis ke Daftar Terduga Teroris dan Organisasi Teroris (DTTOT) serta DPPSPM saat kasir mengetik.</p>
+  <figure class="contain" style="--h:62mm"><img src="{{img:pos-dttot}}" alt=""><figcaption><b>Gambar 7.1</b> Peringatan saat nama cocok dengan daftar (contoh nama fiktif)</figcaption></figure>
+  <ol class="steps">
+    <li>Kasir mengetik nama customer seperti biasa.</li>
+    <li>Jika nama cocok, kotak merah <b>PERINGATAN DTTOT / DPPSPM: TRANSAKSI DIBEKUKAN</b> muncul dan tombol proses terkunci.</li>
+  </ol>
+  <div class="danger"><b>Jangan lanjutkan transaksi.</b> Sesuai PBI APU PPT, transaksi wajib dibekukan tanpa penundaan. Segera laporkan ke direksi dan PPATK.</div>
+  <h3>Daftar DTTOT di aplikasi</h3>
+  <figure><img src="{{img:set-dttot}}" alt=""><figcaption><b>Gambar 7.2</b> Pengaturan → Kepatuhan BI → Daftar DTTOT / DPPSPM</figcaption></figure>
+  <ol class="steps">
+    <li>Ketik nama atau alias untuk mencari di daftar.</li>
+    <li>Saring berdasarkan jenis daftar: DTTOT, DPPSPM, atau internal. Admin menambah nama baru dengan <span class="ui">Tambah Data DTTOT</span>.</li>
+  </ol>
+  <div class="foot"><span>Panduan Sistem POS · Skyline Exchange</span><span class="pg"></span></div>
+</section>
+
+<!-- ================= BAB 8 ================= -->
+<section class="page" data-title="Riwayat transaksi" data-chap="Bab 8">
+  <header class="kop"><img src="{{logo}}" alt=""><div><div class="co" data-sync="co">PT. UNIVERSAL VALUTA PRIMA</div><div class="addr" data-sync="addr">Jl. Bypass Ngurah Rai No. 4X, Kuta, Bali · +6285-122-777-970</div></div><div class="doc-name"><b>Panduan Sistem POS</b><br>Skyline Exchange</div></header>
+  <div class="chap"><span class="no">Bab 8</span></div>
+  <h2>Riwayat transaksi</h2>
+  <p class="lead">Menu <span class="ui">Riwayat &amp; Laporan</span> berisi semua transaksi, total harian, dan tombol laporan.</p>
+  <figure><img src="{{img:history-toolbar}}" alt=""><figcaption><b>Gambar 8.1</b> Filter tanggal dan tombol laporan</figcaption></figure>
+  <ol class="steps">
+    <li>Pilih tanggal <b>Dari</b> dan <b>Sampai</b>.</li>
+    <li>Atau klik <span class="ui">Hari Ini</span>, <span class="ui">Bulan Ini</span>, <span class="ui">Semua</span>.</li>
+    <li>Cari nomor struk atau nama customer.</li>
+    <li><span class="ui">Excel (.xlsx)</span> mengunduh daftar transaksi. Ada juga CSV dan PDF.</li>
+    <li><span class="ui">Laporan BI</span>: Laporan Summary Valas (Bab 10).</li>
+    <li><span class="ui">Laporan Kepatuhan</span>: threshold, negara, valas BN, PPATK (Bab 9).</li>
+  </ol>
+  <figure><img src="{{img:history}}" alt=""><figcaption><b>Gambar 8.2</b> Daftar transaksi. Klik <b>Cetak</b> untuk mencetak ulang struk.</figcaption></figure>
+  <div class="foot"><span>Panduan Sistem POS · Skyline Exchange</span><span class="pg"></span></div>
+</section>
+
+<!-- ================= BAB 9 ================= -->
+<section class="page" data-title="Laporan kepatuhan" data-chap="Bab 9">
+  <header class="kop"><img src="{{logo}}" alt=""><div><div class="co" data-sync="co">PT. UNIVERSAL VALUTA PRIMA</div><div class="addr" data-sync="addr">Jl. Bypass Ngurah Rai No. 4X, Kuta, Bali · +6285-122-777-970</div></div><div class="doc-name"><b>Panduan Sistem POS</b><br>Skyline Exchange</div></header>
+  <div class="chap"><span class="no">Bab 9</span></div>
+  <h2>Laporan kepatuhan</h2>
+  <p class="lead">Atur periode di filter tanggal Riwayat, lalu klik <span class="ui">Laporan Kepatuhan</span>.</p>
+  <div class="split" style="--cols:1.9fr 1fr">
+    <figure><img src="{{img:compliance}}" alt=""><figcaption><b>Gambar 9.1</b> Jendela Laporan Kepatuhan</figcaption></figure>
+    <div>
+      <ol class="steps">
+        <li><b>Threshold by Customer:</b> ketik No. ID customer.</li>
+        <li>Klik <span class="ui">Tampilkan</span>. Laporan terbuka di tab baru dan siap dicetak.</li>
+        <li><b>Transaksi by Negara:</b> pilih kewarganegaraan, lalu <span class="ui">Tampilkan</span>.</li>
+        <li><span class="ui">Excel</span> mengunduh laporan negara ke Excel.</li>
+        <li><b>Laporan valas BN:</b> total pembelian atau penjualan per mata uang.</li>
+        <li><b>Export PPATK:</b> file Excel transaksi beli atau jual untuk pelaporan PPATK.</li>
+      </ol>
+    </div>
+  </div>
+  <div class="note">Setiap laporan punya tombol <b>Cetak / Simpan PDF</b> di pojok kanan atas.</div>
+  <div class="foot"><span>Panduan Sistem POS · Skyline Exchange</span><span class="pg"></span></div>
+</section>
+
+<section class="page" data-title="Contoh laporan kepatuhan" data-chap="Bab 9">
+  <header class="kop"><img src="{{logo}}" alt=""><div><div class="co" data-sync="co">PT. UNIVERSAL VALUTA PRIMA</div><div class="addr" data-sync="addr">Jl. Bypass Ngurah Rai No. 4X, Kuta, Bali · +6285-122-777-970</div></div><div class="doc-name"><b>Panduan Sistem POS</b><br>Skyline Exchange</div></header>
+  <div class="chap"><span class="no">Bab 9</span></div>
+  <h3 style="margin-top:0">Transaksi customer by ID (threshold)</h3>
+  <p>Semua transaksi satu customer dalam periode, dijumlahkan dan dibandingkan dengan batas threshold.</p>
+  <figure><img src="{{img:rpt-threshold-customer}}" alt=""><figcaption><b>Gambar 9.2</b> Customer melewati threshold dari dua transaksi</figcaption></figure>
+  <h3>Transaksi customer by nationality</h3>
+  <figure><img src="{{img:rpt-nationality}}" alt=""><figcaption><b>Gambar 9.3</b> Transaksi per kewarganegaraan, dikelompokkan per customer</figcaption></figure>
+  <h3>Pembelian / penjualan valas BN</h3>
+  <figure class="contain" style="--h:52mm"><img src="{{img:rpt-volume-buy}}" alt=""><figcaption><b>Gambar 9.4</b> Total pembelian valas per mata uang</figcaption></figure>
+  <div class="foot"><span>Panduan Sistem POS · Skyline Exchange</span><span class="pg"></span></div>
+</section>
+
+<!-- ================= BAB 10 ================= -->
+<section class="page" data-title="Laporan Summary Valas untuk BI" data-chap="Bab 10">
+  <header class="kop"><img src="{{logo}}" alt=""><div><div class="co" data-sync="co">PT. UNIVERSAL VALUTA PRIMA</div><div class="addr" data-sync="addr">Jl. Bypass Ngurah Rai No. 4X, Kuta, Bali · +6285-122-777-970</div></div><div class="doc-name"><b>Panduan Sistem POS</b><br>Skyline Exchange</div></header>
+  <div class="chap"><span class="no">Bab 10</span></div>
+  <h2>Laporan Summary Valas untuk BI</h2>
+  <p class="lead">Mutasi valas per mata uang dalam satu periode, untuk LKU bulanan Bank Indonesia.</p>
+  <ol class="steps flow">
+    <li>Buka <span class="ui">Riwayat &amp; Laporan</span>.</li>
+    <li>Atur periode, misalnya klik <span class="ui">Bulan Ini</span> atau pilih tanggal 1 sampai akhir bulan.</li>
+    <li>Klik <span class="ui">Laporan BI</span>. Laporan terbuka di tab baru.</li>
+    <li>Klik <b>Cetak / Simpan PDF</b> (kertas A4 landscape).</li>
+  </ol>
+  <figure><img src="{{img:rpt-bi}}" alt=""><figcaption><b>Gambar 10.1</b> Laporan Summary Valas [By Currency]</figcaption></figure>
+  <table class="kv">
+    <tr><th style="width:38mm">Kolom</th><th>Isi</th></tr>
+    <tr><td>Saldo awal</td><td>Stok valas di awal periode (valas dan Rupiah).</td></tr>
+    <tr><td>Volume pembelian</td><td>Total valas yang dibeli dari customer.</td></tr>
+    <tr><td>Volume penjualan</td><td>Total valas yang dijual ke customer.</td></tr>
+    <tr><td>Saldo akhir</td><td>Sisa stok, dinilai dengan kurs tengah BN. Jika kurs tengah belum diisi, memakai kurs rata-rata.</td></tr>
+  </table>
+  <div class="note">Isi <b>kurs tengah BN</b> untuk tanggal akhir periode (Bab 2.6) sebelum mencetak laporan bulanan.</div>
+  <div class="foot"><span>Panduan Sistem POS · Skyline Exchange</span><span class="pg"></span></div>
+</section>
+
+<!-- ================= BAB 11 ================= -->
+<section class="page" data-title="Keuangan: catat kas dan biaya" data-chap="Bab 11">
+  <header class="kop"><img src="{{logo}}" alt=""><div><div class="co" data-sync="co">PT. UNIVERSAL VALUTA PRIMA</div><div class="addr" data-sync="addr">Jl. Bypass Ngurah Rai No. 4X, Kuta, Bali · +6285-122-777-970</div></div><div class="doc-name"><b>Panduan Sistem POS</b><br>Skyline Exchange</div></header>
+  <div class="chap"><span class="no">Bab 11</span></div>
+  <h2>Keuangan: catat kas dan biaya</h2>
+  <p class="lead">Semua uang keluar-masuk selain transaksi valas dicatat di menu <span class="ui">Keuangan</span>, sesuai nota.</p>
+  <div class="split" style="--cols:1fr 1fr">
+    <figure><img src="{{img:fin-entry}}" alt=""><figcaption><b>Gambar 11.1</b> Form Catat kas &amp; biaya</figcaption></figure>
+    <div>
+      <ol class="steps">
+        <li>Pilih <b>tanggal</b> sesuai nota.</li>
+        <li>Pilih <b>jenis</b> catatan (lihat tabel).</li>
+        <li>Pilih <b>kategori</b>, misalnya gaji, sewa, listrik.</li>
+        <li>Ketik <b>jumlah</b> Rupiah.</li>
+        <li>Tulis <b>keterangan</b> dan nomor nota.</li>
+        <li>Klik <span class="ui">Simpan catatan</span>.</li>
+      </ol>
+      <div class="note">Catatan yang salah hanya bisa dihapus oleh admin, lewat tombol <b>Hapus</b> di daftar catatan.</div>
+    </div>
+  </div>
+  <table class="kv">
+    <tr><th style="width:44mm">Jenis catatan</th><th>Kapan dipakai</th></tr>
+    <tr><td>Biaya operasional</td><td>Gaji, sewa, iklan, listrik/telepon/air, transport, pemeliharaan, penyusutan, asuransi, adm/ATK, PPh.</td></tr>
+    <tr><td>Tambah / Kurang Cash</td><td>Pemilik menambah modal tunai atau mengambil uang kas.</td></tr>
+    <tr><td>Setor / Tarik bank</td><td>Memindahkan uang antara kas toko dan rekening bank.</td></tr>
+    <tr><td>Bunga / Adm. bank</td><td>Bunga jasa giro dan biaya administrasi bank.</td></tr>
+    <tr><td>Hutang</td><td>Menerima pinjaman atau membayar hutang bank / dagang.</td></tr>
+    <tr><td>Piutang &amp; pajak di muka</td><td>Memberi piutang, membayar pajak di muka, atau menerima pelunasan.</td></tr>
+    <tr><td>Aktiva / inventaris</td><td>Membeli aset tetap, misalnya komputer atau brankas.</td></tr>
+    <tr><td>Pendapatan lain</td><td>Pemasukan di luar transaksi valas.</td></tr>
+  </table>
+  <div class="foot"><span>Panduan Sistem POS · Skyline Exchange</span><span class="pg"></span></div>
+</section>
+
+<section class="page" data-title="Mencetak laporan keuangan" data-chap="Bab 11">
+  <header class="kop"><img src="{{logo}}" alt=""><div><div class="co" data-sync="co">PT. UNIVERSAL VALUTA PRIMA</div><div class="addr" data-sync="addr">Jl. Bypass Ngurah Rai No. 4X, Kuta, Bali · +6285-122-777-970</div></div><div class="doc-name"><b>Panduan Sistem POS</b><br>Skyline Exchange</div></header>
+  <div class="chap"><span class="no">Bab 11</span></div>
+  <h3 style="margin-top:0">Mencetak laporan keuangan (format LKU BI)</h3>
+  <div class="split" style="--cols:1.3fr 1fr">
+    <figure><img src="{{img:fin-reports}}" alt=""><figcaption><b>Gambar 11.2</b> Periode dan tombol laporan</figcaption></figure>
+    <div>
+      <ol class="steps">
+        <li>Pilih tanggal <b>dari</b>.</li>
+        <li>Pilih tanggal <b>sampai</b>, atau klik <span class="ui">Bulan ini</span>.</li>
+        <li><span class="ui">Kas Harian</span>: mutasi dan saldo kas.</li>
+        <li><span class="ui">Buku Bank</span>: mutasi rekening bank.</li>
+        <li><span class="ui">Laba / (Rugi)</span>: hasil usaha periode.</li>
+        <li><span class="ui">Neraca</span>: posisi aset, kewajiban, ekuitas.</li>
+      </ol>
+      <div class="note">Laporan terbuka di tab baru. Klik <b>Cetak / Simpan PDF</b> untuk mencetak atau menyimpan.</div>
+    </div>
+  </div>
+  <h3>Buku Bank</h3>
+  <figure><img src="{{img:rpt-bank}}" alt=""><figcaption><b>Gambar 11.3</b> Buku Bank: saldo awal, setoran, penarikan, bunga, dan biaya administrasi</figcaption></figure>
+  <p>Setoran kas ke bank menambah saldo bank dan mengurangi kas. Penarikan kebalikannya. Bunga dan biaya administrasi bank ikut tercatat di Laba / (Rugi).</p>
+  <div class="foot"><span>Panduan Sistem POS · Skyline Exchange</span><span class="pg"></span></div>
+</section>
+
+<section class="page" data-title="Laporan Kas Harian" data-chap="Bab 11">
+  <header class="kop"><img src="{{logo}}" alt=""><div><div class="co" data-sync="co">PT. UNIVERSAL VALUTA PRIMA</div><div class="addr" data-sync="addr">Jl. Bypass Ngurah Rai No. 4X, Kuta, Bali · +6285-122-777-970</div></div><div class="doc-name"><b>Panduan Sistem POS</b><br>Skyline Exchange</div></header>
+  <div class="chap"><span class="no">Bab 11</span></div>
+  <h3 style="margin-top:0">Kas Harian</h3>
+  <p>Mutasi kas Rupiah dengan kode akun LKU 100–950 dan saldo berjalan di setiap baris.</p>
+  <figure class="contain" style="--h:168mm"><img src="{{img:rpt-kas}}" alt=""><figcaption><b>Gambar 11.4</b> Laporan Kas Harian</figcaption></figure>
+  <table class="kv">
+    <tr><th style="width:24mm">Kode</th><th>Isi</th></tr>
+    <tr><td>100</td><td>Saldo awal kas periode.</td></tr>
+    <tr><td>401 / 501</td><td>Pembelian valas (kas keluar) dan penjualan valas (kas masuk).</td></tr>
+    <tr><td>601–609</td><td>Biaya operasional per kategori.</td></tr>
+    <tr><td>700–950</td><td>Piutang, hutang, pembelian aktiva, dan mutasi kas lainnya.</td></tr>
+  </table>
+  <div class="foot"><span>Panduan Sistem POS · Skyline Exchange</span><span class="pg"></span></div>
+</section>
+
+<section class="page" data-title="Laporan Laba / (Rugi)" data-chap="Bab 11">
+  <header class="kop"><img src="{{logo}}" alt=""><div><div class="co" data-sync="co">PT. UNIVERSAL VALUTA PRIMA</div><div class="addr" data-sync="addr">Jl. Bypass Ngurah Rai No. 4X, Kuta, Bali · +6285-122-777-970</div></div><div class="doc-name"><b>Panduan Sistem POS</b><br>Skyline Exchange</div></header>
+  <div class="chap"><span class="no">Bab 11</span></div>
+  <h3 style="margin-top:0">Laba / (Rugi)</h3>
+  <figure class="contain" style="--h:190mm"><img src="{{img:rpt-lr}}" alt=""><figcaption><b>Gambar 11.5</b> Laporan Laba / (Rugi) dengan tanda tangan direktur</figcaption></figure>
+  <div class="note"><b>Harga pokok</b> = saldo awal valas + pembelian − saldo akhir valas. <b>Laba bersih</b> = penjualan − harga pokok − beban operasional ± pendapatan/beban lain − pajak.</div>
+  <div class="foot"><span>Panduan Sistem POS · Skyline Exchange</span><span class="pg"></span></div>
+</section>
+
+<section class="page" data-title="Neraca" data-chap="Bab 11">
+  <header class="kop"><img src="{{logo}}" alt=""><div><div class="co" data-sync="co">PT. UNIVERSAL VALUTA PRIMA</div><div class="addr" data-sync="addr">Jl. Bypass Ngurah Rai No. 4X, Kuta, Bali · +6285-122-777-970</div></div><div class="doc-name"><b>Panduan Sistem POS</b><br>Skyline Exchange</div></header>
+  <div class="chap"><span class="no">Bab 11</span></div>
+  <h3 style="margin-top:0">Neraca</h3>
+  <figure><img src="{{img:rpt-neraca}}" alt=""><figcaption><b>Gambar 11.6</b> Neraca: jumlah aset sama dengan jumlah kewajiban dan ekuitas</figcaption></figure>
+  <ul class="ticks">
+    <li><b>Aktiva:</b> kas dan bank, stok valas (UKA), piutang, pajak dibayar di muka, aset tetap bersih.</li>
+    <li><b>Kewajiban:</b> hutang bank, hutang dagang, dan kewajiban lain.</li>
+    <li><b>Ekuitas:</b> modal disetor, laba ditahan, dan laba / (rugi) periode berjalan.</li>
+  </ul>
+  <div class="note">Jika saldo awal tidak seimbang, Neraca menampilkan baris <b>selisih</b> berwarna merah. Periksa lagi saldo awal keuangan (Bab 2.7).</div>
+  <div class="warn">Penyusutan aset dicatat manual setiap bulan sebagai <b>Biaya operasional → Penyusutan</b>. Catatan ini tidak mengurangi kas.</div>
+  <div class="foot"><span>Panduan Sistem POS · Skyline Exchange</span><span class="pg"></span></div>
+</section>
+
+<!-- ================= PENUTUP ================= -->
+<section class="page" data-title="Rutinitas harian dan bulanan">
+  <header class="kop"><img src="{{logo}}" alt=""><div><div class="co" data-sync="co">PT. UNIVERSAL VALUTA PRIMA</div><div class="addr" data-sync="addr">Jl. Bypass Ngurah Rai No. 4X, Kuta, Bali · +6285-122-777-970</div></div><div class="doc-name"><b>Panduan Sistem POS</b><br>Skyline Exchange</div></header>
+  <div class="chap"><span class="no">Penutup</span></div>
+  <h2>Rutinitas harian dan bulanan</h2>
+  <p class="lead">Ringkasan tugas rutin agar data transaksi dan laporan selalu lengkap.</p>
+  <div class="split" style="--cols:1fr 1fr">
+    <div>
+      <h3 style="margin-top:0">Setiap hari</h3>
+      <ol class="steps flow">
+        <li>Masuk dengan akun kasir masing-masing.</li>
+        <li>Perbarui kurs di <span class="ui">Papan Kurs</span> sebelum toko buka.</li>
+        <li>Isi identitas customer lengkap di setiap transaksi.</li>
+        <li>Lengkapi dokumen underlying jika muncul notifikasi threshold.</li>
+        <li>Catat biaya dan setoran bank hari itu di <span class="ui">Keuangan</span>.</li>
+        <li>Cek total harian di <span class="ui">Riwayat &amp; Laporan</span>, lalu keluar dari akun.</li>
+      </ol>
+    </div>
+    <div>
+      <h3 style="margin-top:0">Setiap akhir bulan</h3>
+      <ol class="steps flow">
+        <li>Isi kurs tengah BN untuk tanggal akhir bulan.</li>
+        <li>Catat penyusutan aset bulan itu.</li>
+        <li>Cetak Laporan Summary Valas untuk BI.</li>
+        <li>Cetak Kas Harian, Buku Bank, Laba/Rugi, dan Neraca.</li>
+        <li>Export PPATK bila diperlukan.</li>
+        <li>Unduh backup di <span class="ui">Pengaturan</span> → <span class="ui">Database &amp; Backup</span>.</li>
+      </ol>
+    </div>
+  </div>
+  <div class="note" style="margin-top:6mm">Pertanyaan atau kendala aplikasi: hubungi admin <b data-sync="co">PT. UNIVERSAL VALUTA PRIMA</b> di <b>+6285-122-777-970</b>.</div>
+  <div class="grow"></div>
+  <p style="text-align:center;color:var(--muted);font-size:9pt;margin-bottom:6mm">Terima kasih.</p>
+  <div class="foot"><span>Panduan Sistem POS · Skyline Exchange</span><span class="pg"></span></div>
+</section>
+
+</main>
+
+<input type="file" id="pick" accept="image/*" hidden data-ui>
+<script>
+(function () {
+  const doc = document.getElementById('doc');
+  const body = document.body;
+  let dirty = false, target = null;
+  const PAGEBAR = '<button type="button" data-a="up" title="Pindah ke atas">↑</button><button type="button" data-a="down" title="Pindah ke bawah">↓</button>'
+    + '<button type="button" data-a="photo" title="Tambah foto di halaman ini">+ Foto</button><button type="button" data-a="dup" title="Gandakan halaman">Gandakan</button>'
+    + '<button type="button" data-a="del" class="del" title="Hapus halaman">Hapus</button>';
+
+  function pages() { return [...doc.querySelectorAll('.page')]; }
+
+  function buildToc() {
+    const toc = document.getElementById('toc'); if (!toc) return;
+    const items = [];
+    pages().forEach((p, i) => {
+      if (!p.dataset.title) return;
+      const h = p.querySelector('h2');
+      if (!h) return;
+      const id = 'p' + (i + 1);
+      p.id = id;
+      items.push(`<a href="#${id}"><span class="c">${p.dataset.chap || ''}</span><span class="t">${h.textContent.trim()}</span><span class="p">${i + 1}</span></a>`);
+    });
+    toc.innerHTML = items.join('');
+  }
+
+  function checkOverflow() {
+    pages().forEach(p => {
+      const foot = p.querySelector('.foot');
+      const limit = foot ? foot.offsetTop - 4 : p.clientHeight;
+      let over = false;
+      for (const el of p.children) {
+        if (el.classList.contains('foot') || el.classList.contains('pagebar') || el.classList.contains('bg') || getComputedStyle(el).position === 'absolute') continue;
+        if (el.offsetTop + el.offsetHeight > limit) { over = true; break; }
+      }
+      p.classList.toggle('overflow', over);
+    });
+  }
+
+  function setEditing(on) {
+    body.classList.toggle('editing', on);
+    document.getElementById('t-edit').setAttribute('aria-pressed', on);
+    document.getElementById('t-edit').textContent = on ? 'Selesai edit' : 'Edit';
+    const sel = '.page h1,.page h2,.page h3,.page p,.page li,.page td,.page th,.page figcaption,.page .note,.page .warn,.page .danger,.page .desc,.page .tag,.page [data-sync],.page .doc-name,.page .foot span:first-child';
+    doc.querySelectorAll(sel).forEach(el => {
+      if (el.closest('[contenteditable="true"]') && !el.matches('[contenteditable]')) return;
+      if (on) el.setAttribute('contenteditable', 'true'); else el.removeAttribute('contenteditable');
+    });
+    pages().forEach(p => {
+      let bar = p.querySelector(':scope > .pagebar');
+      if (on && !bar) { bar = document.createElement('div'); bar.className = 'pagebar'; bar.innerHTML = PAGEBAR; p.prepend(bar); }
+      if (!on && bar) bar.remove();
+    });
+    if (on) checkOverflow(); else { pages().forEach(p => p.classList.remove('overflow')); buildToc(); }
+  }
+
+  document.getElementById('t-edit').addEventListener('click', () => setEditing(!body.classList.contains('editing')));
+  document.getElementById('t-print').addEventListener('click', () => { if (body.classList.contains('editing')) setEditing(false); buildToc(); window.print(); });
+  window.addEventListener('beforeprint', buildToc);
+
+  // keep letterhead text identical on every page
+  doc.addEventListener('input', e => {
+    dirty = true;
+    const s = e.target.closest('[data-sync]');
+    if (s) doc.querySelectorAll(`[data-sync="${s.dataset.sync}"]`).forEach(o => { if (o !== s) o.innerHTML = s.innerHTML; });
+    checkOverflow();
+  });
+
+  // replace / add photos
+  const pick = document.getElementById('pick');
+  doc.addEventListener('click', e => {
+    if (!body.classList.contains('editing')) return;
+    const img = e.target.closest('figure img, .cover .shot img');
+    if (img) { target = img; pick.click(); return; }
+    const b = e.target.closest('.pagebar button');
+    if (!b) return;
+    const p = b.closest('.page');
+    const a = b.dataset.a;
+    if (a === 'up' && p.previousElementSibling) p.parentNode.insertBefore(p, p.previousElementSibling);
+    if (a === 'down' && p.nextElementSibling) p.parentNode.insertBefore(p.nextElementSibling, p);
+    if (a === 'dup') { const c = p.cloneNode(true); c.removeAttribute('id'); p.after(c); }
+    if (a === 'del' && confirm('Hapus halaman ini?')) p.remove();
+    if (a === 'photo') {
+      const f = document.createElement('figure');
+      f.innerHTML = '<img alt=""><figcaption contenteditable="true">Keterangan foto</figcaption>';
+      const foot = p.querySelector('.foot');
+      p.insertBefore(f, foot);
+      target = f.querySelector('img'); pick.click();
+    }
+    dirty = true; buildToc(); checkOverflow();
+  });
+  pick.addEventListener('change', () => {
+    const file = pick.files[0]; if (!file || !target) return;
+    const r = new FileReader();
+    r.onload = () => { target.src = r.result; target.onload = checkOverflow; dirty = true; pick.value = ''; };
+    r.readAsDataURL(file);
+  });
+
+  // save a fresh copy of this file (photos are embedded inside it)
+  document.getElementById('t-save').addEventListener('click', () => {
+    const wasEditing = body.classList.contains('editing');
+    if (wasEditing) setEditing(false);
+    buildToc();
+    const html = '<!doctype html>\n' + document.documentElement.outerHTML;
+    if (wasEditing) setEditing(true);
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([html], { type: 'text/html' }));
+    a.download = 'Panduan-POS-Skyline.html';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    dirty = false;
+    document.getElementById('t-hint').textContent = 'Tersimpan ke folder Downloads. Buka file itu untuk melanjutkan edit.';
+  });
+  window.addEventListener('beforeunload', e => { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
+
+  buildToc();
+})();
+</script>
+</body>
+</html>
