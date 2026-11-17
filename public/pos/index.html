@@ -2014,6 +2014,10 @@
           <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
           <span id="lbl-subtab-compliance">Kepatuhan BI</span>
         </button>
+        <button type="button" id="subtab-btn-stock" class="set-tab" role="tab" aria-selected="false" aria-controls="subtab-panel-stock">
+          <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01M18 12h.01"/></svg>
+          <span>Stok Valas</span>
+        </button>
         <button type="button" id="subtab-btn-sheets" class="set-tab" role="tab" aria-selected="false" aria-controls="subtab-panel-sheets">
           <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>
           <span id="lbl-subtab-sheets">Google Sheets</span>
@@ -2530,6 +2534,56 @@
       </div>
 
       <!-- PANEL 5: Kepatuhan Bank Indonesia (KUPVA BB) -->
+      <!-- PANEL: Stok Valas (BI: Saldo Awal Valas + Kurs Tengah BN) -->
+      <div id="subtab-panel-stock" role="tabpanel" aria-labelledby="subtab-btn-stock" class="hidden set-panel bg-navy-800 border border-navy-700 rounded-xl">
+        <div class="set-section space-y-4">
+          <div>
+            <h2 class="pos-h text-slate-100">Saldo awal valas</h2>
+            <p class="set-desc max-w-prose">Isi sekali di awal pemakaian POS: stok uang kertas per mata uang dan nilai rupiahnya pada tanggal mulai. Laporan BI menghitung saldo dari tanggal ini; transaksi sebelum tanggal ini dianggap sudah termasuk di saldo awal.</p>
+          </div>
+          <div class="flex flex-wrap items-end gap-3">
+            <div>
+              <label for="opening-stock-date" class="pos-label">Tanggal mulai</label>
+              <input type="date" id="opening-stock-date" class="pos-input w-full bg-navy-900 border border-navy-600 rounded-lg text-slate-100 placeholder-slate-500 !w-48">
+            </div>
+            <span id="opening-stock-status" class="set-status">Belum diisi</span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-[13px]">
+              <thead class="text-slate-400 text-[12px] border-b border-navy-700">
+                <tr><th class="py-2 pr-3 text-left font-medium">Mata uang</th><th class="py-2 px-3 text-right font-medium">Jumlah valas</th><th class="py-2 px-3 text-right font-medium">Kurs rata-rata</th><th class="py-2 pl-3 text-right font-medium">Nilai rupiah</th></tr>
+              </thead>
+              <tbody id="opening-stock-body" class="divide-y divide-navy-700/50 num"></tbody>
+              <tfoot><tr class="border-t border-navy-700 font-semibold"><td class="py-2 pr-3">Total</td><td></td><td></td><td class="py-2 pl-3 text-right num" id="opening-stock-total">Rp 0</td></tr></tfoot>
+            </table>
+          </div>
+          <div class="flex justify-end"><button type="button" id="btn-save-opening-stock" class="set-btn set-btn--primary">Simpan saldo awal</button></div>
+        </div>
+
+        <div class="set-section space-y-4">
+          <div>
+            <h2 class="pos-h text-slate-100">Kurs tengah BN</h2>
+            <p class="set-desc max-w-prose">Kurs penutupan untuk menilai stok valas di saldo akhir Laporan BI. Jika tanggal ini belum diisi, terisi dari kurs tengah sebelumnya atau titik tengah kurs beli/jual di Papan Kurs.</p>
+          </div>
+          <div class="flex flex-wrap items-end gap-3">
+            <div>
+              <label for="middle-rate-date" class="pos-label">Tanggal</label>
+              <input type="date" id="middle-rate-date" class="pos-input w-full bg-navy-900 border border-navy-600 rounded-lg text-slate-100 placeholder-slate-500 !w-48">
+            </div>
+            <button type="button" id="btn-middle-from-board" class="set-btn set-btn--secondary set-btn--sm">Isi dari Papan Kurs</button>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-[13px]">
+              <thead class="text-slate-400 text-[12px] border-b border-navy-700">
+                <tr><th class="py-2 pr-3 text-left font-medium">Mata uang</th><th class="py-2 px-3 text-right font-medium">Kurs tengah</th><th class="py-2 pl-3 text-left font-medium">Sumber</th></tr>
+              </thead>
+              <tbody id="middle-rate-body" class="divide-y divide-navy-700/50 num"></tbody>
+            </table>
+          </div>
+          <div class="flex justify-end"><button type="button" id="btn-save-middle-rates" class="set-btn set-btn--primary">Simpan kurs tengah</button></div>
+        </div>
+      </div>
+
       <div id="subtab-panel-compliance" role="tabpanel" aria-labelledby="subtab-btn-compliance" class="hidden set-panel bg-navy-800 border border-navy-700 rounded-xl">
         <div class="set-section space-y-4">
           <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
@@ -2983,6 +3037,15 @@
       </section>
 
       <section class="space-y-2 pt-3 border-t border-navy-700">
+        <h4 class="text-sm font-semibold text-slate-100">Laporan valas BN</h4>
+        <p class="text-[12px] text-slate-400">Total valas dan rupiah per mata uang (by date: pilih satu hari di filter; by periode: pilih rentang).</p>
+        <div class="flex flex-wrap gap-2">
+          <button type="button" id="btn-volume-buy" class="set-btn set-btn--secondary">Pembelian Valas BN</button>
+          <button type="button" id="btn-volume-sell" class="set-btn set-btn--secondary">Penjualan Valas BN</button>
+        </div>
+      </section>
+
+      <section class="space-y-2 pt-3 border-t border-navy-700">
         <h4 class="text-sm font-semibold text-slate-100">Export PPATK (Excel)</h4>
         <p class="text-[12px] text-slate-400">Satu baris per valas, lengkap dengan tanggal lahir, kategori konsumen dan status PEP.</p>
         <div class="flex flex-wrap gap-2">
@@ -2997,11 +3060,11 @@
   <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col space-y-2 pointer-events-none"></div>
 
   <!-- Scripts -->
-  <script src="/pos/bluetooth-print.js?v=3.20"></script>
-  <script src="/pos/usb-print.js?v=3.20"></script>
-  <script src="/pos/serial-print.js?v=3.20"></script>
-  <script src="/pos/bridge-print.js?v=3.20"></script>
-  <script src="/pos/app.js?v=3.20"></script>
+  <script src="/pos/bluetooth-print.js?v=3.21"></script>
+  <script src="/pos/usb-print.js?v=3.21"></script>
+  <script src="/pos/serial-print.js?v=3.21"></script>
+  <script src="/pos/bridge-print.js?v=3.21"></script>
+  <script src="/pos/app.js?v=3.21"></script>
 
   <!-- Modal Tambah Data DTTOT -->
   <div id="modal-add-dttot" class="fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-3 hidden">

@@ -1050,50 +1050,83 @@ router.delete('/api/dttot/:id', requireAuth, requireAdmin, (req, res) => {
 // BI "Laporan Summary Valas [By Currency]": per currency (all note sizes together, e.g. USD + USD 20, 10, 5 = BN-USD)
 // opening balance, buy and sell volume in the period, closing balance at moving average cost (kurs tengah).
 // Opening stock comes only from transactions recorded before the period; there is no separate stock input.
+// Latest closing middle rate (Kurs Tengah BN) on or before a day (or strictly before); null when none was entered
+function middleRateOn(currency, day, inclusive = true) {
+  const row = db.prepare(`SELECT rate FROM middle_rates WHERE currency = ? AND day ${inclusive ? '<=' : '<'} ? ORDER BY day DESC LIMIT 1`).get(currency, day);
+  return row ? Number(row.rate) : null;
+}
+
+function openingStock() {
+  const date = getSetting('opening_stock_date') || '';
+  const rows = db.prepare('SELECT currency, qty, idr FROM opening_stock ORDER BY currency').all();
+  return { date, rows };
+}
+
 function buildBiSummary(start, end) {
+  // Opening stock (Saldo Awal Valas) starts the book on its date; transactions before that date are already in it
+  const opening = openingStock();
+  // a period that ends before the opening date is reported from the transactions alone
+  const useOpening = !!opening.date && opening.date <= end;
+  const from = useOpening ? opening.date : '0000-00-00';
   const lines = db.prepare(`
     SELECT t.type, ${STORE_DAY_SQL_T} AS day, ti.currency_code, ti.amount, ti.subtotal_idr
     FROM transactions t JOIN transaction_items ti ON ti.transaction_id = t.id
-    WHERE ${STORE_DAY_SQL_T} <= ?
+    WHERE ${STORE_DAY_SQL_T} BETWEEN ? AND ?
     ORDER BY t.created_at, t.id, ti.id
-  `).all(end);
+  `).all(from, end);
 
   const book = new Map();
+  const entry = cur => {
+    if (!book.has(cur)) book.set(cur, { qty: 0, cost: 0, open: null, buyQty: 0, buyIdr: 0, sellQty: 0, sellIdr: 0 });
+    return book.get(cur);
+  };
+  if (useOpening) {
+    for (const o of opening.rows) {
+      const e = entry(String(o.currency).toUpperCase());
+      e.qty += Number(o.qty) || 0;
+      e.cost += Number(o.idr) || 0;
+    }
+  }
   for (const l of lines) {
     const cur = String(l.currency_code || '').trim().slice(0, 3).toUpperCase();
     if (!cur) continue;
-    if (!book.has(cur)) book.set(cur, { qty: 0, cost: 0, open: null, buyQty: 0, buyIdr: 0, sellQty: 0, sellIdr: 0 });
-    const b = book.get(cur);
-    if (l.day >= start && !b.open) b.open = { qty: b.qty, cost: b.cost };
+    const e = entry(cur);
+    if (l.day >= start && !e.open) e.open = { qty: e.qty, cost: e.cost };
     const qty = Number(l.amount) || 0;
     const idr = Number(l.subtotal_idr) || 0;
     if (l.type === 'BELI') {
-      b.qty += qty;
-      b.cost += idr;
+      e.qty += qty;
+      e.cost += idr;
     } else {
       // stock leaves at the current average cost, not at the selling rate
-      const avg = b.qty > 0 ? b.cost / b.qty : 0;
-      b.qty -= qty;
-      b.cost = Math.abs(b.qty) < 1e-9 ? 0 : b.cost - qty * avg;
+      const avg = e.qty > 0 ? e.cost / e.qty : 0;
+      e.qty -= qty;
+      e.cost = Math.abs(e.qty) < 1e-9 ? 0 : e.cost - qty * avg;
     }
     if (l.day >= start) {
-      if (l.type === 'BELI') { b.buyQty += qty; b.buyIdr += idr; } else { b.sellQty += qty; b.sellIdr += idr; }
+      if (l.type === 'BELI') { e.buyQty += qty; e.buyIdr += idr; } else { e.sellQty += qty; e.sellIdr += idr; }
     }
   }
 
-  const rows = [...book.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([cur, b]) => {
-    const open = b.open || { qty: b.qty, cost: b.cost };
+  // Stock is valued at the Kurs Tengah BN when one was entered, otherwise at its average cost
+  const rows = [...book.entries()].sort(([x], [y]) => x.localeCompare(y)).map(([cur, e]) => {
+    const open = e.open || { qty: e.qty, cost: e.cost };
+    const openRate = middleRateOn(cur, start, false);
+    const closeRate = middleRateOn(cur, end);
     return {
       currency: `BN-${cur}`,
-      open_qty: open.qty, open_idr: open.cost,
-      buy_qty: b.buyQty, buy_idr: b.buyIdr,
-      sell_qty: b.sellQty, sell_idr: b.sellIdr,
-      close_qty: b.qty, close_rate: b.qty > 0 ? b.cost / b.qty : 0, close_idr: b.cost
+      open_qty: open.qty, open_idr: openRate != null ? open.qty * openRate : open.cost,
+      buy_qty: e.buyQty, buy_idr: e.buyIdr,
+      sell_qty: e.sellQty, sell_idr: e.sellIdr,
+      close_qty: e.qty,
+      close_rate: closeRate != null ? closeRate : (e.qty > 0 ? e.cost / e.qty : 0),
+      close_idr: closeRate != null ? e.qty * closeRate : e.cost,
+      rate_source: closeRate != null ? 'KURS_TENGAH' : 'RATA_RATA'
     };
   }).filter(r => r.open_qty || r.buy_qty || r.sell_qty || r.close_qty);
 
-  const sum = key => rows.reduce((a, r) => a + r[key], 0);
-  return { rows, totals: { open_idr: sum('open_idr'), buy_idr: sum('buy_idr'), sell_idr: sum('sell_idr'), close_idr: sum('close_idr') } };
+  const sum = key => rows.reduce((acc, r) => acc + r[key], 0);
+  return { rows, opening_date: useOpening ? opening.date : '', totals: { open_idr: sum('open_idr'), buy_idr: sum('buy_idr'), sell_idr: sum('sell_idr'), close_idr: sum('close_idr') } };
 }
 
 // Report period from ?startDate&endDate, ?date or ?all=1 (first transaction day to today), in store days
@@ -1255,6 +1288,118 @@ router.get('/api/reports/nationality', requireAuth, (req, res) => {
 });
 
 const ddMmmYy = iso => { const [y, m, d] = String(iso || '').split('-'); return y ? `${d}-${SHEET_MONTHS[Number(m) - 1]}-${y.slice(2)}` : ''; };
+
+// ==================== BI PHASE 2: OPENING STOCK, KURS TENGAH, VOLUME REPORTS ====================
+// Base currencies of the rate board (USD, USD 20, 10, 5 and USD 2, 1 are all USD), in board order
+function baseCurrencies() {
+  const rank = code => { const i = db.RATE_ORDER.indexOf(code); return i < 0 ? db.RATE_ORDER.length : i; };
+  const rates = db.prepare('SELECT code, buy_rate, sell_rate FROM rates').all()
+    .sort((x, y) => rank(x.code) - rank(y.code) || x.code.localeCompare(y.code));
+  const out = new Map();
+  for (const r of rates) {
+    const cur = String(r.code).trim().slice(0, 3).toUpperCase();
+    // the plain code (e.g. "USD") is the main note size; its buy/sell midpoint is the suggested middle rate
+    if (!out.has(cur) || r.code.trim().toUpperCase() === cur) out.set(cur, (Number(r.buy_rate) + Number(r.sell_rate)) / 2);
+  }
+  return [...out.entries()].map(([currency, suggested]) => ({ currency, suggested }));
+}
+
+router.get('/api/opening-stock', requireAuth, (req, res) => {
+  try {
+    const { date, rows } = openingStock();
+    const saved = new Map(rows.map(r => [r.currency, r]));
+    const list = baseCurrencies().map(c => ({ currency: c.currency, qty: saved.get(c.currency)?.qty || 0, idr: saved.get(c.currency)?.idr || 0 }));
+    for (const r of rows) if (!list.some(x => x.currency === r.currency)) list.push(r);
+    res.json({ success: true, data: { date, rows: list } });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+router.post('/api/opening-stock', requireAuth, requireAdmin, (req, res) => {
+  try {
+    const { date, rows } = req.body || {};
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(date || ''))) return res.status(400).json({ success: false, message: 'Tanggal saldo awal wajib diisi.' });
+    if (!Array.isArray(rows)) return res.status(400).json({ success: false, message: 'Data saldo awal tidak valid.' });
+    const clean = rows.map(r => ({ currency: String(r.currency || '').trim().slice(0, 3).toUpperCase(), qty: Number(r.qty) || 0, idr: Number(r.idr) || 0 }))
+      .filter(r => /^[A-Z]{3}$/.test(r.currency) && (r.qty || r.idr));
+    if (clean.some(r => r.qty < 0 || r.idr < 0)) return res.status(400).json({ success: false, message: 'Saldo awal tidak boleh negatif.' });
+    db.exec('BEGIN');
+    try {
+      db.prepare('DELETE FROM opening_stock').run();
+      const ins = db.prepare('INSERT INTO opening_stock (currency, qty, idr) VALUES (?, ?, ?)');
+      for (const r of clean) ins.run(r.currency, r.qty, r.idr);
+      db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run('opening_stock_date', date);
+      db.exec('COMMIT');
+    } catch (e) {
+      db.exec('ROLLBACK');
+      throw e;
+    }
+    if (db.backupSettingsToFile) db.backupSettingsToFile();
+    res.json({ success: true, saved: clean.length });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// Middle rates for a day: the saved rate for that day, else the latest earlier one, else the board midpoint
+router.get('/api/middle-rates', requireAuth, (req, res) => {
+  try {
+    const day = /^\d{4}-\d{2}-\d{2}$/.test(String(req.query.day || '')) ? req.query.day : storeDate();
+    const exact = new Map(db.prepare('SELECT currency, rate FROM middle_rates WHERE day = ?').all(day).map(r => [r.currency, Number(r.rate)]));
+    const rows = baseCurrencies().map(c => {
+      if (exact.has(c.currency)) return { currency: c.currency, rate: exact.get(c.currency), source: 'SAVED' };
+      const prev = middleRateOn(c.currency, day);
+      return prev != null ? { currency: c.currency, rate: prev, source: 'PREVIOUS' } : { currency: c.currency, rate: Math.round(c.suggested * 100) / 100, source: 'BOARD' };
+    });
+    res.json({ success: true, data: { day, rows } });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+router.post('/api/middle-rates', requireAuth, requireAdmin, (req, res) => {
+  try {
+    const { day, rows } = req.body || {};
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(day || ''))) return res.status(400).json({ success: false, message: 'Tanggal kurs tengah wajib diisi.' });
+    if (!Array.isArray(rows)) return res.status(400).json({ success: false, message: 'Data kurs tengah tidak valid.' });
+    const clean = rows.map(r => ({ currency: String(r.currency || '').trim().slice(0, 3).toUpperCase(), rate: Number(r.rate) }))
+      .filter(r => /^[A-Z]{3}$/.test(r.currency) && r.rate > 0);
+    const ins = db.prepare('INSERT OR REPLACE INTO middle_rates (day, currency, rate) VALUES (?, ?, ?)');
+    db.exec('BEGIN');
+    try {
+      for (const r of clean) ins.run(day, r.currency, r.rate);
+      db.exec('COMMIT');
+    } catch (e) {
+      db.exec('ROLLBACK');
+      throw e;
+    }
+    res.json({ success: true, saved: clean.length });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// Pembelian / Penjualan Valas BN by date or period: valas and rupiah per currency
+router.get('/api/reports/volume', requireAuth, (req, res) => {
+  try {
+    const type = String(req.query.type || 'BELI').toUpperCase() === 'JUAL' ? 'JUAL' : 'BELI';
+    const { start, end } = reportPeriod(req.query);
+    const byCur = new Map();
+    for (const l of reportLines(start, end, 'AND t.type = ?', [type])) {
+      const cur = bnCode(l.currency_code);
+      const e = byCur.get(cur) || { currency: cur, qty: 0, idr: 0 };
+      e.qty += Number(l.amount) || 0;
+      e.idr += Number(l.subtotal_idr) || 0;
+      byCur.set(cur, e);
+    }
+    const rows = [...byCur.values()].sort((x, y) => y.idr - x.idr);
+    const company = getSetting('store_company') || getSetting('store_name') || '';
+    res.json({ success: true, data: { type, company, startDate: start, endDate: end, rows, total_idr: rows.reduce((acc, r) => acc + r.idr, 0) } });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
 
 // One-sheet Excel file: yellow bold header like the BI program exports, numbers right aligned
 async function sendSimpleXlsx(res, filename, sheetName, columns, rows) {

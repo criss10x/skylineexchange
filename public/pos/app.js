@@ -2925,6 +2925,133 @@ async function showNationalityReport() {
   }
 }
 
+// ==================== BI PHASE 2: STOK VALAS + VOLUME REPORTS ====================
+const parseNum = v => {
+  const t = String(v || '').trim().replace(/\./g, '').replace(',', '.');
+  return t === '' ? 0 : Number(t) || 0;
+};
+const fmtInput = (v, dec = 2) => Number(v || 0) ? Number(v).toLocaleString('id-ID', { maximumFractionDigits: dec }) : '';
+const isAdminUser = () => state.user && state.user.role === 'ADMIN';
+
+function recalcOpeningStock() {
+  let total = 0;
+  document.querySelectorAll('#opening-stock-body tr').forEach(tr => {
+    const qty = parseNum(tr.querySelector('.os-qty').value);
+    const rate = parseNum(tr.querySelector('.os-rate').value);
+    const idr = qty * rate;
+    tr.querySelector('.os-idr').textContent = idr ? 'Rp ' + idr.toLocaleString('id-ID', { maximumFractionDigits: 0 }) : '-';
+    total += idr;
+  });
+  document.getElementById('opening-stock-total').textContent = 'Rp ' + total.toLocaleString('id-ID', { maximumFractionDigits: 0 });
+}
+
+async function loadOpeningStock() {
+  try {
+    const data = await (await authFetch('/api/opening-stock')).json();
+    if (!data.success) throw new Error(data.message);
+    const { date, rows } = data.data;
+    const dis = isAdminUser() ? '' : 'disabled';
+    document.getElementById('opening-stock-date').value = date || storeToday();
+    document.getElementById('opening-stock-date').disabled = !isAdminUser();
+    const status = document.getElementById('opening-stock-status');
+    status.textContent = date ? `Berlaku mulai ${fmtDmy(date)}` : 'Belum diisi';
+    status.className = 'set-status ' + (date ? 'set-status--ok' : 'set-status--warn');
+    document.getElementById('opening-stock-body').innerHTML = rows.map(r => `<tr data-cur="${escapeHtml(r.currency)}">
+      <td class="py-1.5 pr-3 font-semibold text-slate-100">BN-${escapeHtml(r.currency)}</td>
+      <td class="py-1.5 px-3"><input type="text" inputmode="decimal" class="os-qty ${'pos-input w-full bg-navy-900 border border-navy-600 rounded-lg text-slate-100 placeholder-slate-500'} text-right !py-1.5" value="${fmtInput(r.qty)}" ${dis} aria-label="Jumlah valas ${escapeHtml(r.currency)}"></td>
+      <td class="py-1.5 px-3"><input type="text" inputmode="decimal" class="os-rate ${'pos-input w-full bg-navy-900 border border-navy-600 rounded-lg text-slate-100 placeholder-slate-500'} text-right !py-1.5" value="${r.qty ? fmtInput(r.idr / r.qty, 4) : ''}" ${dis} aria-label="Kurs ${escapeHtml(r.currency)}"></td>
+      <td class="py-1.5 pl-3 text-right os-idr">-</td></tr>`).join('');
+    document.querySelectorAll('#opening-stock-body input').forEach(i => i.addEventListener('input', recalcOpeningStock));
+    document.getElementById('btn-save-opening-stock').disabled = !isAdminUser();
+    recalcOpeningStock();
+  } catch (err) {
+    showToast(`Saldo awal: ${err.message}`, 'error');
+  }
+}
+
+async function saveOpeningStock() {
+  const date = document.getElementById('opening-stock-date').value;
+  const rows = [...document.querySelectorAll('#opening-stock-body tr')].map(tr => {
+    const qty = parseNum(tr.querySelector('.os-qty').value);
+    return { currency: tr.dataset.cur, qty, idr: qty * parseNum(tr.querySelector('.os-rate').value) };
+  });
+  if (!confirm(`Simpan saldo awal valas per ${fmtDmy(date)}? Laporan BI akan menghitung stok mulai tanggal ini.`)) return;
+  try {
+    const data = await (await authFetch('/api/opening-stock', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ date, rows }) })).json();
+    if (!data.success) throw new Error(data.message);
+    showToast(`Saldo awal disimpan (${data.saved} mata uang)`, 'success');
+    loadOpeningStock();
+  } catch (err) {
+    showToast(`Gagal menyimpan saldo awal: ${err.message}`, 'error');
+  }
+}
+
+const MIDDLE_SOURCE = { SAVED: 'Tersimpan', PREVIOUS: 'Kurs tengah sebelumnya', BOARD: 'Papan Kurs (tengah beli/jual)' };
+async function loadMiddleRates(fromBoard = false) {
+  const dateEl = document.getElementById('middle-rate-date');
+  if (!dateEl.value) dateEl.value = storeToday();
+  dateEl.disabled = !isAdminUser();
+  try {
+    const data = await (await authFetch(`/api/middle-rates?day=${encodeURIComponent(dateEl.value)}`)).json();
+    if (!data.success) throw new Error(data.message);
+    const board = fromBoard ? new Map(state.rates.filter(r => r.code.trim().length === 3).map(r => [r.code.trim().toUpperCase(), (r.buy_rate + r.sell_rate) / 2])) : null;
+    const dis = isAdminUser() ? '' : 'disabled';
+    document.getElementById('middle-rate-body').innerHTML = data.data.rows.map(r => {
+      const rate = board && board.has(r.currency) ? board.get(r.currency) : r.rate;
+      const src = board && board.has(r.currency) ? 'BOARD' : r.source;
+      return `<tr data-cur="${escapeHtml(r.currency)}"><td class="py-1.5 pr-3 font-semibold text-slate-100">BN-${escapeHtml(r.currency)}</td>
+        <td class="py-1.5 px-3"><input type="text" inputmode="decimal" class="mr-rate ${'pos-input w-full bg-navy-900 border border-navy-600 rounded-lg text-slate-100 placeholder-slate-500'} text-right !py-1.5 !w-40 ml-auto block" value="${fmtInput(rate, 4)}" ${dis} aria-label="Kurs tengah ${escapeHtml(r.currency)}"></td>
+        <td class="py-1.5 pl-3 text-[12px] ${src === 'SAVED' ? 'text-emerald-400' : 'text-slate-400'}">${MIDDLE_SOURCE[src] || src}</td></tr>`;
+    }).join('');
+    document.getElementById('btn-save-middle-rates').disabled = !isAdminUser();
+    document.getElementById('btn-middle-from-board').disabled = !isAdminUser();
+  } catch (err) {
+    showToast(`Kurs tengah: ${err.message}`, 'error');
+  }
+}
+
+async function saveMiddleRates() {
+  const day = document.getElementById('middle-rate-date').value;
+  const rows = [...document.querySelectorAll('#middle-rate-body tr')].map(tr => ({ currency: tr.dataset.cur, rate: parseNum(tr.querySelector('.mr-rate').value) }));
+  try {
+    const data = await (await authFetch('/api/middle-rates', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ day, rows }) })).json();
+    if (!data.success) throw new Error(data.message);
+    showToast(`Kurs tengah ${fmtDmy(day)} disimpan (${data.saved} mata uang)`, 'success');
+    loadMiddleRates();
+  } catch (err) {
+    showToast(`Gagal menyimpan kurs tengah: ${err.message}`, 'error');
+  }
+}
+
+async function showVolumeReport(type) {
+  const { qs } = reportPeriodQuery();
+  try {
+    const data = await (await authFetch(`/api/reports/volume?type=${type}&${qs}`)).json();
+    if (!data.success) throw new Error(data.message);
+    const r = data.data;
+    const title = type === 'BELI' ? 'PEMBELIAN VALAS BANK NOTE / BN' : 'PENJUALAN VALAS BANK NOTE / BN';
+    const rows = r.rows.map(x => `<tr><td style="text-align:center">${x.currency}</td><td>${fmtQty(x.qty)}</td><td>${fmtIdr2(x.idr)}</td></tr>`).join('')
+      || '<tr><td colspan="3" style="text-align:center">Tidak ada transaksi pada periode ini.</td></tr>';
+    openReportWindow(`${type === 'BELI' ? 'Pembelian' : 'Penjualan'}_Valas_${r.startDate}_${r.endDate}`, `
+      <style>table.vol{border-collapse:collapse;margin-top:10px;min-width:520px}table.vol th,table.vol td{border:1px solid #000;padding:5px 10px;text-align:right}table.vol th{text-align:center;font-weight:normal}</style>
+      <div class="company">${escapeHtml(r.company)}</div>
+      <p style="margin:14px 0 2px">PERIODE : ${fmtDmy(r.startDate)} S/D ${fmtDmy(r.endDate)}</p><p style="margin:0">${title}</p>
+      <table class="vol"><thead><tr><th rowspan="2" style="text-align:left">JENIS VALUTA</th><th colspan="2">TRANSAKSI DALAM</th></tr><tr><th>VALUTA</th><th>RUPIAH</th></tr></thead>
+      <tbody>${rows}</tbody><tfoot><tr><td style="text-align:center;font-weight:bold">TOTAL</td><td></td><td style="font-weight:bold">${fmtIdr2(r.total_idr)}</td></tr></tfoot></table>`);
+  } catch (err) {
+    showToast(`Gagal membuat laporan: ${err.message}`, 'error');
+  }
+}
+
+function initPhase2Stock() {
+  document.getElementById('btn-save-opening-stock')?.addEventListener('click', saveOpeningStock);
+  document.getElementById('middle-rate-date')?.addEventListener('change', () => loadMiddleRates());
+  document.getElementById('btn-middle-from-board')?.addEventListener('click', () => loadMiddleRates(true));
+  document.getElementById('btn-save-middle-rates')?.addEventListener('click', saveMiddleRates);
+  document.getElementById('btn-volume-buy')?.addEventListener('click', () => showVolumeReport('BELI'));
+  document.getElementById('btn-volume-sell')?.addEventListener('click', () => showVolumeReport('JUAL'));
+}
+
 function initPhase1Compliance() {
   const custId = document.getElementById('cust-id');
   custId?.addEventListener('blur', lookupCustomerById);
@@ -3789,6 +3916,8 @@ function switchSubtab(subtabName) {
   const panelUsers = document.getElementById('subtab-panel-users');
   const panelDatabase = document.getElementById('subtab-panel-database');
   const panelCompliance = document.getElementById('subtab-panel-compliance');
+  const panelStock = document.getElementById('subtab-panel-stock');
+  const btnStock = document.getElementById('subtab-btn-stock');
   const btnSheets = document.getElementById('subtab-btn-sheets');
   const btnStore = document.getElementById('subtab-btn-store');
   const btnUsers = document.getElementById('subtab-btn-users');
@@ -3800,9 +3929,10 @@ function switchSubtab(subtabName) {
   if (panelUsers) panelUsers.classList.add('hidden');
   if (panelDatabase) panelDatabase.classList.add('hidden');
   if (panelCompliance) panelCompliance.classList.add('hidden');
+  if (panelStock) panelStock.classList.add('hidden');
 
   // Active look comes from .set-tab[aria-selected="true"] in index.html
-  [btnSheets, btnStore, btnUsers, btnDatabase, btnCompliance].forEach(b => b?.setAttribute('aria-selected', 'false'));
+  [btnSheets, btnStore, btnUsers, btnDatabase, btnCompliance, btnStock].forEach(b => b?.setAttribute('aria-selected', 'false'));
 
   if (subtabName === 'sheets') {
     if (panelSheets) panelSheets.classList.remove('hidden');
@@ -3818,6 +3948,11 @@ function switchSubtab(subtabName) {
     if (panelDatabase) panelDatabase.classList.remove('hidden');
     btnDatabase?.setAttribute('aria-selected', 'true');
     loadDatabaseInfo();
+  } else if (subtabName === 'stock') {
+    if (panelStock) panelStock.classList.remove('hidden');
+    btnStock?.setAttribute('aria-selected', 'true');
+    loadOpeningStock();
+    loadMiddleRates();
   } else if (subtabName === 'compliance') {
     if (panelCompliance) panelCompliance.classList.remove('hidden');
     btnCompliance?.setAttribute('aria-selected', 'true');
@@ -4909,6 +5044,7 @@ function initEventListeners() {
   document.getElementById('subtab-btn-users')?.addEventListener('click', () => switchSubtab('users'));
   document.getElementById('subtab-btn-database')?.addEventListener('click', () => switchSubtab('database'));
   document.getElementById('subtab-btn-compliance')?.addEventListener('click', () => switchSubtab('compliance'));
+  document.getElementById('subtab-btn-stock')?.addEventListener('click', () => switchSubtab('stock'));
 
   // DTTOT Screening input in Kasir
   document.getElementById('cust-name')?.addEventListener('input', (e) => {
@@ -5450,6 +5586,8 @@ async function exportBiReport() {
       </tr>
     </tfoot>
   </table>
+  ${r.rows.some(x => x.rate_source === 'RATA_RATA') ? '<p style="font-size:10px;margin-top:10px">* Kurs tengah belum diisi untuk sebagian mata uang; saldo dinilai dengan kurs rata-rata pembelian (Pengaturan &gt; Stok Valas).</p>' : ''}
+  ${r.opening_date ? `<p style="font-size:10px;margin:2px 0 0">Saldo awal valas berlaku mulai ${dmy(r.opening_date)}.</p>` : ''}
   <div class="foot"><span>Tgl Cetak : ${printed}</span><span>Page 1 of 1</span><span></span></div>
 </body>
 </html>`);
@@ -6182,6 +6320,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initSerialUI();
   initBridgeUI();
   initPhase1Compliance();
+  initPhase2Stock();
   ['underlying-doc-type', 'underlying-doc-no'].forEach(id => {
     const el = document.getElementById(id);
     if (el) { el.addEventListener('input', updateUnderlyingStatus); el.addEventListener('change', updateUnderlyingStatus); }
