@@ -1766,6 +1766,14 @@ function updateItemRateInput() {
   }
 }
 
+// Currency code -> flagcdn country code. Unknown codes (or offline) keep the text tag.
+const CURRENCY_FLAGS = {
+  USD: 'us', AUD: 'au', EUR: 'eu', GBP: 'gb', CHF: 'ch', JPY: 'jp', SGD: 'sg', CAD: 'ca',
+  MYR: 'my', NZD: 'nz', HKD: 'hk', CNY: 'cn', BND: 'bn', SAR: 'sa', AED: 'ae', THB: 'th',
+  PHP: 'ph', KRW: 'kr', INR: 'in', NTD: 'tw', TWD: 'tw', IDR: 'id', SEK: 'se', NOK: 'no',
+  DKK: 'dk', QAR: 'qa', KWD: 'kw', VND: 'vn', RUB: 'ru', ZAR: 'za', TRY: 'tr', BHD: 'bh', OMR: 'om',
+};
+
 function renderRatesTable() {
   const tbody = document.getElementById('rates-table-body');
   if (!tbody) return;
@@ -1780,7 +1788,9 @@ function renderRatesTable() {
     tr.className = 'hover:bg-navy-700/40 transition-colors';
     tr.innerHTML = `
       <td class="py-3 px-4 font-bold text-white flex items-center gap-2">
-        <span class="w-7 h-7 rounded bg-navy-700 border border-navy-600 flex items-center justify-center text-xs font-mono text-brand">${tag}</span>
+        <span class="relative w-9 h-6 shrink-0 rounded overflow-hidden bg-navy-700 border border-navy-600 flex items-center justify-center text-[10px] font-mono text-brand">${tag}${CURRENCY_FLAGS[tag]
+          ? `<img src="https://flagcdn.com/w40/${CURRENCY_FLAGS[tag]}.png" srcset="https://flagcdn.com/w80/${CURRENCY_FLAGS[tag]}.png 2x" alt="" loading="lazy" class="absolute inset-0 w-full h-full object-cover" onerror="this.remove()">`
+          : ''}</span>
         <div>
           <div class="flex items-center gap-1.5">
             <span>${r.code}</span>
