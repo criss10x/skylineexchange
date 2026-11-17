@@ -661,6 +661,7 @@ router.post('/api/transactions', requireAuth, (req, res) => {
     );
 
     const txId = result.lastInsertRowid;
+    db.setCustomerExtras(txId, req.body);
     const insertItem = db.prepare(`
       INSERT INTO transaction_items (transaction_id, currency_code, amount, rate, subtotal_idr)
       VALUES (?, ?, ?, ?, ?)
@@ -841,6 +842,7 @@ router.post('/api/sync', requireAuth, (req, res) => {
         clientTxId
       );
       const newId = result.lastInsertRowid;
+      db.setCustomerExtras(newId, tx);
       if (Array.isArray(tx.items)) {
         for (const item of tx.items) {
           insertItem.run(newId, item.currency_code, Number(item.amount), Number(item.rate), Number(item.subtotal_idr));
@@ -1094,19 +1096,228 @@ function buildBiSummary(start, end) {
   return { rows, totals: { open_idr: sum('open_idr'), buy_idr: sum('buy_idr'), sell_idr: sum('sell_idr'), close_idr: sum('close_idr') } };
 }
 
+// Report period from ?startDate&endDate, ?date or ?all=1 (first transaction day to today), in store days
+function reportPeriod(query) {
+  const { startDate, endDate, date, all } = query;
+  let start = startDate || date || storeDate();
+  let end = endDate || startDate || date || storeDate();
+  if (all === '1' || all === 'true') {
+    const first = db.prepare(`SELECT MIN(${STORE_DAY_SQL}) AS d FROM transactions`).get().d;
+    start = first || storeDate();
+    end = storeDate();
+  }
+  if (start > end) [start, end] = [end, start];
+  return { start, end };
+}
+
 router.get('/api/reports/bi-summary', requireAuth, (req, res) => {
   try {
-    const { startDate, endDate, date, all } = req.query;
-    let start = startDate || date || storeDate();
-    let end = endDate || startDate || date || storeDate();
-    if (all === '1' || all === 'true') {
-      const first = db.prepare(`SELECT MIN(${STORE_DAY_SQL}) AS d FROM transactions`).get().d;
-      start = first || storeDate();
-      end = storeDate();
-    }
-    if (start > end) [start, end] = [end, start];
+    const { start, end } = reportPeriod(req.query);
     const company = (db.prepare("SELECT value FROM settings WHERE key = 'store_company'").get() || {}).value || '';
     res.json({ success: true, data: { company, startDate: start, endDate: end, ...buildBiSummary(start, end) } });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ==================== CUSTOMERS & BI THRESHOLD / PPATK REPORTS ====================
+const CUSTOMER_FIELDS = `customer_id_no, customer_name, customer_phone, customer_npwp, customer_nationality, customer_job,
+  customer_gender, customer_address, customer_birth_date, customer_birth_place, customer_category, is_pep, pep_institution`;
+
+function thresholdIdr() {
+  const v = Number(getSetting('threshold_idr'));
+  return v > 0 ? v : 180000000;
+}
+
+// Returning customers by ID number or name, newest data per ID (for the "Cari" lookup)
+router.get('/api/customers', requireAuth, (req, res) => {
+  try {
+    const q = String(req.query.q || '').trim();
+    if (!q) return res.json({ success: true, data: [] });
+    const like = `%${q}%`;
+    const rows = db.prepare(`
+      SELECT ${CUSTOMER_FIELDS}, created_at AS last_seen FROM transactions
+      WHERE id IN (
+        SELECT MAX(id) FROM transactions
+        WHERE customer_id_no <> '' AND (customer_id_no LIKE ? OR customer_name LIKE ?)
+        GROUP BY customer_id_no
+      )
+      ORDER BY id DESC LIMIT 20
+    `).all(like, like);
+    res.json({ success: true, data: rows });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+router.get('/api/customers/:idNo', requireAuth, (req, res) => {
+  try {
+    const row = db.prepare(`SELECT ${CUSTOMER_FIELDS} FROM transactions WHERE customer_id_no = ? ORDER BY id DESC LIMIT 1`)
+      .get(String(req.params.idNo || '').trim());
+    res.json({ success: true, data: row || null });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// Item lines in a period, one row per currency line, oldest first
+function reportLines(start, end, where = '', params = []) {
+  return db.prepare(`
+    SELECT t.id, ${STORE_DAY_SQL_T} AS day, t.receipt_no, t.type, t.teller_name,
+      t.customer_id_no, t.customer_name, t.customer_phone, t.customer_npwp, t.customer_nationality,
+      t.customer_job, t.customer_gender, t.customer_address, t.customer_birth_date, t.customer_birth_place,
+      t.customer_category, t.is_pep,
+      ti.currency_code, ti.amount, ti.rate, ti.subtotal_idr
+    FROM transactions t JOIN transaction_items ti ON ti.transaction_id = t.id
+    WHERE ${STORE_DAY_SQL_T} BETWEEN ? AND ? ${where}
+    ORDER BY t.created_at, t.id, ti.id
+  `).all(start, end, ...params);
+}
+
+const bnCode = code => `BN-${String(code || '').trim().slice(0, 3).toUpperCase()}`;
+
+// Threshold by customer: all transactions of one ID in the period, buy and sell totals against the threshold
+router.get('/api/reports/customer', requireAuth, (req, res) => {
+  try {
+    const idNo = String(req.query.id_no || '').trim();
+    if (!idNo) return res.status(400).json({ success: false, message: 'No. ID customer wajib diisi.' });
+    const { start, end } = reportPeriod(req.query);
+    const lines = reportLines(start, end, 'AND t.customer_id_no = ?', [idNo]);
+    const rows = lines.map(l => ({
+      day: l.day, receipt_no: l.receipt_no, currency: bnCode(l.currency_code),
+      buy_qty: l.type === 'BELI' ? l.amount : 0, buy_idr: l.type === 'BELI' ? l.subtotal_idr : 0,
+      sell_qty: l.type === 'JUAL' ? l.amount : 0, sell_idr: l.type === 'JUAL' ? l.subtotal_idr : 0
+    }));
+    const byCurrency = {};
+    for (const r of rows) {
+      byCurrency[r.currency] = byCurrency[r.currency] || { buy_idr: 0, sell_idr: 0 };
+      byCurrency[r.currency].buy_idr += r.buy_idr;
+      byCurrency[r.currency].sell_idr += r.sell_idr;
+    }
+    const buy = rows.reduce((a, r) => a + r.buy_idr, 0);
+    const sell = rows.reduce((a, r) => a + r.sell_idr, 0);
+    const threshold = thresholdIdr();
+    const customer = db.prepare(`SELECT ${CUSTOMER_FIELDS} FROM transactions WHERE customer_id_no = ? ORDER BY id DESC LIMIT 1`).get(idNo) || null;
+    res.json({
+      success: true,
+      data: {
+        startDate: start, endDate: end, customer, rows, by_currency: byCurrency,
+        totals: { buy_idr: buy, sell_idr: sell }, threshold,
+        exceeded_buy: buy >= threshold, exceeded_sell: sell >= threshold
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+router.get('/api/reports/nationalities', requireAuth, (req, res) => {
+  try {
+    const rows = db.prepare("SELECT DISTINCT UPPER(TRIM(customer_nationality)) AS n FROM transactions WHERE TRIM(customer_nationality) <> '' ORDER BY n").all();
+    res.json({ success: true, data: rows.map(r => r.n) });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// Transactions of customers from one country, grouped by customer
+function nationalityReport(query) {
+  const nat = String(query.nationality || '').trim().toUpperCase();
+  const { start, end } = reportPeriod(query);
+  const lines = reportLines(start, end, 'AND UPPER(TRIM(t.customer_nationality)) = ?', [nat]);
+  const groups = new Map();
+  for (const l of lines) {
+    const key = l.customer_id_no || l.customer_name;
+    if (!groups.has(key)) groups.set(key, { id_no: l.customer_id_no, name: l.customer_name, rows: [], buy_idr: 0, sell_idr: 0 });
+    const g = groups.get(key);
+    const isBuy = l.type === 'BELI';
+    g.rows.push({
+      day: l.day, receipt_no: l.receipt_no, currency: bnCode(l.currency_code),
+      buy_qty: isBuy ? l.amount : 0, buy_idr: isBuy ? l.subtotal_idr : 0,
+      sell_qty: isBuy ? 0 : l.amount, sell_idr: isBuy ? 0 : l.subtotal_idr
+    });
+    if (isBuy) g.buy_idr += l.subtotal_idr; else g.sell_idr += l.subtotal_idr;
+  }
+  const customers = [...groups.values()];
+  return {
+    nationality: nat, startDate: start, endDate: end, customers,
+    totals: { buy_idr: customers.reduce((a, c) => a + c.buy_idr, 0), sell_idr: customers.reduce((a, c) => a + c.sell_idr, 0) }
+  };
+}
+
+router.get('/api/reports/nationality', requireAuth, (req, res) => {
+  try {
+    if (!String(req.query.nationality || '').trim()) return res.status(400).json({ success: false, message: 'Pilih kewarganegaraan.' });
+    res.json({ success: true, data: nationalityReport(req.query) });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+const ddMmmYy = iso => { const [y, m, d] = String(iso || '').split('-'); return y ? `${d}-${SHEET_MONTHS[Number(m) - 1]}-${y.slice(2)}` : ''; };
+
+// One-sheet Excel file: yellow bold header like the BI program exports, numbers right aligned
+async function sendSimpleXlsx(res, filename, sheetName, columns, rows) {
+  const wb = new ExcelJS.Workbook();
+  wb.creator = 'Skyline Exchange POS';
+  const ws = wb.addWorksheet(sheetName.slice(0, 31));
+  ws.columns = columns.map(c => ({ header: c.header, key: c.key, width: c.width || 14, style: c.numFmt ? { numFmt: c.numFmt } : {} }));
+  ws.getRow(1).eachCell(cell => {
+    cell.font = { bold: true };
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFF00' } };
+    cell.alignment = { horizontal: 'center', vertical: 'middle' };
+    cell.border = { bottom: { style: 'thin' } };
+  });
+  rows.forEach(r => ws.addRow(r));
+  ws.views = [{ state: 'frozen', ySplit: 1 }];
+  const buf = await wb.xlsx.writeBuffer();
+  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+  res.send(Buffer.from(buf));
+}
+
+router.get('/api/reports/nationality/excel', requireAuth, async (req, res) => {
+  try {
+    const r = nationalityReport(req.query);
+    const rows = [];
+    for (const c of r.customers) {
+      for (const x of c.rows) rows.push({ day: ddMmmYy(x.day), receipt: x.receipt_no, currency: x.currency, buy_qty: x.buy_qty, buy_idr: x.buy_idr, sell_qty: x.sell_qty, sell_idr: x.sell_idr, name: c.name, id_no: c.id_no });
+    }
+    await sendSimpleXlsx(res, `Transaksi_By_Negara_${r.nationality || 'ALL'}_${r.startDate}_${r.endDate}.xlsx`, 'TRX BY NATIONALITY', [
+      { header: 'DATE', key: 'day', width: 12 }, { header: 'NO TRX', key: 'receipt', width: 20 }, { header: 'CURRENCY', key: 'currency', width: 11 },
+      { header: 'QTY BELI', key: 'buy_qty', numFmt: '#,##0.##' }, { header: 'PEMBELIAN', key: 'buy_idr', width: 18, numFmt: '#,##0.00' },
+      { header: 'QTY JUAL', key: 'sell_qty', numFmt: '#,##0.##' }, { header: 'PENJUALAN', key: 'sell_idr', width: 18, numFmt: '#,##0.00' },
+      { header: 'NAMA CUSTOMER', key: 'name', width: 28 }, { header: 'ID NO', key: 'id_no', width: 20 }
+    ], rows);
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// PPATK support export: purchases (BELI) or sales (JUAL), one row per currency line, columns as the BI program
+router.get('/api/reports/ppatk/excel', requireAuth, async (req, res) => {
+  try {
+    const type = String(req.query.type || 'BELI').toUpperCase() === 'JUAL' ? 'JUAL' : 'BELI';
+    const { start, end } = reportPeriod(req.query);
+    const word = type === 'BELI' ? 'BELI' : 'JUAL';
+    const rows = reportLines(start, end, 'AND t.type = ?', [type]).map(l => ({
+      day: ddMmmYy(l.day), id_no: l.customer_id_no, name: (l.customer_name || '').toUpperCase(), npwp: l.customer_npwp,
+      country: (l.customer_nationality || '').toUpperCase(), phone: l.customer_phone, address: (l.customer_address || '').toUpperCase(),
+      job: (l.customer_job || '').toUpperCase(), gender: (l.customer_gender || '').toUpperCase(),
+      birth_date: ddMmmYy(l.customer_birth_date), birth_place: (l.customer_birth_place || '').toUpperCase(),
+      category: l.customer_category || 'PERSONAL', receipt: l.receipt_no, currency: bnCode(l.currency_code),
+      qty: l.amount, rate: l.rate, total: l.subtotal_idr, pep: l.is_pep ? 'YES' : 'NO'
+    }));
+    await sendSimpleXlsx(res, `PPATK_${type === 'BELI' ? 'Pembelian' : 'Penjualan'}_${start}_${end}.xlsx`, `Q_TRANSAKSI_${word}_BY_PERIODE`, [
+      { header: 'TANGGAL', key: 'day', width: 11 }, { header: 'ID NO', key: 'id_no', width: 18 }, { header: 'NAMA', key: 'name', width: 28 },
+      { header: 'NO NPWP', key: 'npwp', width: 18 }, { header: 'ASAL NEGARA', key: 'country', width: 14 }, { header: 'TELP', key: 'phone', width: 15 },
+      { header: 'ALAMAT', key: 'address', width: 34 }, { header: 'PEKERJAAN', key: 'job', width: 16 }, { header: 'GENDER', key: 'gender', width: 11 },
+      { header: 'TGL LAHIR', key: 'birth_date', width: 11 }, { header: 'TEMPAT LAHIR', key: 'birth_place', width: 15 },
+      { header: 'KATEGORI KONSUMEN', key: 'category', width: 19 }, { header: 'NO NOTA', key: 'receipt', width: 20 },
+      { header: 'VALAS', key: 'currency', width: 10 }, { header: 'QTY', key: 'qty', numFmt: '#,##0.##' },
+      { header: `KURS ${word}`, key: 'rate', numFmt: '#,##0.00' }, { header: `TOTAL ${word}`, key: 'total', width: 18, numFmt: '#,##0.00' },
+      { header: 'CATEGORY PEP', key: 'pep', width: 14 }
+    ], rows);
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }

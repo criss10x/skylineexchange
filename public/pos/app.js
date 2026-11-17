@@ -35,7 +35,7 @@ const i18n = {
     lblPepPurpose: 'Tujuan Transaksi (Purpose)',
     lblPepApproval: 'Saya mengonfirmasi bahwa transaksi nasabah PEP ini telah mendapatkan Persetujuan Direksi / Senior Management sesuai standar kepatuhan Bank Indonesia.',
     lblUnderlyingTitle: 'Wajib dokumen underlying',
-    txtUnderlyingDesc: 'Total transaksi mencapai batas USD 10.000 (PBI Transaksi Valas). Isi dokumen underlying sebelum menyimpan transaksi.',
+    txtUnderlyingDesc: 'Total transaksi melewati batas threshold (setara USD 10.000, PBI Transaksi Valas). Isi dokumen underlying sebelum menyimpan transaksi.',
     lblUnderlyingType: 'Jenis Dokumen Underlying',
     lblUnderlyingNo: 'Nomor Dokumen / Keterangan',
     dttotAlertTitle: 'PERINGATAN DTTOT / DPPSPM: TRANSAKSI DIBEKUKAN',
@@ -61,7 +61,7 @@ const i18n = {
     custNationalityLabel: 'Kewarganegaraan',
     custNationalityPlaceholder: 'Indonesia, Australia',
     custJobLabel: 'Pekerjaan',
-    custExtraLabel: 'Data tambahan (NPWP, kewarganegaraan, pekerjaan, alamat)',
+    custExtraLabel: 'Data tambahan (NPWP, kewarganegaraan, pekerjaan, alamat, tanggal lahir, kategori)',
     custJobPlaceholder: 'Pekerjaan',
     custGenderLabel: 'Jenis kelamin',
     optGenderNone: '- Pilih Gender -',
@@ -289,7 +289,7 @@ const i18n = {
     lblPepPurpose: 'Purpose of Transaction',
     lblPepApproval: 'I confirm that this PEP transaction has been formally approved by Senior Management / Board of Directors in compliance with Bank Indonesia regulations.',
     lblUnderlyingTitle: 'Underlying document required',
-    txtUnderlyingDesc: 'The total reached the USD 10,000 limit (PBI Transaksi Valas). Fill in the underlying document before saving.',
+    txtUnderlyingDesc: 'The total is over the threshold (about USD 10,000, PBI Transaksi Valas). Fill in the underlying document before saving.',
     lblUnderlyingType: 'Underlying Document Type',
     lblUnderlyingNo: 'Document Number / Reference',
     dttotAlertTitle: 'DTTOT / DPPSPM ALERT: TRANSACTION FROZEN',
@@ -315,7 +315,7 @@ const i18n = {
     custNationalityLabel: 'Nationality',
     custNationalityPlaceholder: 'Indonesia, Australia',
     custJobLabel: 'Occupation',
-    custExtraLabel: 'Additional details (tax ID, nationality, occupation, address)',
+    custExtraLabel: 'Additional details (tax ID, nationality, occupation, address, date of birth, category)',
     custJobPlaceholder: 'Occupation',
     custGenderLabel: 'Gender',
     optGenderNone: '- Select Gender -',
@@ -532,6 +532,10 @@ const state = {
     store_phone: '+6285-122-777-970',
     store_permit: '',
     show_permit: '0',
+    store_director: '',
+    store_city: '',
+    store_npwp: '',
+    threshold_idr: '180000000',
     default_teller: 'TELLER 01',
     disclaimer_1: 'Periksa fisik uang sebelum meninggalkan kasir.',
     disclaimer_2: 'Uang yang sudah ditukar tidak dapat dikembalikan.',
@@ -1457,6 +1461,16 @@ function applySettingsToUI() {
   if (sPermit) sPermit.value = s.store_permit || '';
   const sShowPermit = document.getElementById('setting-show-permit');
   if (sShowPermit) sShowPermit.checked = s.show_permit === '1';
+  [['setting-store-director', 'store_director'], ['setting-store-city', 'store_city'], ['setting-store-npwp', 'store_npwp']].forEach(([id, key]) => {
+    const el = document.getElementById(id);
+    if (el) el.value = s[key] || '';
+  });
+  const npwpEl = document.getElementById('rcpt-store-npwp');
+  if (npwpEl) {
+    npwpEl.textContent = s.store_npwp ? `NPWP: ${s.store_npwp}` : '';
+    npwpEl.classList.toggle('hidden', !s.store_npwp);
+  }
+  renderThresholdSetting();
   const sTeller = document.getElementById('setting-default-teller');
   if (sTeller) sTeller.value = activeTeller;
   const sDisc1 = document.getElementById('setting-disclaimer-1');
@@ -2183,7 +2197,7 @@ function renderCart() {
   const underCard = document.getElementById('card-underlying-warning');
   const usdBadge = document.getElementById('badge-usd-equiv');
   
-  if (usdEquiv >= 10000) {
+  if (total >= thresholdIdr()) {
     const justCrossed = !state.isUnderlyingRequired;
     state.isUnderlyingRequired = true;
     if (underCard) underCard.classList.remove('hidden');
@@ -2571,6 +2585,7 @@ async function processTransactionInner() {
     customer_job: custJob.toUpperCase(),
     customer_gender: custGender,
     customer_address: custAddress.toUpperCase(),
+    ...customerExtras(),
     is_pep: isPep ? 1 : 0,
     pep_institution: pepInstitution,
     source_of_funds: sourceOfFunds,
@@ -2657,6 +2672,293 @@ function storeToday() {
   return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Makassar' });
 }
 
+// ==================== BI PHASE 1: CUSTOMER DATA, THRESHOLD, COMPLIANCE REPORTS ====================
+function customerExtras() {
+  return {
+    customer_birth_date: document.getElementById('cust-birth-date')?.value || '',
+    customer_birth_place: (document.getElementById('cust-birth-place')?.value || '').trim().toUpperCase(),
+    customer_category: document.getElementById('cust-category')?.value || 'PERSONAL'
+  };
+}
+
+function thresholdIdr() {
+  const v = Number(state.settings.threshold_idr);
+  return v > 0 ? v : 180000000;
+}
+
+function renderThresholdSetting() {
+  const input = document.getElementById('setting-threshold-idr');
+  const status = document.getElementById('threshold-status');
+  const isAdmin = state.user && state.user.role === 'ADMIN';
+  if (input && document.activeElement !== input) input.value = thresholdIdr().toLocaleString('id-ID');
+  if (input) input.disabled = !isAdmin;
+  const btn = document.getElementById('btn-save-threshold');
+  if (btn) btn.disabled = !isAdmin;
+  if (status) status.textContent = 'Rp ' + thresholdIdr().toLocaleString('id-ID');
+}
+
+async function saveThresholdSetting() {
+  const isEn = state.appLang === 'en';
+  const value = Number(String(document.getElementById('setting-threshold-idr')?.value || '').replace(/\D/g, ''));
+  if (!(value > 0)) {
+    showToast(isEn ? 'Enter a threshold above 0' : 'Isi batas threshold lebih dari 0', 'warning');
+    return;
+  }
+  try {
+    const data = await (await authFetch('/api/settings', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ threshold_idr: String(value) })
+    })).json();
+    if (!data.success) throw new Error(data.message || 'Gagal menyimpan');
+    state.settings.threshold_idr = String(value);
+    renderThresholdSetting();
+    renderCart();
+    showToast(isEn ? 'Threshold saved' : 'Batas threshold disimpan', 'success');
+  } catch (err) {
+    showToast(`${isEn ? 'Failed to save' : 'Gagal menyimpan'}: ${err.message}`, 'error');
+  }
+}
+
+// Fill the customer form from the newest transaction of this ID
+function fillCustomerForm(c) {
+  const set = (id, v) => { const el = document.getElementById(id); if (el && v != null) el.value = v; };
+  set('cust-id', c.customer_id_no);
+  set('cust-name', (c.customer_name || '').toUpperCase());
+  set('cust-phone', c.customer_phone || '');
+  set('cust-npwp', c.customer_npwp || '');
+  set('cust-nationality', c.customer_nationality || '');
+  set('cust-job', c.customer_job || '');
+  set('cust-gender', c.customer_gender || '');
+  set('cust-address', c.customer_address || '');
+  set('cust-birth-date', c.customer_birth_date || '');
+  set('cust-birth-place', c.customer_birth_place || '');
+  set('cust-category', c.customer_category === 'CORPORATE' ? 'CORPORATE' : 'PERSONAL');
+  const pep = document.getElementById('cust-pep-toggle');
+  if (pep && Number(c.is_pep) === 1 && !pep.checked) pep.click();
+  const nameEl = document.getElementById('cust-name');
+  if (nameEl) nameEl.dispatchEvent(new Event('input', { bubbles: true })); // re-run DTTOT screening + receipt preview
+}
+
+let lastLookedUpId = '';
+async function lookupCustomerById() {
+  const idNo = (document.getElementById('cust-id')?.value || '').trim();
+  if (idNo.length < 3 || idNo === lastLookedUpId) return;
+  lastLookedUpId = idNo;
+  try {
+    const data = await (await authFetch(`/api/customers/${encodeURIComponent(idNo)}`)).json();
+    if (!data.success || !data.data) return;
+    fillCustomerForm(data.data);
+    showToast(state.appLang === 'en' ? 'Returning customer: data filled in' : 'Customer lama: data terisi otomatis', 'info');
+  } catch { /* offline: cashier types the data */ }
+}
+
+let customerSearchTarget = 'form';
+function openCustomerSearch(target) {
+  customerSearchTarget = target;
+  const modal = document.getElementById('modal-customer-search');
+  const input = document.getElementById('cust-search-input');
+  document.getElementById('cust-search-results').innerHTML = '';
+  modal.classList.remove('hidden');
+  input.value = '';
+  input.focus();
+}
+
+let customerSearchTimer = null;
+async function runCustomerSearch() {
+  const q = document.getElementById('cust-search-input').value.trim();
+  const list = document.getElementById('cust-search-results');
+  if (q.length < 2) { list.innerHTML = ''; return; }
+  try {
+    const data = await (await authFetch(`/api/customers?q=${encodeURIComponent(q)}`)).json();
+    const rows = data.success ? data.data : [];
+    list.innerHTML = rows.length
+      ? rows.map((c, i) => `<li><button type="button" data-i="${i}" class="w-full text-left px-3 py-2 hover:bg-navy-700 flex justify-between gap-3">
+          <span class="font-semibold text-slate-100">${escapeHtml((c.customer_name || '').toUpperCase())}</span>
+          <span class="num text-slate-400">${escapeHtml(c.customer_id_no)}</span></button></li>`).join('')
+      : `<li class="px-3 py-2 text-slate-400">${state.appLang === 'en' ? 'No customer found' : 'Customer tidak ditemukan'}</li>`;
+    list.querySelectorAll('button[data-i]').forEach(b => b.addEventListener('click', () => {
+      const c = rows[Number(b.dataset.i)];
+      document.getElementById('modal-customer-search').classList.add('hidden');
+      if (customerSearchTarget === 'report') {
+        document.getElementById('compliance-cust-id').value = c.customer_id_no;
+      } else {
+        lastLookedUpId = c.customer_id_no;
+        fillCustomerForm(c);
+      }
+    }));
+  } catch { list.innerHTML = ''; }
+}
+
+// Authenticated file download (links cannot carry the Authorization header)
+async function downloadAuthed(url, fallbackName) {
+  try {
+    const res = await authFetch(url);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || `HTTP ${res.status}`);
+    }
+    const name = (/filename="([^"]+)"/.exec(res.headers.get('Content-Disposition') || '') || [])[1] || fallbackName;
+    const href = URL.createObjectURL(await res.blob());
+    const a = document.createElement('a');
+    a.href = href;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(href), 10000);
+  } catch (err) {
+    showToast(`${state.appLang === 'en' ? 'Download failed' : 'Gagal mengunduh'}: ${err.message}`, 'error');
+  }
+}
+
+function reportPeriodQuery() {
+  const f = getHistoryDateFilterState();
+  if (f.isAll) return { qs: 'all=1', label: state.appLang === 'en' ? 'All dates' : 'Semua tanggal' };
+  const s = f.startDate || f.endDate || storeToday();
+  const e = f.endDate || f.startDate || storeToday();
+  return { qs: `startDate=${encodeURIComponent(s)}&endDate=${encodeURIComponent(e)}`, label: s === e ? s : `${s} s/d ${e}` };
+}
+
+async function openComplianceReports() {
+  document.getElementById('compliance-period').textContent = reportPeriodQuery().label;
+  document.getElementById('modal-compliance-report').classList.remove('hidden');
+  try {
+    const data = await (await authFetch('/api/reports/nationalities')).json();
+    const sel = document.getElementById('compliance-nationality');
+    const keep = sel.value;
+    sel.innerHTML = '<option value="">Pilih kewarganegaraan</option>' + (data.data || []).map(n => `<option>${escapeHtml(n)}</option>`).join('');
+    sel.value = keep;
+  } catch { /* list stays as it was */ }
+}
+
+// Printable report window in the same style as the BI summary report
+function openReportWindow(title, bodyHtml) {
+  const win = window.open('', '_blank');
+  if (!win) {
+    showToast(state.appLang === 'en' ? 'Popup blocked. Please allow popups.' : 'Pop-up terblokir. Izinkan pop-up untuk laporan.', 'error');
+    return null;
+  }
+  win.document.write(`<!DOCTYPE html><html lang="id"><head><meta charset="utf-8"><title>${escapeHtml(title)}</title><style>
+    @page { size: A4 landscape; margin: 12mm 10mm; }
+    body { font-family: Arial, Helvetica, sans-serif; color: #000; background: #fff; margin: 0; padding: 16px; font-size: 11px; }
+    .company { font-weight: bold; font-size: 13px; text-transform: uppercase; }
+    h1 { font-size: 16px; margin: 4px 0 8px; }
+    .meta td { padding: 1px 8px 1px 0; }
+    table.data { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    table.data th { border-top: 1px solid #000; border-bottom: 1px solid #000; padding: 4px 6px; font-size: 10px; text-align: right; }
+    table.data td { padding: 3px 6px; text-align: right; white-space: nowrap; }
+    table.data .l { text-align: left; }
+    tr.group td { font-weight: bold; padding-top: 10px; text-align: left; }
+    tr.sub td { border-top: 1px solid #999; font-weight: bold; }
+    tr.grand td { border-top: 2px solid #000; font-weight: bold; }
+    .flash { margin-top: 12px; font-weight: 800; font-size: 14px; text-align: center; padding: 6px; border: 2px solid #dc2626; color: #dc2626; animation: b 1s steps(1, end) infinite; }
+    @keyframes b { 50% { background: #dc2626; color: #fff; } }
+    .chart { margin-top: 16px; } .bar-row { display: flex; align-items: center; gap: 8px; margin: 4px 0; }
+    .bar-row span:first-child { width: 70px; } .bar { height: 14px; } .buy { background: #6366f1; } .sell { background: #f59e0b; }
+    .actions { margin-bottom: 14px; } .actions button { font: 600 13px sans-serif; padding: 8px 16px; border-radius: 6px; border: 0; background: #0f766e; color: #fff; cursor: pointer; }
+    .foot { margin-top: 16px; font-size: 10px; }
+    @media print { .actions { display: none; } body { padding: 0; } .flash { animation: none; } }
+  </style></head><body><div class="actions"><button onclick="window.print()">Cetak / Simpan PDF</button></div>${bodyHtml}
+  <div class="foot">Tgl Cetak : ${new Date().toLocaleString('en-GB', { timeZone: 'Asia/Makassar', hour12: false })}</div></body></html>`);
+  win.document.close();
+  return win;
+}
+
+const fmtIdr2 = v => Number(v || 0).toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const fmtQty = v => Number(v || 0).toLocaleString('id-ID', { maximumFractionDigits: 2 });
+const fmtDmy = iso => { const [y, m, d] = String(iso || '').split('-'); return y ? `${d}/${m}/${y}` : ''; };
+
+async function showCustomerThresholdReport() {
+  const idNo = document.getElementById('compliance-cust-id').value.trim();
+  if (!idNo) { showToast(state.appLang === 'en' ? 'Enter the customer ID number' : 'Isi No. ID customer', 'warning'); return; }
+  const { qs } = reportPeriodQuery();
+  try {
+    const data = await (await authFetch(`/api/reports/customer?id_no=${encodeURIComponent(idNo)}&${qs}`)).json();
+    if (!data.success) throw new Error(data.message);
+    const r = data.data;
+    const c = r.customer || {};
+    const company = state.settings.store_company || state.settings.store_name || '';
+    const rows = r.rows.map(x => `<tr><td class="l">${fmtDmy(x.day)}</td><td class="l">${escapeHtml(x.receipt_no)}</td><td class="l">${x.currency}</td>
+      <td>${fmtQty(x.buy_qty)}</td><td>${fmtIdr2(x.buy_idr)}</td><td>${fmtQty(x.sell_qty)}</td><td>${fmtIdr2(x.sell_idr)}</td></tr>`).join('')
+      || '<tr><td class="l" colspan="7">Tidak ada transaksi pada periode ini.</td></tr>';
+    const max = Math.max(1, ...Object.values(r.by_currency).flatMap(v => [v.buy_idr, v.sell_idr]));
+    const chart = Object.entries(r.by_currency).map(([cur, v]) => `
+      <div class="bar-row"><span>${cur}</span><span class="bar buy" style="width:${Math.round(v.buy_idr / max * 420)}px"></span><span>Beli ${fmtIdr2(v.buy_idr)}</span></div>
+      <div class="bar-row"><span></span><span class="bar sell" style="width:${Math.round(v.sell_idr / max * 420)}px"></span><span>Jual ${fmtIdr2(v.sell_idr)}</span></div>`).join('');
+    const flash = [r.exceeded_buy ? 'Jumlah Transaksi Pembelian Melebihi Threshold' : '', r.exceeded_sell ? 'Jumlah Transaksi Penjualan Melebihi Threshold' : '']
+      .filter(Boolean).map(t => `<div class="flash">${t}</div>`).join('');
+    openReportWindow(`Threshold_By_Customer_${idNo}`, `
+      <div class="company">${escapeHtml(company)}</div><h1>TRANSAKSI CUSTOMER BY ID</h1>
+      <table class="meta"><tr><td>Periode</td><td>: ${fmtDmy(r.startDate)} S/D ${fmtDmy(r.endDate)}</td></tr>
+      <tr><td>ID No</td><td>: ${escapeHtml(idNo)} [ ${escapeHtml((c.customer_name || '-').toUpperCase())} ]</td></tr>
+      <tr><td>Kewarganegaraan</td><td>: ${escapeHtml((c.customer_nationality || '-').toUpperCase())}</td></tr>
+      <tr><td>Threshold</td><td>: Rp ${fmtIdr2(r.threshold)}</td></tr></table>
+      <table class="data"><thead><tr><th class="l">DATE</th><th class="l">NO TRX</th><th class="l">CURRENCY</th><th>QTY BELI</th><th>PEMBELIAN</th><th>QTY JUAL</th><th>PENJUALAN</th></tr></thead>
+      <tbody>${rows}</tbody><tfoot><tr class="grand"><td class="l" colspan="3">TOTAL</td><td></td><td>${fmtIdr2(r.totals.buy_idr)}</td><td></td><td>${fmtIdr2(r.totals.sell_idr)}</td></tr></tfoot></table>
+      ${flash}<div class="chart"><b>Transaksi By ID</b>${chart}</div>`);
+  } catch (err) {
+    showToast(`${state.appLang === 'en' ? 'Report failed' : 'Gagal membuat laporan'}: ${err.message}`, 'error');
+  }
+}
+
+async function showNationalityReport() {
+  const nat = document.getElementById('compliance-nationality').value;
+  if (!nat) { showToast(state.appLang === 'en' ? 'Choose a nationality' : 'Pilih kewarganegaraan', 'warning'); return; }
+  const { qs } = reportPeriodQuery();
+  try {
+    const data = await (await authFetch(`/api/reports/nationality?nationality=${encodeURIComponent(nat)}&${qs}`)).json();
+    if (!data.success) throw new Error(data.message);
+    const r = data.data;
+    const company = state.settings.store_company || state.settings.store_name || '';
+    const body = r.customers.map(c => `<tr class="group"><td colspan="7">${escapeHtml(c.id_no || '-')} [ ${escapeHtml((c.name || '').toUpperCase())} ]</td></tr>`
+      + c.rows.map(x => `<tr><td class="l">${x.currency}</td><td class="l">${fmtDmy(x.day)}</td><td class="l">${escapeHtml(x.receipt_no)}</td>
+        <td>${fmtQty(x.buy_qty)}</td><td>${fmtIdr2(x.buy_idr)}</td><td>${fmtQty(x.sell_qty)}</td><td>${fmtIdr2(x.sell_idr)}</td></tr>`).join('')
+      + `<tr class="sub"><td class="l" colspan="3">TOTAL PER CUSTOMER</td><td></td><td>${fmtIdr2(c.buy_idr)}</td><td></td><td>${fmtIdr2(c.sell_idr)}</td></tr>`).join('')
+      || '<tr><td class="l" colspan="7">Tidak ada transaksi pada periode ini.</td></tr>';
+    openReportWindow(`Transaksi_By_Negara_${nat}`, `
+      <div class="company">${escapeHtml(company)}</div><h1>TRANSAKSI CUSTOMER BY NATIONALITY</h1>
+      <table class="meta"><tr><td>Periode</td><td>: ${fmtDmy(r.startDate)} S/D ${fmtDmy(r.endDate)}</td></tr><tr><td>Nationality</td><td>: ${escapeHtml(r.nationality)}</td></tr></table>
+      <table class="data"><thead><tr><th class="l">CURRENCY</th><th class="l">TGL TRANSAKSI</th><th class="l">NO TRX</th><th>QTY BELI</th><th>PEMBELIAN</th><th>QTY JUAL</th><th>PENJUALAN</th></tr></thead>
+      <tbody>${body}</tbody><tfoot><tr class="grand"><td class="l" colspan="3">TOTAL SELURUH TRANSAKSI</td><td></td><td>${fmtIdr2(r.totals.buy_idr)}</td><td></td><td>${fmtIdr2(r.totals.sell_idr)}</td></tr></tfoot></table>`);
+  } catch (err) {
+    showToast(`${state.appLang === 'en' ? 'Report failed' : 'Gagal membuat laporan'}: ${err.message}`, 'error');
+  }
+}
+
+function initPhase1Compliance() {
+  const custId = document.getElementById('cust-id');
+  custId?.addEventListener('blur', lookupCustomerById);
+  custId?.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); lookupCustomerById(); } });
+  document.getElementById('btn-cust-search')?.addEventListener('click', () => openCustomerSearch('form'));
+  document.getElementById('cust-search-input')?.addEventListener('input', () => {
+    clearTimeout(customerSearchTimer);
+    customerSearchTimer = setTimeout(runCustomerSearch, 250);
+  });
+  document.querySelectorAll('#modal-customer-search .js-close-modal, #modal-compliance-report .js-close-modal').forEach(b =>
+    b.addEventListener('click', () => b.closest('[role="dialog"]').classList.add('hidden')));
+  ['modal-customer-search', 'modal-compliance-report'].forEach(id => {
+    const m = document.getElementById(id);
+    m?.addEventListener('click', e => { if (e.target === m) m.classList.add('hidden'); });
+    m?.addEventListener('keydown', e => { if (e.key === 'Escape') m.classList.add('hidden'); });
+  });
+
+  document.getElementById('btn-save-threshold')?.addEventListener('click', saveThresholdSetting);
+  const thr = document.getElementById('setting-threshold-idr');
+  if (thr && typeof attachNumFormatter === 'function') attachNumFormatter(thr);
+
+  document.getElementById('btn-history-compliance')?.addEventListener('click', openComplianceReports);
+  document.getElementById('btn-compliance-cust-search')?.addEventListener('click', () => openCustomerSearch('report'));
+  document.getElementById('btn-compliance-cust-show')?.addEventListener('click', showCustomerThresholdReport);
+  document.getElementById('btn-compliance-nat-show')?.addEventListener('click', showNationalityReport);
+  document.getElementById('btn-compliance-nat-excel')?.addEventListener('click', () => {
+    const nat = document.getElementById('compliance-nationality').value;
+    if (!nat) { showToast(state.appLang === 'en' ? 'Choose a nationality' : 'Pilih kewarganegaraan', 'warning'); return; }
+    downloadAuthed(`/api/reports/nationality/excel?nationality=${encodeURIComponent(nat)}&${reportPeriodQuery().qs}`, 'Transaksi_By_Negara.xlsx');
+  });
+  document.getElementById('btn-ppatk-buy')?.addEventListener('click', () => downloadAuthed(`/api/reports/ppatk/excel?type=BELI&${reportPeriodQuery().qs}`, 'PPATK_Pembelian.xlsx'));
+  document.getElementById('btn-ppatk-sell')?.addEventListener('click', () => downloadAuthed(`/api/reports/ppatk/excel?type=JUAL&${reportPeriodQuery().qs}`, 'PPATK_Penjualan.xlsx'));
+}
+
 function resetForm() {
   state.cart = [];
   document.getElementById('cust-name').value = '';
@@ -2667,6 +2969,8 @@ function resetForm() {
   const jobInp = document.getElementById('cust-job'); if (jobInp) jobInp.value = '';
   const genInp = document.getElementById('cust-gender'); if (genInp) genInp.value = '';
   const addrInp = document.getElementById('cust-address'); if (addrInp) addrInp.value = '';
+  ['cust-birth-date', 'cust-birth-place'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  const catInp = document.getElementById('cust-category'); if (catInp) catInp.value = 'PERSONAL';
   const extraDetails = document.getElementById('cust-extra-details'); if (extraDetails) extraDetails.open = false;
   const pepToggle = document.getElementById('cust-pep-toggle'); if (pepToggle) pepToggle.checked = false;
   const pepFields = document.getElementById('pep-edd-fields'); if (pepFields) pepFields.classList.add('hidden');
@@ -3003,6 +3307,7 @@ function buildCurrentFormReceiptData() {
     customer_job: custJob.toUpperCase(),
     customer_gender: custGender,
     customer_address: custAddress.toUpperCase(),
+    ...customerExtras(),
     is_pep: isPep ? 1 : 0,
     pep_institution: pepInstitution,
     source_of_funds: sourceOfFunds,
@@ -4453,6 +4758,9 @@ function initEventListeners() {
       paper_size: document.querySelector('input[name="setting-paper-size"]:checked')?.value || '76',
       store_permit: document.getElementById('setting-store-permit').value.trim(),
       show_permit: document.getElementById('setting-show-permit').checked ? '1' : '0',
+      store_director: document.getElementById('setting-store-director').value.trim(),
+      store_city: document.getElementById('setting-store-city').value.trim(),
+      store_npwp: document.getElementById('setting-store-npwp').value.trim(),
       default_teller: document.getElementById('setting-default-teller').value.trim() || 'TELLER 01',
       disclaimer_1: document.getElementById('setting-disclaimer-1').value.trim(),
       disclaimer_2: document.getElementById('setting-disclaimer-2').value.trim(),
@@ -5013,12 +5321,7 @@ function exportGoogleSheetsCsv() {
     filename = `Skyline_POS_${d}.csv`;
   }
 
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+  downloadAuthed(url, filename);
 
   showToast(state.appLang === 'en'
     ? `Exporting CSV (${filter.label})...`
@@ -5041,12 +5344,7 @@ function exportExcel() {
     filename = `Skyline_POS_${d}.xlsx`;
   }
 
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+  downloadAuthed(url, filename);
 
   showToast(state.appLang === 'en'
     ? `Exporting Excel (${filter.label})...`
@@ -5883,6 +6181,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initUsbUI();
   initSerialUI();
   initBridgeUI();
+  initPhase1Compliance();
   ['underlying-doc-type', 'underlying-doc-no'].forEach(id => {
     const el = document.getElementById(id);
     if (el) { el.addEventListener('input', updateUnderlyingStatus); el.addEventListener('change', updateUnderlyingStatus); }

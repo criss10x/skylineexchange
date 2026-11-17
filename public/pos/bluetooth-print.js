@@ -419,6 +419,7 @@ class BluetoothPrinter {
     if (settings.show_permit === '1' && settings.store_permit) {
       addLine(`${isEn ? 'License' : 'Izin KUPVA'}: ${settings.store_permit}`);
     }
+    if (settings.store_npwp) addLine(`NPWP: ${settings.store_npwp}`);
 
     // Divider
     addLine(dividerDash);
