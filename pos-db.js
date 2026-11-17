@@ -203,6 +203,17 @@ CREATE TABLE IF NOT EXISTS opening_stock (
   qty REAL NOT NULL DEFAULT 0,
   idr REAL NOT NULL DEFAULT 0
 );
+CREATE TABLE IF NOT EXISTS cash_entries (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  day TEXT NOT NULL,
+  kind TEXT NOT NULL,
+  category TEXT DEFAULT '',
+  description TEXT DEFAULT '',
+  amount REAL NOT NULL,
+  created_by TEXT DEFAULT '',
+  created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_cash_entries_day ON cash_entries(day);
 CREATE TABLE IF NOT EXISTS middle_rates (
   day TEXT NOT NULL,
   currency TEXT NOT NULL,

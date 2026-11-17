@@ -1401,6 +1401,293 @@ router.get('/api/reports/volume', requireAuth, (req, res) => {
   }
 });
 
+// ==================== BI PHASE 3: KEUANGAN (LKU) ====================
+// Every cash book entry is a kind + category. Kas and Bank effect per kind; categories map to the BI Kas Harian codes.
+const FIN_KINDS = {
+  BIAYA:          { kas: -1, bank: 0, cats: ['GAJI', 'SEWA', 'IKLAN', 'LISTRIK', 'TRANSPORT', 'PEMELIHARAAN', 'PENYUSUTAN', 'ASURANSI', 'ADM_UMUM', 'LAIN', 'PAJAK_PPH'] },
+  PENDAPATAN_LAIN:{ kas: 1, bank: 0, cats: ['LAIN'] },
+  PIUTANG_KELUAR: { kas: -1, bank: 0, cats: ['PAJAK', 'DAGANG'] },
+  PIUTANG_MASUK:  { kas: 1, bank: 0, cats: ['PAJAK', 'DAGANG'] },
+  HUTANG_MASUK:   { kas: 1, bank: 0, cats: ['BANK', 'DAGANG'] },
+  HUTANG_KELUAR:  { kas: -1, bank: 0, cats: ['BANK', 'DAGANG'] },
+  AKTIVA:         { kas: -1, bank: 0, cats: ['AKTIVA', 'INVENTARIS'] },
+  MODAL_MASUK:    { kas: 1, bank: 0, cats: [''] },
+  MODAL_KELUAR:   { kas: -1, bank: 0, cats: [''] },
+  SETOR_BANK:     { kas: -1, bank: 1, cats: [''] },
+  TARIK_BANK:     { kas: 1, bank: -1, cats: [''] },
+  BANK_BUNGA:     { kas: 0, bank: 1, cats: [''] },
+  BANK_ADMIN:     { kas: 0, bank: -1, cats: [''] }
+};
+// Depreciation is an expense that moves no cash
+const kasEffect = e => (e.kind === 'BIAYA' && e.category === 'PENYUSUTAN') ? 0 : (FIN_KINDS[e.kind]?.kas || 0) * e.amount;
+const bankEffect = e => (FIN_KINDS[e.kind]?.bank || 0) * e.amount;
+
+const FIN_OPENING_KEYS = ['fin_cash_open', 'fin_bank_open', 'fin_capital', 'fin_retained', 'fin_fixed_cost_open', 'fin_accum_dep_open',
+  'fin_receivable_open', 'fin_prepaid_tax_open', 'fin_payable_bank_open', 'fin_payable_trade_open'];
+
+// Books start on the Saldo Awal Valas date, so valas stock and cash share one opening day
+function finStartDate() {
+  const d = getSetting('opening_stock_date');
+  if (d) return d;
+  return db.prepare(`SELECT MIN(${STORE_DAY_SQL}) AS d FROM transactions`).get().d || storeDate();
+}
+
+function finOpening() {
+  const o = { start: finStartDate() };
+  for (const k of FIN_OPENING_KEYS) o[k] = Number(getSetting(k)) || 0;
+  return o;
+}
+
+const prevDay = d => { const t = new Date(d + 'T00:00:00Z'); t.setUTCDate(t.getUTCDate() - 1); return t.toISOString().slice(0, 10); };
+
+function entriesBetween(from, to) {
+  if (to < from) return [];
+  return db.prepare('SELECT * FROM cash_entries WHERE day BETWEEN ? AND ? ORDER BY day, id').all(from, to);
+}
+
+// Rupiah paid for purchases and received for sales between two store days
+function valasCash(from, to) {
+  if (to < from) return { buy: 0, sell: 0 };
+  const r = db.prepare(`SELECT
+      COALESCE(SUM(CASE WHEN t.type = 'BELI' THEN ti.subtotal_idr END), 0) AS buy,
+      COALESCE(SUM(CASE WHEN t.type = 'JUAL' THEN ti.subtotal_idr END), 0) AS sell
+    FROM transactions t JOIN transaction_items ti ON ti.transaction_id = t.id
+    WHERE ${STORE_DAY_SQL_T} BETWEEN ? AND ?`).get(from, to);
+  return { buy: Number(r.buy) || 0, sell: Number(r.sell) || 0 };
+}
+
+function kasAt(day, o = finOpening()) {
+  if (day < o.start) return o.fin_cash_open;
+  const v = valasCash(o.start, day);
+  return o.fin_cash_open - v.buy + v.sell + entriesBetween(o.start, day).reduce((a, e) => a + kasEffect(e), 0);
+}
+
+function bankAt(day, o = finOpening()) {
+  if (day < o.start) return o.fin_bank_open;
+  return o.fin_bank_open + entriesBetween(o.start, day).reduce((a, e) => a + bankEffect(e), 0);
+}
+
+const sumEntries = (list, kind, category) => list.filter(e => e.kind === kind && (category == null || e.category === category)).reduce((a, e) => a + e.amount, 0);
+
+// Laba / (rugi) for a period: sales minus cost of sales (opening + purchases - closing stock), expenses, other items
+function profitLoss(from, to) {
+  const empty = { penjualan: 0, saldo_awal: 0, pembelian: 0, saldo_akhir: 0, hpp: 0, kotor: 0, beban: {}, total_beban: 0, operasional_bersih: 0,
+    pendapatan_lain: 0, bunga_bank: 0, admin_bank: 0, total_lain: 0, sebelum_pajak: 0, pajak: 0, bersih: 0 };
+  if (to < from) return empty;
+  const bi = buildBiSummary(from, to);
+  const list = entriesBetween(from, to);
+  const penjualan = bi.totals.sell_idr;
+  const hpp = bi.totals.open_idr + bi.totals.buy_idr - bi.totals.close_idr;
+  const beban = {};
+  for (const c of FIN_KINDS.BIAYA.cats) if (c !== 'PAJAK_PPH') beban[c] = sumEntries(list, 'BIAYA', c);
+  const totalBeban = Object.values(beban).reduce((a, v) => a + v, 0);
+  const lain = sumEntries(list, 'PENDAPATAN_LAIN');
+  const bunga = sumEntries(list, 'BANK_BUNGA');
+  const admin = sumEntries(list, 'BANK_ADMIN');
+  const totalLain = lain + bunga - admin;
+  const opBersih = penjualan - hpp - totalBeban;
+  const pajak = sumEntries(list, 'BIAYA', 'PAJAK_PPH');
+  return {
+    penjualan, saldo_awal: bi.totals.open_idr, pembelian: bi.totals.buy_idr, saldo_akhir: bi.totals.close_idr, hpp,
+    kotor: penjualan - hpp, beban, total_beban: totalBeban, operasional_bersih: opBersih,
+    pendapatan_lain: lain, bunga_bank: bunga, admin_bank: admin, total_lain: totalLain,
+    sebelum_pajak: opBersih + totalLain, pajak, bersih: opBersih + totalLain - pajak
+  };
+}
+
+function companyInfo() {
+  return {
+    company: getSetting('store_company') || getSetting('store_name') || '',
+    city: getSetting('store_city') || '',
+    director: getSetting('store_director') || ''
+  };
+}
+
+router.get('/api/finance/meta', requireAuth, (req, res) => {
+  res.json({ success: true, data: { kinds: Object.fromEntries(Object.entries(FIN_KINDS).map(([k, v]) => [k, v.cats])), opening: finOpening() } });
+});
+
+router.get('/api/finance/entries', requireAuth, (req, res) => {
+  try {
+    const { start, end } = reportPeriod(req.query);
+    res.json({ success: true, data: { startDate: start, endDate: end, rows: entriesBetween(start, end) } });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+router.post('/api/finance/entries', requireAuth, (req, res) => {
+  try {
+    const { day, kind, category, description, amount } = req.body || {};
+    const spec = FIN_KINDS[kind];
+    if (!spec) return res.status(400).json({ success: false, message: 'Jenis catatan tidak dikenal.' });
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(day || ''))) return res.status(400).json({ success: false, message: 'Tanggal wajib diisi.' });
+    const cat = String(category || '');
+    if (!spec.cats.includes(cat)) return res.status(400).json({ success: false, message: 'Kategori tidak sesuai jenis catatan.' });
+    const amt = Number(amount);
+    if (!(amt > 0)) return res.status(400).json({ success: false, message: 'Jumlah harus lebih dari 0.' });
+    const r = db.prepare('INSERT INTO cash_entries (day, kind, category, description, amount, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)')
+      .run(day, kind, cat, String(description || '').trim().slice(0, 200), amt, req.user?.username || '', new Date().toISOString());
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+router.delete('/api/finance/entries/:id', requireAuth, requireAdmin, (req, res) => {
+  try {
+    db.prepare('DELETE FROM cash_entries WHERE id = ?').run(req.params.id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+router.post('/api/finance/opening', requireAuth, requireAdmin, (req, res) => {
+  try {
+    const stmt = db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)');
+    for (const k of FIN_OPENING_KEYS) {
+      if (req.body[k] === undefined) continue;
+      const v = Number(req.body[k]);
+      if (!Number.isFinite(v)) return res.status(400).json({ success: false, message: `Nilai ${k} tidak valid.` });
+      stmt.run(k, String(v));
+    }
+    if (db.backupSettingsToFile) db.backupSettingsToFile();
+    res.json({ success: true, data: finOpening() });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// Kas Harian: opening cash, lines per BI code with a running balance, closing cash
+router.get('/api/finance/kas-harian', requireAuth, (req, res) => {
+  try {
+    const { start, end } = reportPeriod(req.query);
+    const o = finOpening();
+    const from = start < o.start ? o.start : start;
+    const v = valasCash(from, end);
+    const list = entriesBetween(from, end);
+    const k = (kind, cat) => sumEntries(list, kind, cat);
+    const groups = [
+      { code: 400, name: 'Pembelian', lines: [{ code: 401, name: 'Valuta Asing / BN', kredit: v.buy }, { code: 402, name: 'Traveller Cheque / TC', kredit: 0 }] },
+      { code: 500, name: 'Penjualan', lines: [{ code: 501, name: 'Valuta Asing / BN', debet: v.sell }, { code: 502, name: 'Traveller Cheque / TC', debet: 0 }] },
+      { code: 600, name: 'Biaya Operasional', lines: [
+        { code: 601, name: 'Gaji / Tunjangan Karyawan', kredit: k('BIAYA', 'GAJI') },
+        { code: 602, name: 'Sewa', kredit: k('BIAYA', 'SEWA') },
+        { code: 603, name: 'Iklan dan Promosi', kredit: k('BIAYA', 'IKLAN') },
+        { code: 604, name: 'Telphone, Listrik, Air', kredit: k('BIAYA', 'LISTRIK') },
+        { code: 605, name: 'Transport / BBM', kredit: k('BIAYA', 'TRANSPORT') },
+        { code: 606, name: 'Pemeliharaan', kredit: k('BIAYA', 'PEMELIHARAAN') },
+        { code: 607, name: 'Asuransi', kredit: k('BIAYA', 'ASURANSI') },
+        { code: 608, name: 'Pajak Penghasilan', kredit: k('BIAYA', 'PAJAK_PPH') },
+        { code: 609, name: 'Adm. Umum / Lain - lain', kredit: k('BIAYA', 'ADM_UMUM') + k('BIAYA', 'LAIN') }
+      ] },
+      { code: 700, name: 'Piutang', lines: [
+        { code: 701, name: 'Pembayaran Pajak (dibayar di muka)', kredit: k('PIUTANG_KELUAR', 'PAJAK'), debet: k('PIUTANG_MASUK', 'PAJAK') },
+        { code: 702, name: 'Piutang Dagang / Lain - lain', kredit: k('PIUTANG_KELUAR', 'DAGANG'), debet: k('PIUTANG_MASUK', 'DAGANG') }
+      ] },
+      { code: 800, name: 'Hutang', lines: [
+        { code: 801, name: 'Hutang Bank', debet: k('HUTANG_MASUK', 'BANK'), kredit: k('HUTANG_KELUAR', 'BANK') },
+        { code: 802, name: 'Hutang Dagang', debet: k('HUTANG_MASUK', 'DAGANG'), kredit: k('HUTANG_KELUAR', 'DAGANG') }
+      ] },
+      { code: 900, name: 'Pembelian Aktiva / Inventaris', lines: [
+        { code: 901, name: 'Aktiva', kredit: k('AKTIVA', 'AKTIVA') },
+        { code: 902, name: 'Inventaris', kredit: k('AKTIVA', 'INVENTARIS') }
+      ] },
+      { code: 950, name: 'Mutasi Kas Lainnya', lines: [
+        { code: 951, name: 'Tambah Cash (setoran pemilik)', debet: k('MODAL_MASUK') },
+        { code: 952, name: 'Kurang Cash (pengambilan pemilik)', kredit: k('MODAL_KELUAR') },
+        { code: 953, name: 'Setor Kas ke Bank', kredit: k('SETOR_BANK') },
+        { code: 954, name: 'Tarik Bank ke Kas', debet: k('TARIK_BANK') },
+        { code: 955, name: 'Pendapatan Lain - lain', debet: k('PENDAPATAN_LAIN') }
+      ] }
+    ];
+    const opening = kasAt(prevDay(from), o);
+    let saldo = opening;
+    for (const g of groups) {
+      g.debet = 0; g.kredit = 0;
+      for (const l of g.lines) {
+        l.debet = l.debet || 0; l.kredit = l.kredit || 0;
+        saldo += l.debet - l.kredit;
+        l.saldo = saldo;
+        g.debet += l.debet; g.kredit += l.kredit;
+      }
+    }
+    res.json({ success: true, data: { ...companyInfo(), startDate: start, endDate: end, opening, closing: saldo, groups } });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+router.get('/api/finance/buku-bank', requireAuth, (req, res) => {
+  try {
+    const { start, end } = reportPeriod(req.query);
+    const o = finOpening();
+    const from = start < o.start ? o.start : start;
+    const names = { SETOR_BANK: 'Setoran dari kas', TARIK_BANK: 'Penarikan ke kas', BANK_BUNGA: 'Pendapatan bunga bank', BANK_ADMIN: 'Biaya administrasi bank' };
+    const opening = bankAt(prevDay(from), o);
+    let saldo = opening;
+    const rows = entriesBetween(from, end).filter(e => bankEffect(e) !== 0).map(e => {
+      const d = bankEffect(e);
+      saldo += d;
+      return { day: e.day, name: names[e.kind] || e.kind, description: e.description, debet: d > 0 ? d : 0, kredit: d < 0 ? -d : 0, saldo };
+    });
+    res.json({ success: true, data: { ...companyInfo(), startDate: start, endDate: end, opening, closing: saldo, rows } });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+router.get('/api/finance/laba-rugi', requireAuth, (req, res) => {
+  try {
+    const { start, end } = reportPeriod(req.query);
+    const o = finOpening();
+    const from = start < o.start ? o.start : start;
+    res.json({ success: true, data: { ...companyInfo(), startDate: start, endDate: end, ...profitLoss(from, end) } });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// Neraca at the end of the period; profit before the period start goes to laba ditahan
+router.get('/api/finance/neraca', requireAuth, (req, res) => {
+  try {
+    const { start, end } = reportPeriod(req.query);
+    const o = finOpening();
+    const from = start < o.start ? o.start : start;
+    const all = entriesBetween(o.start, end);
+    const net = (inKind, outKind, cat) => sumEntries(all, inKind, cat) - sumEntries(all, outKind, cat);
+    const valas = buildBiSummary(end, end).totals.close_idr;
+    const aktiva = {
+      kas: kasAt(end, o), bank: bankAt(end, o), valas_kas: valas, valas_bank: 0,
+      piutang_dagang: o.fin_receivable_open + net('PIUTANG_KELUAR', 'PIUTANG_MASUK', 'DAGANG'),
+      piutang_tc: 0,
+      pajak_dimuka: o.fin_prepaid_tax_open + net('PIUTANG_KELUAR', 'PIUTANG_MASUK', 'PAJAK'),
+      sewa_dimuka: 0, asuransi_dimuka: 0,
+      harga_perolehan: o.fin_fixed_cost_open + sumEntries(all, 'AKTIVA'),
+      akum_penyusutan: o.fin_accum_dep_open + sumEntries(all, 'BIAYA', 'PENYUSUTAN'),
+      lain: 0
+    };
+    aktiva.aset_tetap = aktiva.harga_perolehan - aktiva.akum_penyusutan;
+    aktiva.total = aktiva.kas + aktiva.bank + aktiva.valas_kas + aktiva.valas_bank + aktiva.piutang_dagang + aktiva.piutang_tc
+      + aktiva.pajak_dimuka + aktiva.sewa_dimuka + aktiva.asuransi_dimuka + aktiva.aset_tetap + aktiva.lain;
+    const pasiva = {
+      hutang_bank: o.fin_payable_bank_open + net('HUTANG_MASUK', 'HUTANG_KELUAR', 'BANK'),
+      hutang_dagang: o.fin_payable_trade_open + net('HUTANG_MASUK', 'HUTANG_KELUAR', 'DAGANG'),
+      hutang_sewa: 0, kewajiban_pengiriman: 0, kewajiban_lain: 0,
+      modal: o.fin_capital + sumEntries(all, 'MODAL_MASUK') - sumEntries(all, 'MODAL_KELUAR'),
+      laba_ditahan: o.fin_retained + profitLoss(o.start, prevDay(from)).bersih,
+      laba_tahun_ini: profitLoss(from, end).bersih
+    };
+    pasiva.total_kewajiban = pasiva.hutang_bank + pasiva.hutang_dagang + pasiva.hutang_sewa + pasiva.kewajiban_pengiriman + pasiva.kewajiban_lain;
+    pasiva.total_ekuitas = pasiva.modal + pasiva.laba_ditahan + pasiva.laba_tahun_ini;
+    pasiva.total = pasiva.total_kewajiban + pasiva.total_ekuitas;
+    res.json({ success: true, data: { ...companyInfo(), startDate: start, endDate: end, aktiva, pasiva, selisih: aktiva.total - pasiva.total } });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 // One-sheet Excel file: yellow bold header like the BI program exports, numbers right aligned
 async function sendSimpleXlsx(res, filename, sheetName, columns, rows) {
   const wb = new ExcelJS.Workbook();
