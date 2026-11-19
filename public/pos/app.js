@@ -938,9 +938,11 @@ async function syncOfflineTransactions() {
 }
 
 // ==================== THEME SYSTEM (LIGHT / DARK) ====================
+// Light is the default. Only an explicit toggle is saved, under a new key: the old
+// 'skyline_pos_theme' key was written on every load, so it cannot tell a real choice apart.
+const THEME_KEY = 'skyline_pos_theme_choice';
 function initTheme() {
-  const saved = localStorage.getItem('skyline_pos_theme') || 'dark';
-  applyTheme(saved);
+  applyTheme(localStorage.getItem(THEME_KEY) || 'light');
 }
 
 function applyTheme(theme) {
@@ -949,7 +951,6 @@ function applyTheme(theme) {
   } else {
     document.documentElement.classList.remove('light');
   }
-  localStorage.setItem('skyline_pos_theme', theme);
   updateThemeToggleUI();
 }
 
@@ -957,6 +958,7 @@ function toggleTheme() {
   const isCurrentlyLight = document.documentElement.classList.contains('light');
   const newTheme = isCurrentlyLight ? 'dark' : 'light';
   applyTheme(newTheme);
+  localStorage.setItem(THEME_KEY, newTheme);
   const isEn = state.appLang === 'en';
   showToast(
     newTheme === 'light'
@@ -1917,7 +1919,7 @@ function renderStock(d) {
   body.innerHTML = rows.length ? rows.map(r => {
     const flag = CURRENCY_FLAGS[r.currency];
     const zero = r.qty === 0;
-    return `<tr class="${zero ? 'opacity-50' : ''}">
+    return `<tr class="${zero ? 'stock-empty' : ''}">
       <td class="py-3 px-4 font-sans">
         <div class="flex items-center gap-2.5">
           <span class="relative w-9 h-6 shrink-0 rounded overflow-hidden bg-navy-700 border border-navy-600 flex items-center justify-center text-[10px] font-mono text-brand">${escapeHtml(r.currency)}${flag ? `<img src="https://flagcdn.com/w40/${flag}.png" srcset="https://flagcdn.com/w80/${flag}.png 2x" alt="" loading="lazy" class="absolute inset-0 w-full h-full object-cover" onerror="this.remove()">` : ''}</span>

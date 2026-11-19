@@ -1,0 +1,620 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Panduan POS Skyline (HP)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* Phone manual: 9:16 pages (108 x 192 mm). Content lives in #pool and is paginated by the script at the bottom. */
+:root{
+  --ink:#0f2530; --soft:#4a6170; --muted:#6b7f8b; --line:#d9e4e8;
+  --brand:#00c9c4; --brand-ink:#047c79; --tint:#e3faf9; --bg:#f4f8f9;
+  --mark:#e8590c; --warn:#b45309; --warn-bg:#fff7e6; --danger:#b42318; --danger-bg:#fdecea;
+}
+@page{size:108mm 192mm;margin:0}
+*{box-sizing:border-box}
+html,body{margin:0;background:#dfe6e9;color:var(--ink);font:9.5pt/1.5 "Plus Jakarta Sans",system-ui,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+body{counter-reset:pg}
+.page{width:108mm;height:192mm;margin:0 auto 6mm;background:#fff;position:relative;overflow:hidden;padding:6.5mm 7mm 11mm;display:flex;flex-direction:column;counter-increment:pg;break-after:page}
+@media print{html,body{background:#fff}.page{margin:0}section.page:last-of-type{break-after:auto}}
+
+/* running head + foot */
+.kop{display:flex;align-items:center;gap:2.2mm;padding-bottom:2.4mm;border-bottom:1px solid var(--line);margin-bottom:4mm;flex:none}
+.kop img{height:6.5mm}
+.kop .co{font-weight:800;font-size:7pt;letter-spacing:.01em}
+.kop .chap-name{margin-left:auto;font-size:6.8pt;color:var(--brand-ink);font-weight:700;text-align:right;max-width:40mm;line-height:1.25}
+.foot{position:absolute;left:7mm;right:7mm;bottom:4.5mm;display:flex;justify-content:space-between;font-size:6.3pt;color:var(--muted);border-top:1px solid var(--line);padding-top:1.6mm}
+.foot .pg::after{content:counter(pg)}
+.body{flex:1;min-height:0;display:flex;flex-direction:column;gap:3mm}
+
+/* type */
+.chip{display:inline-block;align-self:flex-start;font-size:7.2pt;font-weight:800;color:var(--brand-ink);background:var(--tint);border-radius:99px;padding:.6mm 3mm;letter-spacing:.02em}
+h2{font-size:15pt;line-height:1.15;margin:0;letter-spacing:-.015em;text-wrap:balance}
+h3{font-size:11pt;line-height:1.25;margin:1mm 0 0;text-wrap:balance}
+h3 .sub{color:var(--brand-ink);margin-right:1.5mm}
+p{margin:0}
+.lead{color:var(--soft);font-size:9.5pt}
+.ui{display:inline-block;font-weight:700;font-size:.92em;background:var(--bg);border:1px solid var(--line);border-radius:1.4mm;padding:0 1.4mm;line-height:1.45;white-space:nowrap}
+
+/* figures */
+figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:1.5mm}
+figure img{display:block;max-width:100%;max-height:var(--h,118mm);width:auto;height:auto;border-radius:2.2mm;border:1px solid var(--line);background:#fff}
+figure.doc img{border-radius:1mm}
+figcaption{font-size:7.2pt;color:var(--muted);text-align:center;line-height:1.35}
+figcaption b{color:var(--ink)}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:2.5mm;align-items:start}
+.pair figure img{max-height:var(--h,90mm)}
+
+/* steps: orange numbers match the circles in the pictures */
+ol.steps{list-style:none;margin:0;padding:0;counter-reset:st calc(var(--start,1) - 1);display:flex;flex-direction:column;gap:1.6mm}
+ol.steps>li{counter-increment:st;position:relative;padding-left:7mm;min-height:5mm}
+ol.steps>li::before{content:counter(st);position:absolute;left:0;top:-.1mm;width:5mm;height:5mm;border-radius:50%;background:var(--mark);color:#fff;font-weight:800;font-size:7.2pt;line-height:5mm;text-align:center}
+ol.flow>li::before{background:var(--ink)}
+ul.ticks{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:1.4mm}
+ul.ticks li{position:relative;padding-left:5mm}
+ul.ticks li::before{content:"";position:absolute;left:.6mm;top:1.7mm;width:2.2mm;height:1.2mm;border-left:1.6px solid var(--brand-ink);border-bottom:1.6px solid var(--brand-ink);transform:rotate(-45deg)}
+
+/* call-outs */
+.note,.warn,.danger{border-radius:2.2mm;padding:2.2mm 2.8mm;font-size:8.8pt;line-height:1.45}
+.note{background:var(--tint);color:#064e4b}
+.warn{background:var(--warn-bg);color:#7a3d06}
+.danger{background:var(--danger-bg);color:#7f1d1d}
+
+/* key-value tables */
+table.kv{width:100%;border-collapse:collapse;font-size:8.3pt;line-height:1.35}
+table.kv th{text-align:left;font-size:7.2pt;color:var(--muted);font-weight:700;padding:1.2mm 1.5mm;border-bottom:1px solid var(--line)}
+table.kv td{padding:1.4mm 1.5mm;border-bottom:1px solid var(--line);vertical-align:top}
+table.kv td:first-child{font-weight:700;white-space:nowrap}
+table.kv td.n{color:#fff;font-weight:800;text-align:center;width:6mm}
+table.kv td.n span{display:inline-block;width:4.6mm;height:4.6mm;border-radius:50%;background:var(--mark);line-height:4.6mm;font-size:6.8pt}
+
+/* cover */
+.cover{padding:0}
+.cover .hero{height:96mm;background:linear-gradient(160deg,#e3faf9 0%,#c9f1ef 55%,#9fe3df 100%);position:relative;overflow:hidden;border-radius:0 0 7mm 7mm;display:flex;justify-content:center;align-items:flex-end}
+.cover .brand{position:absolute;top:7mm;left:7mm;display:flex;align-items:center;gap:2.2mm}
+.cover .brand img{height:8mm}
+.cover .brand .n{font-weight:800;font-size:9pt;line-height:1.1}
+.cover .brand .s{font-size:6.5pt;color:var(--soft)}
+.cover .phone{width:46mm;height:76mm;border-radius:6mm 6mm 0 0;border:2.2mm solid #0f2530;border-bottom:0;overflow:hidden;background:#fff;box-shadow:0 -2mm 6mm rgba(15,37,48,.18)}
+.cover .phone img{width:100%;display:block}
+.cover .txt{padding:7mm 7mm 0}
+.cover h1{font-size:20pt;line-height:1.08;margin:2.5mm 0 2.5mm;letter-spacing:-.02em;font-weight:800}
+.cover h1 span{color:var(--brand-ink)}
+.cover .desc{color:var(--soft);font-size:9pt}
+.cover .meta{position:absolute;left:7mm;right:7mm;bottom:7mm;display:flex;justify-content:space-between;align-items:flex-end;gap:3mm;border-top:1px solid var(--line);padding-top:3mm;font-size:6.8pt;color:var(--soft)}
+.cover .meta .co{font-weight:800;color:var(--ink);font-size:7.6pt}
+
+/* table of contents */
+.toc{list-style:none;margin:0;padding:0}
+.toc li{display:flex;align-items:baseline;gap:2mm;padding:1.25mm 0;border-bottom:1px solid var(--line);font-size:8.6pt}
+.toc .c{font-weight:800;color:var(--brand-ink);font-size:7pt;width:12mm;flex:none}
+.toc .t{font-weight:600;flex:1}
+.toc .p{font-weight:700;font-size:7.6pt}
+</style>
+</head>
+<body>
+
+<!-- ================= COVER ================= -->
+<section class="page cover">
+  <div class="hero">
+    <div class="brand"><img src="{{logo}}" alt=""><div><div class="n">Skyline Exchange</div><div class="s">Authorized Money Changer</div></div></div>
+    <div class="phone"><img src="img/cover.jpg" alt="Aplikasi POS di HP"></div>
+  </div>
+  <div class="txt">
+    <span class="chip">Versi HP · November 2026</span>
+    <h1>Panduan Penggunaan <span>Sistem POS</span> Money Changer</h1>
+    <p class="desc">Langkah demi langkah: transaksi beli dan jual valas, stok valas, kepatuhan Bank Indonesia, laporan, dan keuangan.</p>
+  </div>
+  <div class="meta">
+    <div><div class="co">PT. UNIVERSAL VALUTA PRIMA</div>Jl. Bypass Ngurah Rai No. 4X, Kuta, Bali<br>+6285-122-777-970</div>
+  </div>
+</section>
+
+<!-- ================= TOC ================= -->
+<section class="page" data-fixed>
+  <header class="kop"><img src="{{logo}}" alt=""><div class="co">PT. UNIVERSAL VALUTA PRIMA</div><div class="chap-name">Daftar isi</div></header>
+  <div class="body">
+    <h2>Daftar isi</h2>
+    <ol class="toc" id="toc"></ol>
+  </div>
+  <footer class="foot"><span>Panduan Sistem POS · Skyline Exchange</span><span class="pg"></span></footer>
+</section>
+
+<!-- ================= CONTENT POOL ================= -->
+<div id="pool">
+
+<section class="chapter" data-chap="Pengantar" data-title="Tentang panduan ini">
+  <span class="chip">Pengantar</span>
+  <h2>Tentang panduan ini</h2>
+  <p class="lead">Panduan ini menjelaskan cara memakai aplikasi POS Skyline Exchange di <b>skylinemoneychanger.com/pos</b>, dari pengaturan awal sampai laporan untuk Bank Indonesia.</p>
+  <ul class="ticks">
+    <li>Angka bulat oranye pada gambar sama dengan nomor langkah di bawahnya.</li>
+    <li>Nama tombol dan menu ditulis seperti di layar, misalnya <span class="ui">Simpan</span>.</li>
+    <li>Gambar diambil dari tampilan HP. Di komputer, susunannya lebih lebar tapi tombolnya sama.</li>
+    <li>Data customer pada gambar adalah data contoh.</li>
+  </ul>
+  <div class="note">Aplikasi bisa dibuka dari HP, tablet, atau komputer kasir dengan browser Chrome. Pastikan internet tersambung agar transaksi langsung tersimpan di server.</div>
+</section>
+
+<!-- ===== BAB 1 ===== -->
+<section class="chapter" data-chap="Bab 1" data-title="Masuk ke aplikasi">
+  <span class="chip">Bab 1</span>
+  <h2>Masuk ke aplikasi</h2>
+  <p class="lead">Setiap kasir punya akun sendiri. Nama kasir tercetak di struk dan tercatat di setiap transaksi.</p>
+  <figure style="--h:96mm"><img src="img/login.jpg" alt=""><figcaption><b>Gambar 1.1</b> Halaman masuk</figcaption></figure>
+  <ol class="steps">
+    <li>Ketik <b>username</b> kasir atau admin.</li>
+    <li>Ketik <b>password</b>. Tekan ikon mata untuk melihat password yang diketik.</li>
+    <li>Tekan <span class="ui">Masuk Kasir</span>.</li>
+  </ol>
+  <div class="note">Centang <b>Ingat Saya</b> hanya di perangkat milik toko. Di perangkat umum, jangan dicentang.</div>
+  <h3>Akun kasir dan password</h3>
+  <figure><img src="img/set-users.jpg" alt=""><figcaption><b>Gambar 1.2</b> Pengaturan → Akun Kasir</figcaption></figure>
+  <ol class="steps">
+    <li>Untuk mengganti password sendiri, ketik <b>password saat ini</b>.</li>
+    <li>Ketik <b>password baru</b> (minimal 6 karakter), lalu <span class="ui">Simpan password</span>.</li>
+    <li>Admin: <span class="ui">Tambah kasir</span> untuk membuat akun kasir baru.</li>
+    <li>Daftar akun. Admin bisa <span class="ui">Reset Sandi</span> jika kasir lupa password, atau <span class="ui">Hapus</span> akun yang tidak dipakai.</li>
+  </ol>
+  <h3>Menu utama</h3>
+  <p>Setelah masuk, aplikasi membuka halaman kasir. Menu ada di bagian atas. Di HP, geser baris menu ke kiri untuk melihat menu lainnya.</p>
+  <figure><img src="img/menu.jpg" alt=""><figcaption><b>Gambar 1.3</b> Bagian atas aplikasi</figcaption></figure>
+  <figure><img src="img/menu-more.jpg" alt=""><figcaption><b>Gambar 1.4</b> Menu setelah digeser</figcaption></figure>
+  <table class="kv">
+    <tr><th></th><th>Menu</th><th>Fungsi</th></tr>
+    <tr><td class="n"><span>1</span></td><td>Terang / Gelap</td><td>Mengganti tema tampilan.</td></tr>
+    <tr><td class="n"><span>2</span></td><td>Keluar</td><td>Keluar dari akun kasir. Lakukan setiap selesai shift.</td></tr>
+    <tr><td class="n"><span>3</span></td><td>Kasir Transaksi</td><td>Mencatat transaksi beli dan jual valas, lalu mencetak struk.</td></tr>
+    <tr><td class="n"><span>4</span></td><td>Papan Kurs</td><td>Kurs beli dan jual harian, dan tampilan kurs di TV toko.</td></tr>
+    <tr><td class="n"><span>5</span></td><td>Stok Valas</td><td>Posisi valas yang kita pegang saat ini.</td></tr>
+    <tr><td class="n"><span>6</span></td><td>Riwayat &amp; Laporan</td><td>Daftar transaksi, cetak ulang struk, Laporan BI, Laporan Kepatuhan.</td></tr>
+    <tr><td class="n"><span>7</span></td><td>Keuangan</td><td>Catat biaya dan mutasi kas/bank, laporan keuangan.</td></tr>
+    <tr><td class="n"><span>8</span></td><td>Pengaturan</td><td>Profil toko, printer, akun kasir, kepatuhan BI, saldo awal.</td></tr>
+  </table>
+</section>
+
+<!-- ===== BAB 2 ===== -->
+<section class="chapter" data-chap="Bab 2" data-title="Langkah awal sebelum transaksi">
+  <span class="chip">Bab 2</span>
+  <h2>Langkah awal sebelum transaksi</h2>
+  <p class="lead">Lakukan sekali saja saat pertama memakai aplikasi, dengan akun <b>admin</b>. Data ini muncul di struk dan di semua laporan.</p>
+  <figure><img src="img/set-subtabs.jpg" alt=""><figcaption><b>Gambar 2.1</b> Bagian di menu Pengaturan. Geser ke kiri untuk melihat semuanya.</figcaption></figure>
+  <table class="kv">
+    <tr><td class="n"><span>1</span></td><td>Profil Toko</td><td>Data perusahaan dan printer struk.</td></tr>
+    <tr><td class="n"><span>2</span></td><td>Akun Kasir</td><td>Password dan akun kasir (Bab 1).</td></tr>
+    <tr><td class="n"><span>3</span></td><td>Database &amp; Backup</td><td>Unduh cadangan data.</td></tr>
+    <tr><td class="n"><span>4</span></td><td>Kepatuhan BI</td><td>Batas threshold dan daftar DTTOT.</td></tr>
+    <tr><td class="n"><span>5</span></td><td>Stok Valas</td><td>Saldo awal valas dan kurs tengah BN.</td></tr>
+    <tr><td class="n"><span>6</span></td><td>Google Sheets</td><td>Salinan transaksi ke Google Sheets.</td></tr>
+  </table>
+  <h3><span class="sub">2.1</span>Profil perusahaan</h3>
+  <figure><img src="img/set-store.jpg" alt=""><figcaption><b>Gambar 2.2</b> Pengaturan → Profil Toko</figcaption></figure>
+  <ol class="steps">
+    <li>Isi <b>Nama PT</b> sesuai akta perusahaan.</li>
+    <li>Isi <b>alamat outlet</b>.</li>
+    <li>Isi <b>nomor WhatsApp / telepon</b>.</li>
+    <li>Isi <b>NPWP perusahaan</b> dan <b>kota</b>. Kota dipakai di tanda tangan laporan.</li>
+    <li>Isi <b>nama direktur</b> untuk tanda tangan Laba/Rugi dan Neraca.</li>
+  </ol>
+  <p>Gulir ke bawah, lalu tekan <span class="ui">Simpan Pengaturan</span>.</p>
+  <div class="note">Nomor izin KUPVA BB dari Bank Indonesia bisa diisi juga. Centang <b>Tampilkan di Struk</b> bila ingin nomor izin tercetak.</div>
+  <h3><span class="sub">2.2</span>Printer struk 76 mm</h3>
+  <p>Struk dicetak langsung ke printer kasir iWare DM-76H (atau printer ESC/POS lain) melalui program kecil <b>Skyline Print Bridge</b> di PC kasir.</p>
+  <figure><img src="img/set-printer-paper.jpg" alt=""><figcaption><b>Gambar 2.3</b> Ukuran kertas</figcaption></figure>
+  <figure><img src="img/set-printer.jpg" alt=""><figcaption><b>Gambar 2.4</b> Printer USB lewat Print Bridge</figcaption></figure>
+  <ol class="steps">
+    <li>Di <span class="ui">Profil Toko</span>, pilih kertas <b>76 mm (Dot Matrix / Pita)</b>.</li>
+    <li>Unduh dan jalankan <b>SkylinePrintBridge.cmd</b> di PC kasir (sekali saja), lalu tekan <span class="ui">Cek koneksi</span>. Pilih printer kasir dari daftar.</li>
+    <li>Tekan <span class="ui">Tes cetak ESC/POS</span>. Printer mencetak struk percobaan.</li>
+  </ol>
+  <p>Terakhir, tekan <span class="ui">Simpan Pengaturan</span>.</p>
+  <h3><span class="sub">2.3</span>Batas threshold</h3>
+  <figure><img src="img/set-threshold.jpg" alt=""><figcaption><b>Gambar 2.5</b> Pengaturan → Kepatuhan BI</figcaption></figure>
+  <ol class="steps">
+    <li>Isi <b>batas threshold</b> dalam Rupiah, setara USD 10.000 (contoh: Rp 180.000.000).</li>
+    <li>Tekan <span class="ui">Simpan batas</span>. Batas langsung berlaku untuk semua kasir.</li>
+  </ol>
+  <h3><span class="sub">2.4</span>Papan kurs harian</h3>
+  <figure><img src="img/rates.jpg" alt=""><figcaption><b>Gambar 2.6</b> Menu Papan Kurs</figcaption></figure>
+  <ol class="steps">
+    <li><span class="ui">Tampilan TV</span> membuka papan kurs untuk layar TV di toko.</li>
+    <li><span class="ui">Edit kurs beli sekaligus</span> mengubah semua kurs beli dalam satu kali simpan.</li>
+    <li><span class="ui">Tambah Mata Uang</span> untuk mata uang baru.</li>
+  </ol>
+  <p>Untuk mengubah kurs satu mata uang, geser tabel ke kiri lalu tekan <span class="ui">Edit Kurs</span> di baris mata uang itu.</p>
+  <h3><span class="sub">2.5</span>Saldo awal valas</h3>
+  <p>Buka <span class="ui">Pengaturan</span> → <span class="ui">Stok Valas</span>. Saldo awal adalah titik mulai menu Stok Valas, Laporan Summary Valas BI, dan laporan keuangan.</p>
+  <figure><img src="img/set-stock.jpg" alt=""><figcaption><b>Gambar 2.7</b> Saldo awal valas</figcaption></figure>
+  <ol class="steps">
+    <li>Pilih <b>tanggal mulai</b> pemakaian aplikasi.</li>
+    <li>Isi <b>jumlah valas</b> di brankas dan <b>kurs rata-rata</b> pembeliannya. Nilai Rupiah terhitung otomatis.</li>
+    <li>Tekan <span class="ui">Simpan saldo awal</span>.</li>
+  </ol>
+  <h3><span class="sub">2.6</span>Kurs tengah BN</h3>
+  <figure><img src="img/set-middle.jpg" alt=""><figcaption><b>Gambar 2.8</b> Kurs tengah untuk menilai saldo akhir</figcaption></figure>
+  <ol class="steps">
+    <li>Pilih <b>tanggal</b>, biasanya hari terakhir periode laporan.</li>
+    <li>Tekan <span class="ui">Isi dari Papan Kurs</span> untuk mengisi titik tengah kurs beli dan jual.</li>
+    <li>Ubah angka bila perlu.</li>
+    <li>Tekan <span class="ui">Simpan kurs tengah</span>.</li>
+  </ol>
+  <h3><span class="sub">2.7</span>Saldo awal keuangan</h3>
+  <p>Diisi sekali oleh admin di menu <span class="ui">Keuangan</span>, bagian paling bawah. Tanggalnya mengikuti tanggal saldo awal valas.</p>
+  <figure style="--h:112mm"><img src="img/fin-opening.jpg" alt=""><figcaption><b>Gambar 2.9</b> Keuangan → Saldo awal keuangan</figcaption></figure>
+  <ol class="steps">
+    <li>Isi saldo <b>kas</b> (Rupiah di laci dan brankas) dan saldo <b>bank</b>.</li>
+    <li>Isi <b>modal disetor</b> dan <b>laba ditahan</b> sampai tanggal mulai.</li>
+    <li>Isi <b>aset tetap</b> dan akumulasi penyusutannya, juga piutang dan hutang bila ada.</li>
+    <li>Tekan <span class="ui">Simpan saldo awal</span>.</li>
+  </ol>
+  <div class="note"><b>Agar Neraca seimbang:</b> kas + bank + stok valas + piutang + pajak dibayar di muka + aset tetap bersih harus sama dengan hutang + modal disetor + laba ditahan.</div>
+</section>
+
+<!-- ===== BAB 3 ===== -->
+<section class="chapter" data-chap="Bab 3" data-title="Transaksi pembelian valas">
+  <span class="chip">Bab 3</span>
+  <h2>Transaksi pembelian valas</h2>
+  <p class="lead">Customer menyerahkan valas, kasir membayar Rupiah. Mulai dari data customer, lalu valasnya.</p>
+  <h3><span class="sub">Langkah 1</span>Data customer</h3>
+  <figure><img src="img/pos-customer.jpg" alt=""><figcaption><b>Gambar 3.1</b> Kartu Customer di Kasir Transaksi</figcaption></figure>
+  <ol class="steps">
+    <li>Isi <b>nama lengkap</b> sesuai identitas.</li>
+    <li>Isi <b>telepon / WhatsApp</b>.</li>
+    <li>Isi <b>No. KTP / paspor</b> (wajib). Customer lama terisi otomatis.</li>
+    <li>Atau tekan <span class="ui">Cari</span> untuk mencari customer lama berdasarkan nama.</li>
+    <li>Buka <b>Data tambahan</b>: NPWP, kewarganegaraan, pekerjaan, jenis kelamin, alamat, tanggal dan tempat lahir, kategori.</li>
+    <li>Centang <b>PEP</b> hanya jika customer pejabat publik (Bab 6).</li>
+  </ol>
+  <h3><span class="sub">Langkah 2</span>Pilih valas</h3>
+  <figure><img src="img/pos-buy-items.jpg" alt=""><figcaption><b>Gambar 3.2</b> Memilih valas dan jumlah</figcaption></figure>
+  <ol class="steps">
+    <li>Pastikan <span class="ui">Beli valas</span> aktif (hijau).</li>
+    <li>Tekan kotak <b>mata uang</b>. Kurs beli hari ini terisi otomatis.</li>
+    <li>Ketik <b>jumlah</b> lembar valas.</li>
+    <li>Tekan <span class="ui">Tambah</span>. Ulangi untuk mata uang lain.</li>
+  </ol>
+  <figure><img src="img/pos-cart.jpg" alt=""><figcaption><b>Gambar 3.3</b> Rincian transaksi</figcaption></figure>
+  <ol class="steps" style="--start:5">
+    <li>Periksa <b>Rincian</b>. Tekan ikon tempat sampah untuk menghapus baris yang salah.</li>
+  </ol>
+  <h3><span class="sub">Langkah 3</span>Simpan dan cetak struk</h3>
+  <figure><img src="img/pos-receipt.jpg" alt=""><figcaption><b>Gambar 3.4</b> Total dan tombol cetak</figcaption></figure>
+  <ol class="steps">
+    <li>Cek total, lalu tekan <span class="ui">Proses &amp; cetak struk</span>. Nomor struk dibuat otomatis dan struk langsung tercetak.</li>
+    <li><b>Pratinjau struk</b> menampilkan struk sebelum dicetak.</li>
+    <li><span class="ui">Cetak USB</span> mencetak ulang ke printer kasir. Ada juga <span class="ui">Cetak BT</span> (Bluetooth) dan <span class="ui">Kirim WA</span>.</li>
+  </ol>
+  <figure><img src="img/pos-mobile-bar.jpg" alt=""><figcaption><b>Gambar 3.5</b> Di HP, total dan tombol <b>Proses</b> selalu ada di bawah layar</figcaption></figure>
+  <figure style="--h:120mm"><img src="img/receipt.jpg" alt=""><figcaption><b>Gambar 3.6</b> Contoh struk 76 mm</figcaption></figure>
+</section>
+
+<!-- ===== BAB 4 ===== -->
+<section class="chapter" data-chap="Bab 4" data-title="Notifikasi threshold">
+  <span class="chip">Bab 4</span>
+  <h2>Notifikasi threshold</h2>
+  <p class="lead">Jika total transaksi mencapai batas threshold, kartu peringatan muncul di bagian atas halaman kasir. Tulisan <b>Jumlah Transaksi Melebihi Threshold</b> berkedip merah-putih.</p>
+  <figure><img src="img/pos-threshold.jpg" alt=""><figcaption><b>Gambar 4.1</b> Peringatan threshold dan dokumen underlying</figcaption></figure>
+  <ol class="steps">
+    <li>Notifikasi berkedip sampai dokumen underlying dilengkapi.</li>
+    <li>Pilih <b>jenis dokumen underlying</b>: tiket, invoice, biaya pendidikan, pengobatan, kontrak, atau lainnya.</li>
+    <li>Isi <b>nomor dokumen</b>, lalu lanjutkan transaksi seperti biasa.</li>
+  </ol>
+  <div class="warn">Transaksi di atas threshold tidak bisa disimpan sebelum dokumen underlying diisi. Simpan salinan dokumennya bersama arsip struk.</div>
+  <h3>Threshold per customer</h3>
+  <p>Beberapa transaksi kecil dari customer yang sama juga bisa melewati batas jika dijumlahkan. Cek dengan laporan <b>Threshold by Customer</b> (Bab 10).</p>
+</section>
+
+<!-- ===== BAB 5 ===== -->
+<section class="chapter" data-chap="Bab 5" data-title="Transaksi penjualan valas">
+  <span class="chip">Bab 5</span>
+  <h2>Transaksi penjualan valas</h2>
+  <p class="lead">Customer membayar Rupiah, kasir menyerahkan valas. Data customer diisi sama seperti pembelian (Bab 3, Langkah 1).</p>
+  <figure><img src="img/pos-sell.jpg" alt=""><figcaption><b>Gambar 5.1</b> Mode Jual valas</figcaption></figure>
+  <ol class="steps">
+    <li>Tekan <span class="ui">Jual valas</span> (oranye).</li>
+    <li>Tekan <b>mata uang</b>, ketik jumlah, lalu <span class="ui">Tambah</span>. Kurs jual terisi otomatis.</li>
+  </ol>
+  <figure><img src="img/pos-sell-pay.jpg" alt=""><figcaption><b>Gambar 5.2</b> Pembayaran dan kembalian</figcaption></figure>
+  <ol class="steps" style="--start:3">
+    <li>Ketik <b>uang diterima</b> dari customer. Kembalian dihitung otomatis.</li>
+    <li>Atau tekan tombol cepat: <span class="ui">Uang pas</span>, <span class="ui">+50rb</span>, <span class="ui">+100rb</span>, dan seterusnya.</li>
+    <li>Tekan <span class="ui">Proses &amp; cetak struk</span>.</li>
+  </ol>
+  <div class="note">Stok valas berkurang otomatis setiap penjualan. Sisa stok terlihat di menu <b>Stok Valas</b> (Bab 8).</div>
+</section>
+
+<!-- ===== BAB 6 ===== -->
+<section class="chapter" data-chap="Bab 6" data-title="Customer PEP">
+  <span class="chip">Bab 6</span>
+  <h2>Customer PEP (pejabat publik)</h2>
+  <p class="lead">PEP (<i>Politically Exposed Person</i>) wajib menjalani uji tuntas lanjut (EDD) dan mendapat persetujuan direksi sebelum transaksi.</p>
+  <figure><img src="img/pos-pep.jpg" alt=""><figcaption><b>Gambar 6.1</b> Form EDD untuk customer PEP</figcaption></figure>
+  <ol class="steps">
+    <li>Centang <b>Customer adalah PEP (pejabat publik)</b>. Form EDD muncul.</li>
+    <li>Isi <b>institusi / jabatan</b>, misalnya Kepala Dinas atau anggota DPRD.</li>
+    <li>Pilih <b>sumber dana</b>.</li>
+    <li>Pilih <b>tujuan transaksi</b>.</li>
+    <li>Centang konfirmasi <b>persetujuan direksi / senior management</b>.</li>
+  </ol>
+  <div class="note">Transaksi PEP diberi tanda <b>PEP</b> di Riwayat dan ikut tercantum di export PPATK.</div>
+</section>
+
+<!-- ===== BAB 7 ===== -->
+<section class="chapter" data-chap="Bab 7" data-title="Skrining DTTOT">
+  <span class="chip">Bab 7</span>
+  <h2>Skrining DTTOT / DPPSPM</h2>
+  <p class="lead">Setiap nama customer dicek otomatis ke Daftar Terduga Teroris dan Organisasi Teroris (DTTOT) serta DPPSPM saat kasir mengetik.</p>
+  <figure><img src="img/pos-dttot.jpg" alt=""><figcaption><b>Gambar 7.1</b> Nama cocok dengan daftar (contoh nama fiktif)</figcaption></figure>
+  <ol class="steps">
+    <li>Kasir mengetik nama customer seperti biasa.</li>
+    <li>Jika nama cocok, kotak merah <b>Transaksi dibekukan</b> muncul dengan detail kecocokan, dan tombol proses terkunci.</li>
+  </ol>
+  <div class="danger"><b>Jangan lanjutkan transaksi.</b> Sesuai PBI APU PPT, transaksi wajib dibekukan tanpa penundaan. Segera laporkan ke petugas kepatuhan, direksi, dan PPATK.</div>
+  <h3>Daftar DTTOT di aplikasi</h3>
+  <figure><img src="img/set-dttot.jpg" alt=""><figcaption><b>Gambar 7.2</b> Pengaturan → Kepatuhan BI → Daftar DTTOT / DPPSPM</figcaption></figure>
+  <ol class="steps">
+    <li>Ketik nama atau alias untuk mencari di daftar.</li>
+    <li>Saring berdasarkan jenis daftar: DTTOT, DPPSPM, atau internal.</li>
+  </ol>
+  <p>Admin menambah nama baru dengan <span class="ui">Tambah Data DTTOT</span> di atas daftar.</p>
+</section>
+
+<!-- ===== BAB 8 ===== -->
+<section class="chapter" data-chap="Bab 8" data-title="Stok valas">
+  <span class="chip">Bab 8</span>
+  <h2>Stok valas</h2>
+  <p class="lead">Menu <span class="ui">Stok Valas</span> menunjukkan valas yang kita pegang saat ini: saldo awal valas + pembelian − penjualan. Angkanya sama dengan Laporan Summary Valas BI.</p>
+  <figure><img src="img/stock.jpg" alt=""><figcaption><b>Gambar 8.1</b> Ringkasan stok valas</figcaption></figure>
+  <ol class="steps">
+    <li><span class="ui">Muat ulang</span> mengambil angka terbaru. Waktu di sebelahnya menunjukkan kapan angka diambil.</li>
+    <li><b>Total nilai pokok</b>: modal Rupiah yang tertanam di seluruh stok valas, dengan harga pokok rata-rata.</li>
+    <li><b>Total nilai pada kurs beli hari ini</b>: nilai stok jika dihitung dengan kurs beli di Papan Kurs.</li>
+  </ol>
+  <h3>Tabel per mata uang</h3>
+  <p>Di HP, tabel bisa digeser ke kiri. Mata uang yang ada stoknya tampil paling atas. Yang kosong tampil pudar di bawah.</p>
+  <figure><img src="img/stock-table.jpg" alt=""><figcaption><b>Gambar 8.2</b> Bagian kiri tabel</figcaption></figure>
+  <ol class="steps" style="--start:4">
+    <li><b>Stok</b>: jumlah valas yang ada sekarang.</li>
+    <li><b>Masuk hari ini</b>: valas yang dibeli dari customer hari ini.</li>
+    <li><b>Keluar hari ini</b>: valas yang dijual ke customer hari ini.</li>
+  </ol>
+  <figure><img src="img/stock-table-right.jpg" alt=""><figcaption><b>Gambar 8.3</b> Bagian kanan tabel setelah digeser</figcaption></figure>
+  <ol class="steps" style="--start:7">
+    <li><b>Harga pokok rata-rata</b>: rata-rata kurs beli stok yang tersisa.</li>
+    <li><b>Nilai pokok</b>: stok × harga pokok rata-rata.</li>
+    <li><b>Kurs beli hari ini</b> dari Papan Kurs.</li>
+    <li><b>Nilai kurs beli</b>: stok × kurs beli hari ini.</li>
+  </ol>
+  <div class="note">Pecahan besar dan kecil digabung per mata uang. Contoh: USD 100 dan USD 20, 10, 5 tampil sebagai satu baris USD.</div>
+  <h3>Peringatan di halaman Stok Valas</h3>
+  <ul class="ticks">
+    <li><b>Kuning, saldo awal belum diisi:</b> stok hanya dihitung dari transaksi. Isi saldo awal valas (Bab 2.5).</li>
+    <li><b>Merah, stok minus:</b> penjualan lebih banyak dari stok yang tercatat. Periksa saldo awal valas dan transaksi mata uang itu di Riwayat.</li>
+  </ul>
+</section>
+
+<!-- ===== BAB 9 ===== -->
+<section class="chapter" data-chap="Bab 9" data-title="Riwayat transaksi">
+  <span class="chip">Bab 9</span>
+  <h2>Riwayat transaksi</h2>
+  <p class="lead">Menu <span class="ui">Riwayat &amp; Laporan</span> berisi semua transaksi, total per periode, dan tombol laporan.</p>
+  <figure><img src="img/history-cards.jpg" alt=""><figcaption><b>Gambar 9.1</b> Total beli dan jual pada periode yang dipilih</figcaption></figure>
+  <figure><img src="img/history-toolbar.jpg" alt=""><figcaption><b>Gambar 9.2</b> Filter tanggal dan tombol laporan</figcaption></figure>
+  <ol class="steps">
+    <li>Pilih tanggal <b>Dari</b> dan <b>Sampai</b>.</li>
+    <li>Atau tekan <span class="ui">Hari Ini</span>, <span class="ui">Bulan Ini</span>, <span class="ui">Semua</span>.</li>
+    <li>Cari nomor struk atau nama customer.</li>
+    <li><span class="ui">Excel (.xlsx)</span> mengunduh daftar transaksi. Ada juga CSV dan PDF.</li>
+    <li><span class="ui">Laporan BI</span>: Laporan Summary Valas (Bab 11).</li>
+    <li><span class="ui">Laporan Kepatuhan</span>: threshold, negara, valas BN, PPATK (Bab 10).</li>
+  </ol>
+  <figure><img src="img/history.jpg" alt=""><figcaption><b>Gambar 9.3</b> Daftar transaksi. Geser ke kiri untuk tombol <b>Cetak</b> ulang struk.</figcaption></figure>
+</section>
+
+<!-- ===== BAB 10 ===== -->
+<section class="chapter" data-chap="Bab 10" data-title="Laporan kepatuhan">
+  <span class="chip">Bab 10</span>
+  <h2>Laporan kepatuhan</h2>
+  <p class="lead">Atur periode di filter tanggal Riwayat, lalu tekan <span class="ui">Laporan Kepatuhan</span>.</p>
+  <figure style="--h:122mm"><img src="img/compliance.jpg" alt=""><figcaption><b>Gambar 10.1</b> Jendela Laporan Kepatuhan</figcaption></figure>
+  <ol class="steps">
+    <li><b>Threshold by Customer:</b> ketik No. ID customer.</li>
+    <li>Tekan <span class="ui">Tampilkan</span>. Laporan terbuka di tab baru dan siap dicetak.</li>
+    <li><b>Transaksi by Negara:</b> pilih kewarganegaraan, lalu <span class="ui">Tampilkan</span>.</li>
+    <li><span class="ui">Excel</span> mengunduh laporan negara.</li>
+    <li><b>Laporan valas BN:</b> total pembelian atau penjualan per mata uang.</li>
+    <li><b>Export PPATK:</b> file Excel transaksi beli atau jual untuk pelaporan PPATK.</li>
+  </ol>
+  <div class="note">Setiap laporan punya tombol <b>Cetak / Simpan PDF</b>. Laporan dibuat untuk kertas A4. Di HP, perbesar gambar dengan dua jari.</div>
+  <h3>Transaksi customer by ID (threshold)</h3>
+  <figure class="doc"><img src="img/rpt-threshold-customer.jpg" alt=""><figcaption><b>Gambar 10.2</b> Customer melewati threshold dari dua transaksi</figcaption></figure>
+  <h3>Transaksi customer by nationality</h3>
+  <figure class="doc"><img src="img/rpt-nationality.jpg" alt=""><figcaption><b>Gambar 10.3</b> Transaksi per kewarganegaraan, dikelompokkan per customer</figcaption></figure>
+  <h3>Pembelian / penjualan valas BN</h3>
+  <figure class="doc"><img src="img/rpt-volume-buy.jpg" alt=""><figcaption><b>Gambar 10.4</b> Total pembelian valas per mata uang</figcaption></figure>
+</section>
+
+<!-- ===== BAB 11 ===== -->
+<section class="chapter" data-chap="Bab 11" data-title="Laporan Summary Valas untuk BI">
+  <span class="chip">Bab 11</span>
+  <h2>Laporan Summary Valas untuk BI</h2>
+  <p class="lead">Mutasi valas per mata uang dalam satu periode, untuk LKU bulanan Bank Indonesia.</p>
+  <ol class="steps flow">
+    <li>Buka <span class="ui">Riwayat &amp; Laporan</span>.</li>
+    <li>Atur periode, misalnya tekan <span class="ui">Bulan Ini</span>.</li>
+    <li>Tekan <span class="ui">Laporan BI</span>. Laporan terbuka di tab baru.</li>
+    <li>Tekan <b>Cetak / Simpan PDF</b> (kertas A4 landscape).</li>
+  </ol>
+  <figure class="doc"><img src="img/rpt-bi.jpg" alt=""><figcaption><b>Gambar 11.1</b> Laporan Summary Valas [By Currency]</figcaption></figure>
+  <table class="kv">
+    <tr><th>Kolom</th><th>Isi</th></tr>
+    <tr><td>Saldo awal</td><td>Stok valas di awal periode (valas dan Rupiah).</td></tr>
+    <tr><td>Volume pembelian</td><td>Total valas yang dibeli dari customer.</td></tr>
+    <tr><td>Volume penjualan</td><td>Total valas yang dijual ke customer.</td></tr>
+    <tr><td>Saldo akhir</td><td>Sisa stok, dinilai dengan kurs tengah BN. Jika kurs tengah belum diisi, memakai kurs rata-rata.</td></tr>
+  </table>
+  <div class="note">Isi <b>kurs tengah BN</b> untuk tanggal akhir periode (Bab 2.6) sebelum mencetak laporan bulanan.</div>
+</section>
+
+<!-- ===== BAB 12 ===== -->
+<section class="chapter" data-chap="Bab 12" data-title="Keuangan">
+  <span class="chip">Bab 12</span>
+  <h2>Keuangan</h2>
+  <p class="lead">Semua uang keluar-masuk selain transaksi valas dicatat di menu <span class="ui">Keuangan</span>, sesuai nota.</p>
+  <h3>Catat kas dan biaya</h3>
+  <figure><img src="img/fin-entry.jpg" alt=""><figcaption><b>Gambar 12.1</b> Form Catat kas &amp; biaya</figcaption></figure>
+  <ol class="steps">
+    <li>Pilih <b>tanggal</b> sesuai nota.</li>
+    <li>Pilih <b>jenis</b> catatan (lihat tabel).</li>
+    <li>Pilih <b>kategori</b>, misalnya gaji, sewa, listrik.</li>
+    <li>Ketik <b>jumlah</b> Rupiah.</li>
+    <li>Tulis <b>keterangan</b> dan nomor nota.</li>
+    <li>Tekan <span class="ui">Simpan catatan</span>.</li>
+  </ol>
+  <div class="note">Catatan yang salah hanya bisa dihapus oleh admin, lewat tombol <b>Hapus</b> di daftar catatan.</div>
+  <table class="kv">
+    <tr><th>Jenis catatan</th><th>Kapan dipakai</th></tr>
+    <tr><td>Biaya operasional</td><td>Gaji, sewa, iklan, listrik/telepon/air, transport, pemeliharaan, penyusutan, asuransi, ATK, PPh.</td></tr>
+    <tr><td>Tambah / kurang cash</td><td>Pemilik menambah modal tunai atau mengambil uang kas.</td></tr>
+    <tr><td>Setor / tarik bank</td><td>Memindahkan uang antara kas toko dan rekening bank.</td></tr>
+    <tr><td>Bunga / adm. bank</td><td>Bunga jasa giro dan biaya administrasi bank.</td></tr>
+    <tr><td>Hutang</td><td>Menerima pinjaman atau membayar hutang.</td></tr>
+    <tr><td>Piutang, pajak di muka</td><td>Memberi piutang, membayar pajak di muka, atau menerima pelunasan.</td></tr>
+    <tr><td>Aktiva / inventaris</td><td>Membeli aset tetap, misalnya komputer atau brankas.</td></tr>
+    <tr><td>Pendapatan lain</td><td>Pemasukan di luar transaksi valas.</td></tr>
+  </table>
+  <h3>Mencetak laporan keuangan (format LKU BI)</h3>
+  <figure><img src="img/fin-reports.jpg" alt=""><figcaption><b>Gambar 12.2</b> Periode dan tombol laporan</figcaption></figure>
+  <ol class="steps">
+    <li>Pilih tanggal <b>dari</b>.</li>
+    <li>Pilih tanggal <b>sampai</b>, atau tekan <span class="ui">Bulan ini</span>.</li>
+    <li><span class="ui">Kas Harian</span>: mutasi dan saldo kas.</li>
+    <li><span class="ui">Buku Bank</span>: mutasi rekening bank.</li>
+    <li><span class="ui">Laba / (Rugi)</span>: hasil usaha periode.</li>
+    <li><span class="ui">Neraca</span>: posisi aset, kewajiban, ekuitas.</li>
+  </ol>
+  <h3>Kas Harian</h3>
+  <figure class="doc" style="--h:112mm"><img src="img/rpt-kas.jpg" alt=""><figcaption><b>Gambar 12.3</b> Kas Harian dengan kode akun LKU dan saldo berjalan</figcaption></figure>
+  <table class="kv">
+    <tr><th>Kode</th><th>Isi</th></tr>
+    <tr><td>100</td><td>Saldo awal kas periode.</td></tr>
+    <tr><td>401 / 501</td><td>Pembelian valas (kas keluar) dan penjualan valas (kas masuk).</td></tr>
+    <tr><td>601–609</td><td>Biaya operasional per kategori.</td></tr>
+    <tr><td>700–950</td><td>Piutang, hutang, aktiva, dan mutasi kas lainnya.</td></tr>
+  </table>
+  <h3>Buku Bank</h3>
+  <figure class="doc"><img src="img/rpt-bank.jpg" alt=""><figcaption><b>Gambar 12.4</b> Buku Bank</figcaption></figure>
+  <p>Setoran kas ke bank menambah saldo bank dan mengurangi kas. Penarikan kebalikannya. Bunga dan biaya administrasi bank ikut tercatat di Laba / (Rugi).</p>
+  <h3>Laba / (Rugi)</h3>
+  <figure class="doc" style="--h:118mm"><img src="img/rpt-lr.jpg" alt=""><figcaption><b>Gambar 12.5</b> Laba / (Rugi) dengan tanda tangan direktur</figcaption></figure>
+  <div class="note"><b>Harga pokok</b> = saldo awal valas + pembelian − saldo akhir valas. <b>Laba bersih</b> = penjualan − harga pokok − beban operasional ± pendapatan/beban lain − pajak.</div>
+  <h3>Neraca</h3>
+  <figure class="doc" style="--h:112mm"><img src="img/rpt-neraca.jpg" alt=""><figcaption><b>Gambar 12.6</b> Neraca: aset sama dengan kewajiban + ekuitas</figcaption></figure>
+  <ul class="ticks">
+    <li><b>Aktiva:</b> kas dan bank, stok valas, piutang, pajak dibayar di muka, aset tetap bersih.</li>
+    <li><b>Kewajiban:</b> hutang bank, hutang dagang, dan kewajiban lain.</li>
+    <li><b>Ekuitas:</b> modal disetor, laba ditahan, dan laba / (rugi) periode berjalan.</li>
+  </ul>
+  <div class="note">Jika saldo awal tidak seimbang, Neraca menampilkan baris <b>selisih</b> berwarna merah. Periksa lagi saldo awal keuangan (Bab 2.7).</div>
+  <div class="warn">Penyusutan aset dicatat manual setiap bulan sebagai <b>Biaya operasional → Penyusutan</b>. Catatan ini tidak mengurangi kas.</div>
+</section>
+
+<!-- ===== PENUTUP ===== -->
+<section class="chapter" data-chap="Penutup" data-title="Rutinitas harian dan bulanan">
+  <span class="chip">Penutup</span>
+  <h2>Rutinitas harian dan bulanan</h2>
+  <h3>Setiap hari</h3>
+  <ol class="steps flow">
+    <li>Masuk dengan akun kasir masing-masing.</li>
+    <li>Perbarui kurs di <span class="ui">Papan Kurs</span> sebelum toko buka.</li>
+    <li>Isi identitas customer lengkap di setiap transaksi.</li>
+    <li>Lengkapi dokumen underlying jika muncul notifikasi threshold.</li>
+    <li>Cek <span class="ui">Stok Valas</span> sebelum menjual dalam jumlah besar.</li>
+    <li>Catat biaya dan setoran bank hari itu di <span class="ui">Keuangan</span>.</li>
+    <li>Cek total harian di <span class="ui">Riwayat &amp; Laporan</span>, lalu keluar dari akun.</li>
+  </ol>
+  <h3>Setiap akhir bulan</h3>
+  <ol class="steps flow">
+    <li>Isi kurs tengah BN untuk tanggal akhir bulan.</li>
+    <li>Catat penyusutan aset bulan itu.</li>
+    <li>Cetak Laporan Summary Valas untuk BI.</li>
+    <li>Cetak Kas Harian, Buku Bank, Laba/Rugi, dan Neraca.</li>
+    <li>Export PPATK bila diperlukan.</li>
+    <li>Unduh backup di <span class="ui">Pengaturan</span> → <span class="ui">Database &amp; Backup</span>.</li>
+  </ol>
+  <div class="note">Pertanyaan atau kendala aplikasi: hubungi admin <b>PT. UNIVERSAL VALUTA PRIMA</b> di <b>+6285-122-777-970</b>.</div>
+</section>
+
+</div>
+
+<template id="tpl"><section class="page"><header class="kop"><img src="{{logo}}" alt=""><div class="co">PT. UNIVERSAL VALUTA PRIMA</div><div class="chap-name"></div></header><div class="body"></div><footer class="foot"><span>Panduan Sistem POS · Skyline Exchange</span><span class="pg"></span></footer></section></template>
+
+<script>
+// Paginate: every chapter starts on a new page; blocks are never split; headings stay with what follows.
+// A figure that does not fit may shrink to 70% of its height before moving to the next page.
+window.build = async () => {
+  await Promise.all([...document.images].map(i => i.complete ? 0 : new Promise(r => { i.onload = i.onerror = r; })));
+  await document.fonts.ready;
+  const tpl = document.getElementById('tpl');
+  const pool = document.getElementById('pool');
+  const MM = 96 / 25.4;
+  let body;
+  const newPage = chap => {
+    const pg = tpl.content.firstElementChild.cloneNode(true);
+    pg.querySelector('.chap-name').textContent = chap;
+    document.body.insertBefore(pg, pool);
+    body = pg.querySelector('.body');
+  };
+  const fits = () => body.scrollHeight <= body.clientHeight + 1;
+  const keepNext = el => el.matches('h2,h3,.chip,.lead') && !el.matches('.lead.solo');
+  const toc = [];
+  for (const ch of [...pool.querySelectorAll('section.chapter')]) {
+    const label = ch.dataset.chap;
+    newPage(label);
+    const anchor = document.createElement('span');
+    anchor.id = 'ch-' + toc.length;
+    body.appendChild(anchor);
+    toc.push({ id: anchor.id, chap: label, title: ch.dataset.title });
+    for (const el of [...ch.children]) {
+      body.appendChild(el);
+      if (fits()) continue;
+      const img = el.matches('figure') ? el.querySelector('img') : null;
+      if (img) {
+        // shrink the picture to the room left, down to 70% of its natural page height
+        const h0 = img.getBoundingClientRect().height;
+        const room = h0 - (body.scrollHeight - body.clientHeight) - 2;
+        if (room >= h0 * 0.7) { img.style.maxHeight = room + 'px'; if (fits()) continue; img.style.maxHeight = ''; }
+      } else if (!keepNext(el)) {
+        // keep steps and notes on the same page as the picture above them: shrink that picture (down to 60%)
+        const figs = [...body.querySelectorAll(':scope > figure img')];
+        const last = figs[figs.length - 1];
+        if (last) {
+          const h0 = last.getBoundingClientRect().height;
+          const room = h0 - (body.scrollHeight - body.clientHeight) - 2;
+          if (room >= h0 * 0.6) { const prev = last.style.maxHeight; last.style.maxHeight = room + 'px'; if (fits()) continue; last.style.maxHeight = prev; }
+        }
+      }
+      // carry trailing headings along to the next page
+      const kids = [...body.children];
+      let i = kids.length - 1;
+      while (i > 0 && keepNext(kids[i - 1])) i--;
+      const move = kids.slice(i);
+      if (move.length === kids.length) continue; // alone on the page: leave it
+      newPage(label);
+      for (const k of move) body.appendChild(k);
+      if (!fits() && img) img.style.maxHeight = (img.getBoundingClientRect().height - (body.scrollHeight - body.clientHeight) - 2) + 'px';
+    }
+  }
+  pool.remove();
+  const pages = [...document.querySelectorAll('section.page')];
+  document.getElementById('toc').innerHTML = toc.map(t => {
+    const p = pages.indexOf(document.getElementById(t.id).closest('.page')) + 1;
+    return `<li><span class="c">${t.chap}</span><span class="t">${t.title}</span><span class="p">${p}</span></li>`;
+  }).join('');
+  return pages.map((p, i) => { const b = p.querySelector('.body'); return { page: i + 1, over: b ? b.scrollHeight > b.clientHeight + 1 : false, fill: b ? Math.round(([...b.children].reduce((a, c) => Math.max(a, c.offsetTop + c.offsetHeight), 0) - b.offsetTop) / b.clientHeight * 100) : 100 }; });
+};
+</script>
+</body>
+</html>
