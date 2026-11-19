@@ -1121,7 +1121,9 @@ function buildBiSummary(start, end) {
       close_qty: e.qty,
       close_rate: closeRate != null ? closeRate : (e.qty > 0 ? e.cost / e.qty : 0),
       close_idr: closeRate != null ? e.qty * closeRate : e.cost,
-      rate_source: closeRate != null ? 'KURS_TENGAH' : 'RATA_RATA'
+      rate_source: closeRate != null ? 'KURS_TENGAH' : 'RATA_RATA',
+      cost_idr: e.cost,
+      avg_cost: e.qty > 0 ? e.cost / e.qty : 0
     };
   }).filter(r => r.open_qty || r.buy_qty || r.sell_qty || r.close_qty);
 
@@ -1148,6 +1150,25 @@ router.get('/api/reports/bi-summary', requireAuth, (req, res) => {
     const { start, end } = reportPeriod(req.query);
     const company = (db.prepare("SELECT value FROM settings WHERE key = 'store_company'").get() || {}).value || '';
     res.json({ success: true, data: { company, startDate: start, endDate: end, ...buildBiSummary(start, end) } });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// Current foreign-currency stock per currency (same ledger as the BI summary), with today's movement
+router.get('/api/stock', requireAuth, (req, res) => {
+  try {
+    const today = storeDate();
+    const s = buildBiSummary(today, today);
+    const rows = s.rows.map(r => ({
+      currency: r.currency.replace(/^BN-/, ''),
+      qty: r.close_qty,
+      avg_cost: r.avg_cost,
+      cost_idr: r.cost_idr,
+      today_buy: r.buy_qty,
+      today_sell: r.sell_qty
+    }));
+    res.json({ success: true, data: { as_of: new Date().toISOString(), day: today, opening_date: s.opening_date, rows } });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }

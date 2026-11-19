@@ -22,6 +22,7 @@ const i18n = {
     badgeAutoCalc: '[Kalkulasi Otomatis]',
     tabPos: 'Kasir Transaksi',
     tabRates: 'Papan Kurs',
+    tabStock: 'Stok Valas',
     tabHistory: 'Riwayat & Laporan',
     tabSettings: 'Pengaturan',
     subtabSheets: 'Google Sheets',
@@ -277,6 +278,7 @@ const i18n = {
     badgeAutoCalc: '[Auto-calculated]',
     tabPos: 'Cashier POS',
     tabRates: 'Exchange Rates',
+    tabStock: 'FX Stock',
     tabHistory: 'History & Reports',
     tabSettings: 'Settings',
     subtabSheets: 'Google Sheets',
@@ -1006,6 +1008,7 @@ function setAppLanguage(lang) {
   // Header & Tabs
   safeSet('i18n-tab-pos', t.tabPos);
   safeSet('i18n-tab-rates', t.tabRates);
+  safeSet('i18n-tab-stock', t.tabStock);
   safeSet('i18n-tab-history', t.tabHistory);
   safeSet('i18n-tab-settings', t.tabSettings);
   safeSet('lbl-subtab-sheets', t.subtabSheets);
@@ -1851,6 +1854,205 @@ function renderRatesTable() {
     });
   });
   inputs[0]?.focus();
+}
+
+// ==================== STOK VALAS ====================
+// Stock per currency from the server ledger (opening stock + buys - sells), valued at average cost and today's buy rate
+async function loadStock() {
+  const body = document.getElementById('stock-table-body');
+  try {
+    if (!state.rates.length) await loadRates();
+    const data = await (await authFetch('/api/stock')).json();
+    if (!data.success) throw new Error(data.message);
+    renderStock(data.data);
+  } catch (err) {
+    body.innerHTML = `<tr><td colspan="8" class="py-8 text-center text-rose-400">${escapeHtml(state.appLang === 'en' ? 'Could not load stock: ' : 'Gagal memuat stok: ')}${escapeHtml(err.message)}</td></tr>`;
+  }
+}
+
+function renderStock(d) {
+  const isEn = state.appLang === 'en';
+  const fmtQty = n => Number(n).toLocaleString('id-ID', { maximumFractionDigits: 2 });
+  const fmtRp = n => 'Rp ' + Math.round(n).toLocaleString('id-ID');
+  // base board row per currency (e.g. "USD", not "USD 20, 10, 5") gives the name and today's buy rate
+  const boardRow = cur => state.rates.find(r => r.code.trim().toUpperCase() === cur)
+    || state.rates.find(r => r.code.trim().toUpperCase().startsWith(cur));
+  const byCur = new Map(d.rows.map(r => [r.currency, r]));
+  // currencies on the board without any movement still show, at 0
+  state.rates.forEach(r => {
+    const cur = r.code.trim().slice(0, 3).toUpperCase();
+    if (!byCur.has(cur)) byCur.set(cur, { currency: cur, qty: 0, avg_cost: 0, cost_idr: 0, today_buy: 0, today_sell: 0 });
+  });
+  const rows = [...byCur.values()].map(r => {
+    const b = boardRow(r.currency);
+    const buyRate = b ? Number(b.buy_rate) : 0;
+    return { ...r, name: b ? b.name : '', buyRate, value: r.qty > 0 ? r.qty * buyRate : 0 };
+  }).sort((a, b) => (b.qty !== 0) - (a.qty !== 0) || b.cost_idr - a.cost_idr || a.currency.localeCompare(b.currency));
+
+  const held = rows.filter(r => r.qty > 0);
+  state.stockRows = rows;
+  const sellBtn = document.getElementById('btn-stock-sell-all');
+  sellBtn.disabled = !isAdminUser() || !held.length;
+  sellBtn.title = !isAdminUser() ? (isEn ? 'Admin only' : 'Khusus admin') : (!held.length ? (isEn ? 'No stock to sell' : 'Tidak ada stok untuk dijual') : '');
+  document.getElementById('stock-sum-cur').textContent = `${held.length} / ${rows.length}`;
+  document.getElementById('stock-sum-cost').textContent = fmtRp(held.reduce((a, r) => a + r.cost_idr, 0));
+  document.getElementById('stock-sum-buy').textContent = fmtRp(held.reduce((a, r) => a + r.value, 0));
+  const asOf = new Date(d.as_of);
+  document.getElementById('stock-asof').textContent = `${isEn ? 'As of' : 'Per'} ${fmtDmy(d.day)} ${asOf.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}`;
+
+  const notice = document.getElementById('stock-notice');
+  const minus = rows.filter(r => r.qty < 0).map(r => r.currency);
+  const msgs = [];
+  if (!d.opening_date) msgs.push(isEn ? 'Opening FX stock is not set yet (Settings → Opening FX stock). Stock below comes from transactions only.' : 'Saldo awal valas belum diisi (Pengaturan → Saldo awal valas). Stok di bawah dihitung dari transaksi saja.');
+  if (minus.length) msgs.push(isEn ? `Negative stock: ${minus.join(', ')}. More was sold than recorded. Check the opening stock and transactions.` : `Stok minus: ${minus.join(', ')}. Penjualan lebih banyak dari stok yang tercatat. Periksa saldo awal valas dan transaksinya.`);
+  notice.className = `text-[13px] rounded-xl border px-4 py-3 ${msgs.length ? '' : 'hidden'} ${minus.length ? 'border-rose-500/50 bg-rose-500/10 text-rose-300' : 'border-amber-500/40 bg-amber-500/10 text-amber-300'}`;
+  notice.innerHTML = msgs.map(m => `<div>${escapeHtml(m)}</div>`).join('');
+  if (d.opening_date) {
+    document.getElementById('lbl-stock-sub').textContent = isEn
+      ? `FX we hold: opening stock (${fmtDmy(d.opening_date)}) + purchases − sales.`
+      : `Posisi valas yang kita pegang: saldo awal valas (${fmtDmy(d.opening_date)}) + pembelian − penjualan.`;
+  }
+
+  const body = document.getElementById('stock-table-body');
+  body.innerHTML = rows.length ? rows.map(r => {
+    const flag = CURRENCY_FLAGS[r.currency];
+    const zero = r.qty === 0;
+    return `<tr class="${zero ? 'opacity-50' : ''}">
+      <td class="py-3 px-4 font-sans">
+        <div class="flex items-center gap-2.5">
+          <span class="relative w-9 h-6 shrink-0 rounded overflow-hidden bg-navy-700 border border-navy-600 flex items-center justify-center text-[10px] font-mono text-brand">${escapeHtml(r.currency)}${flag ? `<img src="https://flagcdn.com/w40/${flag}.png" srcset="https://flagcdn.com/w80/${flag}.png 2x" alt="" loading="lazy" class="absolute inset-0 w-full h-full object-cover" onerror="this.remove()">` : ''}</span>
+          <div><div class="font-bold text-white">${escapeHtml(r.currency)}</div><div class="text-[11px] text-slate-400">${escapeHtml(r.name)}</div></div>
+        </div>
+      </td>
+      <td class="py-3 px-4 text-right font-bold ${r.qty < 0 ? 'text-rose-400' : 'text-white'}">${fmtQty(r.qty)}</td>
+      <td class="py-3 px-4 text-right text-emerald-400">${r.today_buy ? '+' + fmtQty(r.today_buy) : '–'}</td>
+      <td class="py-3 px-4 text-right text-amber-400">${r.today_sell ? '−' + fmtQty(r.today_sell) : '–'}</td>
+      <td class="py-3 px-4 text-right text-slate-300">${r.avg_cost ? 'Rp ' + Number(r.avg_cost).toLocaleString('id-ID', { maximumFractionDigits: 2 }) : '–'}</td>
+      <td class="py-3 px-4 text-right text-slate-200">${r.cost_idr > 0 ? fmtRp(r.cost_idr) : '–'}</td>
+      <td class="py-3 px-4 text-right text-slate-300">${r.buyRate ? 'Rp ' + r.buyRate.toLocaleString('id-ID', { maximumFractionDigits: 2 }) : '–'}</td>
+      <td class="py-3 px-4 text-right font-semibold text-emerald-400">${r.value > 0 ? fmtRp(r.value) : '–'}</td>
+    </tr>`;
+  }).join('') : `<tr><td colspan="8" class="py-8 text-center text-slate-400">${isEn ? 'No currencies yet.' : 'Belum ada mata uang.'}</td></tr>`;
+}
+
+// ==================== JUAL SEMUA STOK ====================
+// Sells every currency with stock > 0 in one JUAL transaction, at editable rates (default: today's sell rate). No receipt print.
+function sellAllLines() {
+  return (state.stockRows || []).filter(r => r.qty > 0).map(r => {
+    const b = state.rates.find(x => x.code.trim().toUpperCase() === r.currency)
+      || state.rates.find(x => x.code.trim().toUpperCase().startsWith(r.currency));
+    return { code: b ? b.code.trim() : r.currency, cur: r.currency, name: b ? b.name : r.currency, qty: r.qty, rate: b ? Number(b.sell_rate) : 0 };
+  });
+}
+
+function openSellAll() {
+  if (!isAdminUser()) return;
+  const lines = sellAllLines();
+  if (!lines.length) return showToast('Tidak ada stok untuk dijual', 'info');
+  const body = document.getElementById('sell-all-items');
+  body.innerHTML = lines.map((l, i) => `<tr>
+    <td class="py-2 px-3 font-sans"><div class="font-bold text-white">${escapeHtml(l.cur)}</div><div class="text-[11px] text-slate-400">${escapeHtml(l.name)}</div></td>
+    <td class="py-2 px-3 text-right font-bold text-white whitespace-nowrap">${Number(l.qty).toLocaleString('id-ID', { maximumFractionDigits: 2 })}</td>
+    <td class="py-2 px-3 text-right"><input type="text" inputmode="decimal" data-decimal="true" data-i="${i}" aria-label="Kurs jual ${escapeHtml(l.cur)}" class="sell-all-rate w-28 text-right font-mono font-bold bg-navy-900 border border-navy-600 rounded-lg px-2 py-1.5 text-amber-300 focus:outline-none focus:border-brand"></td>
+    <td class="py-2 px-3 text-right text-slate-200 whitespace-nowrap" data-sub="${i}"></td>
+  </tr>`).join('');
+  state.sellAllLines = lines;
+  body.querySelectorAll('.sell-all-rate').forEach(inp => {
+    attachNumFormatter(inp);
+    setNumInput(inp, lines[inp.dataset.i].rate);
+    inp.addEventListener('input', recalcSellAll);
+  });
+  ['sell-all-buyer', 'sell-all-id', 'sell-all-ul-no'].forEach(id => { document.getElementById(id).value = ''; });
+  document.getElementById('sell-all-ul-type').value = '';
+  document.getElementById('sell-all-category').value = 'CORPORATE';
+  document.getElementById('sell-all-nationality').value = 'INDONESIA';
+  document.getElementById('sell-all-note').value = 'Jual seluruh stok valas';
+  recalcSellAll();
+  document.getElementById('modal-sell-all').classList.remove('hidden');
+  document.getElementById('sell-all-buyer').focus();
+}
+
+function closeSellAll() {
+  document.getElementById('modal-sell-all').classList.add('hidden');
+}
+
+function recalcSellAll() {
+  let total = 0;
+  document.querySelectorAll('#sell-all-items .sell-all-rate').forEach(inp => {
+    const l = state.sellAllLines[inp.dataset.i];
+    l.rate = getNumInput(inp) || 0;
+    l.subtotal = Math.round(l.qty * l.rate);
+    total += l.subtotal;
+    document.querySelector(`#sell-all-items [data-sub="${inp.dataset.i}"]`).textContent = 'Rp ' + l.subtotal.toLocaleString('id-ID');
+  });
+  state.sellAllTotal = total;
+  document.getElementById('sell-all-total').textContent = 'Rp ' + total.toLocaleString('id-ID');
+  const over = total >= thresholdIdr();
+  document.getElementById('sell-all-underlying').classList.toggle('hidden', !over);
+  document.getElementById('sell-all-id-req').classList.toggle('hidden', !over);
+  document.getElementById('btn-submit-sell-all').textContent = `Jual semua · Rp ${total.toLocaleString('id-ID')}`;
+}
+
+async function submitSellAll(e) {
+  e.preventDefault();
+  const btn = document.getElementById('btn-submit-sell-all');
+  if (btn.disabled) return;
+  const lines = state.sellAllLines || [];
+  const total = state.sellAllTotal || 0;
+  const buyer = document.getElementById('sell-all-buyer').value.trim().toUpperCase();
+  const idNo = document.getElementById('sell-all-id').value.trim().toUpperCase();
+  const ulType = document.getElementById('sell-all-ul-type').value;
+  const ulNo = document.getElementById('sell-all-ul-no').value.trim();
+  const over = total >= thresholdIdr();
+  const fail = (msg, id) => { showToast(msg, 'error'); if (id) document.getElementById(id).focus(); };
+  if (!state.isOnline) return fail('Jual semua stok hanya bisa saat online.');
+  const bad = lines.find(l => !(l.rate > 0));
+  if (bad) return fail(`Kurs jual ${bad.cur} harus lebih dari 0`);
+  if (!buyer) return fail('Nama pembeli wajib diisi', 'sell-all-buyer');
+  if (over && !idNo) return fail('No. identitas / NIB wajib diisi untuk transaksi di atas threshold', 'sell-all-id');
+  if (over && !ulType) return fail('Jenis dokumen underlying wajib dipilih', 'sell-all-ul-type');
+  if (over && !ulNo) return fail('Nomor / keterangan dokumen underlying wajib diisi', 'sell-all-ul-no');
+  const summary = lines.map(l => `${Number(l.qty).toLocaleString('id-ID')} ${l.cur}`).join(', ');
+  if (!confirm(`Jual seluruh stok ke ${buyer}?\n\n${summary}\n\nTotal Rp ${total.toLocaleString('id-ID')}\n\nStok valas akan menjadi 0.`)) return;
+
+  btn.disabled = true;
+  try {
+    const now = new Date();
+    const payload = {
+      client_tx_id: randomToken(24),
+      type: 'JUAL',
+      customer_name: buyer,
+      customer_id_no: idNo,
+      customer_nationality: document.getElementById('sell-all-nationality').value.trim().toUpperCase(),
+      customer_category: document.getElementById('sell-all-category').value,
+      is_underlying: over ? 1 : 0,
+      underlying_type: over ? ulType : '',
+      underlying_doc_no: over ? ulNo : '',
+      dttot_check_status: 'CLEARED',
+      customer_signature_name: buyer,
+      teller_name: getActiveTellerName(),
+      total_idr: total,
+      paid_amount: total,
+      change_amount: 0,
+      is_delivery: 0,
+      notes: document.getElementById('sell-all-note').value.trim(),
+      items: lines.map(l => ({ currency_code: l.code, name: l.name, amount: l.qty, rate: l.rate, subtotal_idr: l.subtotal })),
+      created_at: now.toISOString()
+    };
+    const res = await authFetch('/api/transactions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+    const data = await res.json();
+    if (res.status === 403) return fail(data.error || 'Transaksi dibekukan oleh sistem kepatuhan DTTOT', 'sell-all-buyer');
+    if (!data.success) throw new Error(data.message || 'Gagal menyimpan');
+    closeSellAll();
+    showToast(`Seluruh stok terjual. No: ${data.data.receipt_no}`, 'success');
+    loadStock();
+    loadHistory();
+    loadReportsSummary();
+  } catch (err) {
+    fail('Gagal menyimpan: ' + err.message);
+  } finally {
+    btn.disabled = false;
+  }
 }
 
 function setBulkBuyMode(on) {
@@ -4433,6 +4635,7 @@ function switchTab(tabId) {
   }
 
   if (tabId === 'tab-rates') loadRates();
+  if (tabId === 'tab-stock') loadStock();
   if (tabId === 'tab-history') { loadHistory(); loadReportsSummary(); }
   if (tabId === 'tab-finance') loadFinance();
   // "Google Sheets" has its own nav tab, so Pengaturan opens on the store profile
@@ -5071,6 +5274,11 @@ function initEventListeners() {
 
   // Edit Rate Modal Events
   document.getElementById('btn-modal-add-rate').addEventListener('click', () => openEditRateModal(null));
+  document.getElementById('btn-stock-refresh').addEventListener('click', () => loadStock());
+  document.getElementById('btn-stock-sell-all').addEventListener('click', openSellAll);
+  document.getElementById('btn-close-sell-all').addEventListener('click', closeSellAll);
+  document.getElementById('btn-cancel-sell-all').addEventListener('click', closeSellAll);
+  document.getElementById('form-sell-all').addEventListener('submit', submitSellAll);
   document.getElementById('btn-bulk-buy-edit').addEventListener('click', () => setBulkBuyMode(true));
   document.getElementById('btn-bulk-buy-cancel').addEventListener('click', () => setBulkBuyMode(false));
   document.getElementById('btn-bulk-buy-save').addEventListener('click', saveBulkBuyRates);
