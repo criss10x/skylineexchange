@@ -226,6 +226,26 @@ CREATE TABLE IF NOT EXISTS middle_rates (
 try { db.prepare("ALTER TABLE transactions ADD COLUMN client_tx_id TEXT DEFAULT ''").run(); } catch (e) {}
 try { db.prepare("CREATE UNIQUE INDEX IF NOT EXISTS idx_transactions_client_tx_id ON transactions(client_tx_id) WHERE client_tx_id <> ''").run(); } catch (e) {}
 
+// Audit log of transactions an admin deleted: full copy (with items) in `data`, plus who, when and why.
+// client_tx_id stays here so a re-sent offline queue cannot bring a deleted transaction back.
+db.exec(`
+CREATE TABLE IF NOT EXISTS deleted_transactions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  original_id INTEGER NOT NULL,
+  receipt_no TEXT NOT NULL,
+  type TEXT NOT NULL,
+  customer_name TEXT DEFAULT '',
+  total_idr REAL DEFAULT 0,
+  tx_created_at TEXT DEFAULT '',
+  client_tx_id TEXT DEFAULT '',
+  data TEXT NOT NULL,
+  reason TEXT NOT NULL,
+  deleted_by TEXT NOT NULL,
+  deleted_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_deleted_tx_client ON deleted_transactions(client_tx_id);
+`);
+
 // Table for DTTOT & DPPSPM Compliance Screening
 db.exec(`
 CREATE TABLE IF NOT EXISTS dttot_list (

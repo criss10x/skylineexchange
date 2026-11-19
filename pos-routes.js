@@ -610,6 +610,10 @@ router.post('/api/transactions', requireAuth, (req, res) => {
       if (existing) {
         return res.json({ success: true, duplicate: true, data: existing });
       }
+      const gone = db.prepare('SELECT receipt_no FROM deleted_transactions WHERE client_tx_id = ?').get(clientTxId);
+      if (gone) {
+        return res.json({ success: true, duplicate: true, deleted: true, data: { receipt_no: gone.receipt_no } });
+      }
     }
 
     const finalReceiptNo = resolveReceiptNo(receipt_no);
@@ -736,6 +740,59 @@ router.post('/api/transactions', requireAuth, (req, res) => {
   }
 });
 
+// Admin deletes a transaction: it leaves every report and the stock, a full copy goes to deleted_transactions
+router.delete('/api/transactions/:id', requireAuth, requireAdmin, (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const reason = typeof (req.body && req.body.reason) === 'string' ? req.body.reason.trim() : '';
+    if (reason.length < 3) {
+      return res.status(400).json({ success: false, message: 'Alasan penghapusan wajib diisi (minimal 3 huruf).' });
+    }
+    const tx = db.prepare('SELECT * FROM transactions WHERE id = ?').get(id);
+    if (!tx) {
+      return res.status(404).json({ success: false, message: 'Transaksi tidak ditemukan' });
+    }
+    tx.items = db.prepare('SELECT * FROM transaction_items WHERE transaction_id = ?').all(id);
+    const deletedBy = req.user.displayName || req.user.username || 'ADMIN';
+    db.exec('BEGIN');
+    try {
+      db.prepare(`INSERT INTO deleted_transactions
+        (original_id, receipt_no, type, customer_name, total_idr, tx_created_at, client_tx_id, data, reason, deleted_by, deleted_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
+        tx.id, tx.receipt_no, tx.type, tx.customer_name || '', Number(tx.total_idr) || 0, tx.created_at || '',
+        tx.client_tx_id || '', JSON.stringify(tx), reason.slice(0, 500), deletedBy, new Date().toISOString()
+      );
+      db.prepare('DELETE FROM transaction_items WHERE transaction_id = ?').run(id);
+      db.prepare('DELETE FROM transactions WHERE id = ?').run(id);
+      db.exec('COMMIT');
+    } catch (e) {
+      db.exec('ROLLBACK');
+      throw e;
+    }
+    // The JSON backup is restored on every server start: rewrite it or the transaction comes back
+    if (db.backupTransactionsToFile) db.backupTransactionsToFile();
+    res.json({ success: true, message: 'Transaksi ' + tx.receipt_no + ' dihapus.' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+router.get('/api/deleted-transactions', requireAuth, requireAdmin, (req, res) => {
+  try {
+    const rows = db.prepare(`SELECT id, original_id, receipt_no, type, customer_name, total_idr, tx_created_at, data, reason, deleted_by, deleted_at
+      FROM deleted_transactions ORDER BY id DESC LIMIT 500`).all();
+    const data = rows.map(r => {
+      let items = [];
+      try { items = JSON.parse(r.data).items || []; } catch (e) {}
+      const { data: _raw, ...rest } = r;
+      return { ...rest, items: items.map(it => ({ currency_code: it.currency_code, amount: it.amount, rate: it.rate })) };
+    });
+    res.json({ success: true, data });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 // Update Delivery Status
 router.patch('/api/transactions/:id/delivery', requireAuth, (req, res) => {
   try {
@@ -773,6 +830,7 @@ router.post('/api/sync', requireAuth, (req, res) => {
     let syncedCount = 0;
     const flagged = [];
     const findByClientId = db.prepare('SELECT id FROM transactions WHERE client_tx_id = ?');
+    const findDeleted = db.prepare('SELECT id FROM deleted_transactions WHERE client_tx_id = ?');
     const findByReceipt = db.prepare('SELECT id, created_at, total_idr, customer_name FROM transactions WHERE receipt_no = ?');
     const renamed = [];
     const insertTx = db.prepare(`
@@ -794,7 +852,7 @@ router.post('/api/sync', requireAuth, (req, res) => {
     for (const tx of transactions) {
       // Same device transaction already stored (re-sent queue): skip
       const clientTxId = typeof tx.client_tx_id === 'string' ? tx.client_tx_id.trim() : '';
-      if (clientTxId && findByClientId.get(clientTxId)) continue;
+      if (clientTxId && (findByClientId.get(clientTxId) || findDeleted.get(clientTxId))) continue;
 
       // Older queued items have no client_tx_id: treat as the same transaction only if it matches exactly
       const sameReceipt = findByReceipt.get(tx.receipt_no);
