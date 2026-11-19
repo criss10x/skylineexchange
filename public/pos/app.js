@@ -4086,6 +4086,7 @@ function getHistoryDateFilterState() {
 async function loadHistory() {
   const tbody = document.getElementById('history-table-body');
   if (!tbody) return;
+  document.getElementById('btn-history-deleted-log')?.classList.toggle('hidden', !isAdminUser());
 
   const filter = getHistoryDateFilterState();
   let url = '/api/transactions?limit=1000';
@@ -4132,6 +4133,8 @@ function renderHistoryTable(transactions) {
 
   const filter = getHistoryDateFilterState();
   const showDate = filter.isAll || filter.isRange;
+  const admin = isAdminUser();
+  state.historyById = new Map(filtered.map(t => [String(t.id), t]));
 
   tbody.innerHTML = '';
   filtered.forEach(t => {
@@ -4167,6 +4170,7 @@ function renderHistoryTable(transactions) {
         <button type="button" class="btn-history-reprint px-2.5 py-1 rounded bg-navy-700 hover:bg-navy-600 text-brand text-xs font-sans transition-colors" data-id="${t.id}">
           ${isEn ? 'Print' : 'Cetak'}
         </button>
+        ${admin ? `<button type="button" class="btn-history-delete ml-1 px-2.5 py-1 rounded bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-xs font-sans transition-colors" data-id="${t.id}">${isEn ? 'Delete' : 'Hapus'}</button>` : ''}
       </td>
     `;
     tbody.appendChild(tr);
@@ -4178,6 +4182,90 @@ function renderHistoryTable(transactions) {
       reprintTransaction(id);
     });
   });
+  document.querySelectorAll('.btn-history-delete').forEach(btn => {
+    btn.addEventListener('click', () => openDeleteTx(btn.getAttribute('data-id')));
+  });
+}
+
+// ==================== DELETE TRANSACTION (admin) ====================
+function openDeleteTx(id) {
+  const t = state.historyById && state.historyById.get(String(id));
+  if (!t || !isAdminUser()) return;
+  state.deleteTxId = t.id;
+  const items = (t.items || []).map(it => `${Number(it.amount).toLocaleString('id-ID')} ${it.currency_code}`).join(', ');
+  const rows = [
+    ['No. struk', t.receipt_no],
+    ['Waktu', new Date(t.created_at).toLocaleString('id-ID')],
+    ['Tipe', t.type === 'BELI' ? 'BELI (kita beli)' : 'JUAL (kita jual)'],
+    ['Customer', t.customer_name],
+    ['Rincian', items],
+    ['Total', 'Rp ' + Number(t.total_idr).toLocaleString('id-ID')]
+  ];
+  document.getElementById('delete-tx-summary').innerHTML = rows
+    .map(([k, v]) => `<dt class="text-slate-400">${k}</dt><dd class="font-semibold text-white break-words">${escapeHtml(String(v || '-'))}</dd>`).join('');
+  document.getElementById('delete-tx-reason').value = '';
+  document.getElementById('modal-delete-tx').classList.remove('hidden');
+  document.getElementById('delete-tx-reason').focus();
+}
+
+function closeDeleteTx() {
+  document.getElementById('modal-delete-tx').classList.add('hidden');
+}
+
+async function submitDeleteTx(e) {
+  e.preventDefault();
+  const reasonEl = document.getElementById('delete-tx-reason');
+  const reason = reasonEl.value.trim();
+  if (reason.length < 3) {
+    reasonEl.focus();
+    return showToast('Isi alasan penghapusan (minimal 3 huruf)', 'error');
+  }
+  if (!navigator.onLine) return showToast('Hapus transaksi butuh koneksi internet', 'error');
+  const btn = document.getElementById('btn-submit-delete-tx');
+  btn.disabled = true;
+  try {
+    const res = await authFetch(`/api/transactions/${state.deleteTxId}`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reason })
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.message || 'Gagal menghapus');
+    closeDeleteTx();
+    showToast(data.message, 'success');
+    loadHistory();
+    loadReportsSummary();
+  } catch (err) {
+    showToast(err.message || 'Gagal menghapus transaksi', 'error');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function openDeletedLog() {
+  const body = document.getElementById('deleted-log-body');
+  body.innerHTML = '<tr><td colspan="7" class="py-6 text-center text-slate-400">Memuat...</td></tr>';
+  document.getElementById('modal-deleted-log').classList.remove('hidden');
+  try {
+    const res = await authFetch('/api/deleted-transactions');
+    const data = await res.json();
+    if (!data.success) throw new Error(data.message);
+    if (!data.data.length) {
+      body.innerHTML = '<tr><td colspan="7" class="py-6 text-center text-slate-400">Belum ada transaksi yang dihapus.</td></tr>';
+      return;
+    }
+    body.innerHTML = data.data.map(r => `<tr class="align-top">
+      <td class="py-2 px-3 font-mono font-bold text-brand whitespace-nowrap">${escapeHtml(r.receipt_no)}<div class="font-sans font-normal text-[11px] text-slate-400">${escapeHtml(new Date(r.tx_created_at).toLocaleString('id-ID'))}</div></td>
+      <td class="py-2 px-3">${r.type === 'BELI' ? '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400">BELI</span>' : '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-400">JUAL</span>'}</td>
+      <td class="py-2 px-3 font-semibold text-white uppercase">${escapeHtml(r.customer_name)}</td>
+      <td class="py-2 px-3 font-mono text-slate-300">${escapeHtml(r.items.map(it => Number(it.amount).toLocaleString('id-ID') + ' ' + it.currency_code).join(', '))}</td>
+      <td class="py-2 px-3 text-right font-mono font-bold text-white whitespace-nowrap">Rp ${Number(r.total_idr).toLocaleString('id-ID')}</td>
+      <td class="py-2 px-3 text-slate-200">${escapeHtml(r.reason)}</td>
+      <td class="py-2 px-3 text-slate-300 whitespace-nowrap">${escapeHtml(r.deleted_by)}<div class="text-[11px] text-slate-400">${escapeHtml(new Date(r.deleted_at).toLocaleString('id-ID'))}</div></td>
+    </tr>`).join('');
+  } catch (err) {
+    body.innerHTML = `<tr><td colspan="7" class="py-6 text-center text-rose-400">${escapeHtml(err.message || 'Gagal memuat log')}</td></tr>`;
+  }
 }
 
 async function reprintTransaction(id) {
@@ -5378,6 +5466,12 @@ function initEventListeners() {
   document.getElementById('history-search-input')?.addEventListener('input', () => {
     loadHistory();
   });
+
+  document.getElementById('form-delete-tx')?.addEventListener('submit', submitDeleteTx);
+  document.getElementById('btn-close-delete-tx')?.addEventListener('click', closeDeleteTx);
+  document.getElementById('btn-cancel-delete-tx')?.addEventListener('click', closeDeleteTx);
+  document.getElementById('btn-history-deleted-log')?.addEventListener('click', openDeletedLog);
+  document.getElementById('btn-close-deleted-log')?.addEventListener('click', () => document.getElementById('modal-deleted-log').classList.add('hidden'));
 
   // Settings Form Submit
   document.getElementById('form-settings').addEventListener('submit', async (e) => {
